@@ -19,15 +19,15 @@
 
 Runtime loading order is:
 
-1. M_BOOTSTRAPPER
+1. MEBOOTSTRAPPER
 2. ESI
-3. M_LSE, M_CALM, and M_TACT
+3. MELSE, MECALM, and METACT
 
-M_BOOTSTRAPPER is the only package allowed to provide `default.ncs`. It discovers the installed `memoria_*.txt` registrations and dispatches heartbeats by priority. ESI must always run before consumers of injected events.
+MEBOOTSTRAPPER is the only package allowed to provide `default.ncs`. It discovers the installed `memoria_*.txt` registrations and dispatches heartbeats by priority. ESI must always run before consumers of injected events.
 
-Framework is a compile-time NWScript dependency shared by M_CALM and M_TACT. It is independently packaged for source distribution but does not own a runtime heartbeat.
+Framework is a compile-time NWScript dependency shared by MECALM and METACT. It is independently packaged for source distribution but does not own a runtime heartbeat.
 
-Memoria-owned mod identifiers use `M_<PACKAGE>_`; corresponding NWN resource files use lowercase `m_<package>_` names and must respect NWN resref length limits. Framework and Bootstrapper registration manifests instead use `MEMORIA_*` identifiers and `memoria_*` resources. ESI is the explicit compatibility exception: preserve its original `ESI_*`, `esi_*`, and `rav_*` names and behavior. The Memoria-owned ESI registration wrapper remains separate as `m_esi_hb` and `memoria_esi`.
+Memoria-owned mod identifiers use `ME<PACKAGE>_`; corresponding NWN resource files use lowercase `me<package>_` names and must respect NWN resref length limits. Framework and Bootstrapper registration manifests instead use `MEMORIA_*` identifiers and `memoria_*` resources. ESI is the explicit compatibility exception: preserve its original `ESI_*`, `esi_*`, and `rav_*` names and behavior. The Memoria-owned ESI registration wrapper remains separate as `meesi_hb` and `memoria_esi`.
 
 ## Project inputs
 
@@ -70,7 +70,7 @@ dotnet clean Memoria.NeverwinterNights.slnx --configuration Release
 dotnet build Memoria.NeverwinterNights.slnx --configuration Release
 ```
 
-The build must finish with zero warnings and errors, compile and verify every NCS entry point, convert GFF resources, and run every M_TACT GUI fixture through the layout emulator. GUI changes are not complete without successful emulator validation at all checked-in resolutions/scales.
+The build must finish with zero warnings and errors, compile and verify every NCS entry point, convert GFF resources, and run every METACT GUI fixture through the layout emulator. GUI changes are not complete without successful emulator validation at all checked-in resolutions/scales.
 
 To validate publishing for all packages, run:
 
@@ -78,7 +78,7 @@ To validate publishing for all packages, run:
 dotnet msbuild Memoria.NeverwinterNights.slnx -restore -t:Publish -p:Configuration=Release -p:Version=0.0.0-validation -m:1
 ```
 
-Confirm that every package contains its README, M_LSE/M_CALM/M_TACT contain their changelogs, no package contains obsolete RTF documentation, and only M_BOOTSTRAPPER contains `override/default.ncs`.
+Confirm that every package contains its README, MELSE/MECALM/METACT contain their changelogs, no package contains obsolete RTF documentation, and only MEBOOTSTRAPPER contains `override/default.ncs`.
 
 Build or publish one mod through its project:
 
@@ -87,11 +87,11 @@ dotnet build Mods/TacticsArchitect/TacticsArchitect.proj --configuration Release
 dotnet msbuild Mods/TacticsArchitect/TacticsArchitect.proj -restore -t:Publish -p:Configuration=Release -p:Version=0.7.0
 ```
 
-Release tags use `<package>-v<version>`, for example `m_tact-v0.7.0`. ESI retains the compatibility tag form `esi-v<version>`.
+Release tags use `<package>-v<version>`, for example `metact-v0.7.0`. ESI retains the compatibility tag form `esi-v<version>`.
 
 ## Licensing and style
 
 - Albeoris-authored work is MIT licensed, Copyright (c) Albeoris.
-- Preserve original ESI/M_LSE/game-derived copyright and third-party notices when modifying those files.
+- Preserve original ESI/MELSE/game-derived copyright and third-party notices when modifying those files.
 - Keep method calls and complete argument lists on a single line. Do not wrap code solely because of line length.
 - Prefer generalized conventions and wildcard inclusion over duplicated configuration.

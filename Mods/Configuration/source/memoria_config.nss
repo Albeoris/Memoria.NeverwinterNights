@@ -5,7 +5,7 @@
 const string MEMORIA_CONFIG_MANIFEST_PREFIX = "mconfig_";
 const string MEMORIA_CONFIG_ITEM_RESREF = "memoria_config";
 const string MEMORIA_CONFIG_ITEM_TAG = "MEMORIA_CONFIGURATION_ITEM";
-const string MEMORIA_CONFIG_ACTIVATE_HANDLER = "m_config_evact";
+const string MEMORIA_CONFIG_ACTIVATE_HANDLER = "meconfig_evact";
 const string MEMORIA_CONFIG_WINDOW_ID = "memoria_config";
 const string MEMORIA_CONFIG_LOCAL_ITEM_SCHEMA = "MEMORIA_CONFIG_ITEM_SCHEMA";
 const string MEMORIA_CONFIG_LOCAL_ESI_INSTALLED = "MEMORIA_CONFIG_ESI_INSTALLED";
@@ -17,7 +17,7 @@ const string MEMORIA_CONFIG_LOCAL_TEXT = "MEMORIA_CONFIG_TEXT_RESULT";
 const string MEMORIA_CONFIG_LOCAL_ITEM_LANGUAGE = "MEMORIA_CONFIG_ITEM_LANGUAGE";
 const string MEMORIA_CONFIG_LOCAL_ITEM_OBJECT = "MEMORIA_CONFIG_ITEM_OBJECT";
 const string MEMORIA_CONFIG_CACHE_OWNER_LOCAL = "MEMORIA_CONFIG_CACHE_OWNER";
-const string MEMORIA_CONFIG_CACHE_WINDOW = "m_config_cache";
+const string MEMORIA_CONFIG_CACHE_WINDOW = "meconfig_cache";
 const string MEMORIA_CONFIG_TEXT_PARAM = "MEMORIA_CONFIG_TEXT_KEY";
 const int MEMORIA_CONFIG_ITEM_SCHEMA = 1;
 
@@ -31,12 +31,12 @@ const int MEMORIA_CONFIG_TEXT_RANGE_ERROR = 7;
 
 string MEMORIA_CONFIG_GetLanguage(object oPC)
 {
-    return MEMORIA_GetLanguage(oPC, MEMORIA_CONFIG_LOCAL_LANGUAGE, "m_config_is_ru", MEMORIA_CONFIG_LOCAL_IS_RUSSIAN);
+    return MEMORIA_GetLanguage(oPC, MEMORIA_CONFIG_LOCAL_LANGUAGE, "meconfig_is_ru", MEMORIA_CONFIG_LOCAL_IS_RUSSIAN);
 }
 
 string MEMORIA_CONFIG_GetText(object oPC, int nKey)
 {
-    return MEMORIA_GetText(nKey, oPC, MEMORIA_CONFIG_GetLanguage(oPC), "m_config_txt_", MEMORIA_CONFIG_LOCAL_TEXT, MEMORIA_CONFIG_TEXT_PARAM);
+    return MEMORIA_GetText(nKey, oPC, MEMORIA_CONFIG_GetLanguage(oPC), "meconfig_txt_", MEMORIA_CONFIG_LOCAL_TEXT, MEMORIA_CONFIG_TEXT_PARAM);
 }
 
 int MEMORIA_CONFIG_CompareNames(string sLeft, string sRight)
@@ -153,7 +153,7 @@ json MEMORIA_CONFIG_GetModules(object oPC)
         jModules = MEMORIA_CONFIG_LoadModules();
         oCacheOwner = oPC;
         nToken = NuiFindWindow(oCacheOwner, MEMORIA_CONFIG_CACHE_WINDOW);
-        if (nToken == 0) nToken = NuiCreate(oCacheOwner, MEMORIA_CONFIG_BuildCacheWindow(), MEMORIA_CONFIG_CACHE_WINDOW, "m_config_noop");
+        if (nToken == 0) nToken = NuiCreate(oCacheOwner, MEMORIA_CONFIG_BuildCacheWindow(), MEMORIA_CONFIG_CACHE_WINDOW, "meconfig_noop");
         if (nToken > 0)
         {
             NuiSetUserData(oCacheOwner, nToken, jModules);
@@ -269,7 +269,7 @@ void MEMORIA_CONFIG_Open(object oPC)
     int nOldToken = NuiFindWindow(oPC, MEMORIA_CONFIG_WINDOW_ID);
     if (nOldToken > 0)
         NuiDestroy(oPC, nOldToken);
-    int nToken = NuiCreate(oPC, MEMORIA_CONFIG_BuildWindow(oPC, jModule), MEMORIA_CONFIG_WINDOW_ID, "m_config_nuievt");
+    int nToken = NuiCreate(oPC, MEMORIA_CONFIG_BuildWindow(oPC, jModule), MEMORIA_CONFIG_WINDOW_ID, "meconfig_nuievt");
     if (nToken <= 0)
         return;
     json jNames = JsonArray();

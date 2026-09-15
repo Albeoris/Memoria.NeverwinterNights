@@ -1,6 +1,6 @@
 # Memoria Framework
 
-Memoria Framework is a source package of reusable NWScript helpers for mod developers. M_CALM and M_TACT compile the required code into their releases, so players do not need to install Framework separately.
+Memoria Framework is a source package of reusable NWScript helpers for mod developers. MECALM and METACT compile the required code into their releases, so players do not need to install Framework separately.
 
 ## Includes
 

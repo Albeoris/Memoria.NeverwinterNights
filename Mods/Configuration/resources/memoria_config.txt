@@ -1,1 +1,1 @@
-{"schema":1,"id":"MEMORIA_CONFIG","heartbeat":"m_config_hb","priority":1}
+{"schema":1,"id":"MEMORIA_CONFIG","heartbeat":"meconfig_hb","priority":1}

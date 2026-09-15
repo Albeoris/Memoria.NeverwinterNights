@@ -1,1 +1,1 @@
-TODO: Describe the changes in this release of Tactics Architect (M_TACT).
+TODO: Describe the changes in this release of Tactics Architect (METACT).

@@ -1,1 +1,1 @@
-{"schema":1,"id":"M_TACT","name":"Tactics Architect","name_key":4,"localization":{"prefix":"m_tact_txt_","parameter":"M_TACT_TEXT_KEY","result":"M_TACT_TEXT_RESULT"},"options":[{"type":"action","label":"Open tactics editor","label_key":112,"script":"m_tact_open"}]}
+{"schema":1,"id":"METACT","name":"Tactics Architect","name_key":4,"localization":{"prefix":"metact_txt_","parameter":"METACT_TEXT_KEY","result":"METACT_TEXT_RESULT"},"options":[{"type":"action","label":"Open tactics editor","label_key":112,"script":"metact_open"}]}

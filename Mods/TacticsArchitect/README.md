@@ -1,6 +1,6 @@
-# Tactics Architect (M_TACT)
+# Tactics Architect (METACT)
 
-M_TACT adds a persistent Dragon Age-style behavior editor for the player character and associates.
+METACT adds a persistent Dragon Age-style behavior editor for the player character and associates.
 
 ## Features
 
@@ -14,13 +14,13 @@ M_TACT adds a persistent Dragon Age-style behavior editor for the player charact
 
 ## Installation
 
-Install M_BOOTSTRAPPER, ESI, MEMORIA_CONFIG, and then M_TACT by copying each package's `override` contents into the NWN user `override` directory.
+Install MEBOOTSTRAPPER, ESI, MEMORIA_CONFIG, and then METACT by copying each package's `override` contents into the NWN user `override` directory.
 
 Open **Memoria Configuration** from the inventory, select Tactics Architect, and choose **Open tactics editor**.
 
 ## Compatibility
 
-M_TACT has no file conflicts with other mods. Logical conflicts are possible with mods that also control companion AI or action queues, or replace module event handlers at runtime.
+METACT has no file conflicts with other mods. Logical conflicts are possible with mods that also control companion AI or action queues, or replace module event handlers at runtime.
 
 ## Languages
 

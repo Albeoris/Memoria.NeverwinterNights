@@ -1,6 +1,6 @@
-# Companion Auto-Lock Manager (M_CALM)
+# Companion Auto-Lock Manager (MECALM)
 
-M_CALM lets companions, henchmen, familiars, animal companions, summons, and dominated creatures automatically unlock nearby doors and containers outside combat.
+MECALM lets companions, henchmen, familiars, animal companions, summons, and dominated creatures automatically unlock nearby doors and containers outside combat.
 
 ## Features
 
@@ -12,15 +12,15 @@ M_CALM lets companions, henchmen, familiars, animal companions, summons, and dom
 
 ## Installation
 
-Install M_BOOTSTRAPPER, ESI, MEMORIA_CONFIG, and then M_CALM by copying each package's `override` contents into the NWN user `override` directory.
+Install MEBOOTSTRAPPER, ESI, MEMORIA_CONFIG, and then MECALM by copying each package's `override` contents into the NWN user `override` directory.
 
 ## Use
 
-Open **Memoria Configuration** from the inventory to configure M_CALM. Settings are stored on the player character and persist in saved games. Target a lockable object with the same item to run CALM diagnostics.
+Open **Memoria Configuration** from the inventory to configure MECALM. Settings are stored on the player character and persist in saved games. Target a lockable object with the same item to run CALM diagnostics.
 
 ## Compatibility
 
-M_CALM has no file conflicts with other mods. Logical conflicts are possible with mods that also control companion actions, automate locks or traps, or replace the module's `OnActivateItem` handler at runtime.
+MECALM has no file conflicts with other mods. Logical conflicts are possible with mods that also control companion actions, automate locks or traps, or replace the module's `OnActivateItem` handler at runtime.
 
 ## Languages
 

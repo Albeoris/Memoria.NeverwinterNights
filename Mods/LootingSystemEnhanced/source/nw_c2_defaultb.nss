@@ -156,5 +156,5 @@ void main()
         SignalEvent(OBJECT_SELF, EventUserDefined(EVENT_SPELL_CAST_AT));
     }
 
-    ExecuteScript("m_lse_crtsplcst");
+    ExecuteScript("melse_crtsplcst");
 }

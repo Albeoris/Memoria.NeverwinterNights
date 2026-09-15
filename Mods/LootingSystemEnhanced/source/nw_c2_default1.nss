@@ -104,6 +104,6 @@ void main()
         SignalEvent(OBJECT_SELF, EventUserDefined(EVENT_HEARTBEAT));
     }
 
-    ExecuteScript("m_lse_crthrtbt");
+    ExecuteScript("melse_crthrtbt");
 }
 

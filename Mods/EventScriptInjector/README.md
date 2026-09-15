@@ -6,7 +6,7 @@ Injection keys are compared and stored as exact strings. Existing numeric-key lo
 
 ## Installation
 
-Install M_BOOTSTRAPPER first, then copy ESI's `override` contents into the NWN user `override` directory.
+Install MEBOOTSTRAPPER first, then copy ESI's `override` contents into the NWN user `override` directory.
 
 ## Minimal event mod
 

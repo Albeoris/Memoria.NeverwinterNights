@@ -1,8 +1,8 @@
 <Project DefaultTargets="Build">
   <Import Project="..\..\Directory.Build.props" />
   <PropertyGroup>
-    <ModName>M_LSE</ModName>
-    <PackageId>m_lse</PackageId>
+    <ModName>MELSE</ModName>
+    <PackageId>melse</PackageId>
     <PackageDisplayName>Ravick's Looting System Enhanced - Memoria Edition</PackageDisplayName>
   </PropertyGroup>
   <PropertyGroup Label="Steam Workshop">

@@ -1,6 +1,6 @@
 # Memoria Bootstrapper
 
-M_BOOTSTRAPPER loads registered Memoria mods in the correct order on each player heartbeat. It discovers registration manifests once per loaded game or module, then dispatches the cached heartbeat list without touching the manifest resources again. Loading a game or entering another module invalidates the cache. It is required by ESI, M_LSE, M_CALM, and M_TACT.
+MEBOOTSTRAPPER loads registered Memoria mods in the correct order on each player heartbeat. It discovers registration manifests once per loaded game or module, then dispatches the cached heartbeat list without touching the manifest resources again. Loading a game or entering another module invalidates the cache. It is required by ESI, MELSE, MECALM, and METACT.
 
 ## Installation
 
@@ -50,4 +50,4 @@ override/
 
 ## Compatibility
 
-M_BOOTSTRAPPER conflicts by file with any other mod that provides `default.ncs`. Such a mod is compatible only if its default script calls `memoria_boot`.
+MEBOOTSTRAPPER conflicts by file with any other mod that provides `default.ncs`. Such a mod is compatible only if its default script calls `memoria_boot`.

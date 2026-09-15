@@ -1,1 +1,1 @@
-{"schema":1,"id":"M_TACT","heartbeat":"m_tact_hb","priority":300}
+{"schema":1,"id":"METACT","heartbeat":"metact_hb","priority":300}

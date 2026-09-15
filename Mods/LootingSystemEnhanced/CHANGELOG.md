@@ -1,4 +1,4 @@
-Ravick's Looting System Enhanced (M_LSE)
+Ravick's Looting System Enhanced (MELSE)
 
 # Looting System Enhanced changelog
 
@@ -16,8 +16,8 @@ New Features:
 - Added Tools Panel accessable via "Player Tool 9" when corpse chosen as target.
 - Added options in Tools Panel for destroying corpses individually, area-wide or module-wide. Useful for bugfixing if any script does not trigger correctly due to a creature not being recognized as dead because its corpse still lying around.
 - Auto looting now takes a maximum item weight and minimum gold piece value into account. Unidentified items and many base item types will always be looted though. This is mostly useful to prevent simple armor/weapon/book items cluttering up the inventory (automatically ignores "Fire Beetle's Belly" too, what a joy!). A red floating text will indicate that an item was ignored. Customizable using the new Configuration Panel. Defaults are 8 for minimal value (to ignore basic base game books) and 9 for maximal weight.
-- A short tutorial conversation will guide you through the manual functionalities of M_LSE after installing it or updating it.
-- Your character will speak a short notification string after installing or updating M_LSE.
+- A short tutorial conversation will guide you through the manual functionalities of MELSE after installing it or updating it.
+- Your character will speak a short notification string after installing or updating MELSE.
 
 Bug Fixes:
 - Placeables containing no items will no longer get unuseable after opening. This should solve most problems with containers that are supposed to serve a special purpose, other than just generating random loot and such.
@@ -26,7 +26,7 @@ Bug Fixes:
 
 General Script Changes:
 - Refined area treasure scanning to work more consistent and to take item exclusion rules into account.
-- Rearranged many parts of the code in "m_lse_lib". Planning to separate the one big include into some smaller ones.
+- Rearranged many parts of the code in "melse_lib". Planning to separate the one big include into some smaller ones.
 - Removed most debugging/logging code for better readibility.
 
 Credits:

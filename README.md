@@ -8,16 +8,16 @@ ATTENTION: The mods are ready but are currently being debugged. I will release t
 
 | Package | Runtime dependency | Purpose |
 | --- | --- | --- |
-| M_BOOTSTRAPPER | None | Owns `default.ncs`, caches discovered module manifests for the current session and module, and dispatches player heartbeats in priority order. |
-| ESI | M_BOOTSTRAPPER | Event Script Injector with its original `ESI_*`, `esi_*`, and `rav_*` compatibility surface. Always dispatched first. |
-| MEMORIA_CONFIG | M_BOOTSTRAPPER, ESI | Shared inventory tool and NUI Mod Configuration Manager. It caches discovered `mconfig_*.txt` registrations for the loaded game or module. |
-| M_LSE | M_BOOTSTRAPPER, ESI, MEMORIA_CONFIG | Memoria edition of Looting System Enhanced, namespaced as `M_LSE_*` and `m_lse_*`. |
-| M_CALM | M_BOOTSTRAPPER, ESI, MEMORIA_CONFIG | Companion Auto-Lock Manager. |
-| M_TACT | M_BOOTSTRAPPER, ESI, MEMORIA_CONFIG | Tactics Architect. |
-| Memoria Framework | Compile-time only | Shared `MEMORIA_*` and `memoria_*` NWScript helpers used by M_CALM and M_TACT. |
+| MEBOOTSTRAPPER | None | Owns `default.ncs`, caches discovered module manifests for the current session and module, and dispatches player heartbeats in priority order. |
+| ESI | MEBOOTSTRAPPER | Event Script Injector with its original `ESI_*`, `esi_*`, and `rav_*` compatibility surface. Always dispatched first. |
+| MEMORIA_CONFIG | MEBOOTSTRAPPER, ESI | Shared inventory tool and NUI Mod Configuration Manager. It caches discovered `mconfig_*.txt` registrations for the loaded game or module. |
+| MELSE | MEBOOTSTRAPPER, ESI, MEMORIA_CONFIG | Memoria edition of Looting System Enhanced, namespaced as `MELSE_*` and `melse_*`. |
+| MECALM | MEBOOTSTRAPPER, ESI, MEMORIA_CONFIG | Companion Auto-Lock Manager. |
+| METACT | MEBOOTSTRAPPER, ESI, MEMORIA_CONFIG | Tactics Architect. |
+| Memoria Framework | Compile-time only | Shared `MEMORIA_*` and `memoria_*` NWScript helpers used by MECALM and METACT. |
 | Toolset | .NET 10 | Builds, validates, and packages all projects. |
 
-Memoria-owned mod identifiers and resources use package-specific `M_<PACKAGE>_` and `m_<package>_` prefixes. Framework uses `MEMORIA_*` and `memoria_*`; ESI retains its original compatibility names.
+Memoria-owned mod identifiers and resources use package-specific `ME<PACKAGE>_` and `me<package>_` prefixes. Framework uses `MEMORIA_*` and `memoria_*`; ESI retains its original compatibility names.
 
 ## Repository layout
 
@@ -31,7 +31,7 @@ Requirements: Windows and the .NET 10 SDK. A local NWN installation is not requi
 dotnet build Memoria.NeverwinterNights.slnx -c Release
 ```
 
-The build compiles every entry-point script, converts UTI resources, verifies generated NCS files, and runs every MEMORIA_CONFIG and M_TACT NUI layout through the layout emulator.
+The build compiles every entry-point script, converts UTI resources, verifies generated NCS files, and runs every MEMORIA_CONFIG and METACT NUI layout through the layout emulator.
 
 Mod projects use wildcard items for `source`, `resources`, documentation, and layouts. MSBuild writes the evaluated inputs to `artifacts/inputs`; there are no hand-maintained file manifests. NWScript sources remain UTF-8 in the repository. The Toolset detects executable entry points, converts a temporary compiler copy to Windows-1251 when Cyrillic is present or Windows-1252 otherwise, and leaves the source unchanged.
 
@@ -53,7 +53,7 @@ dotnet msbuild Memoria.NeverwinterNights.slnx -restore -t:Publish -p:Configurati
 
 ## Releases
 
-Push a tag in the form `<package>-v<version>`, for example `m_tact-v0.7.0` or `m_bootstrapper-v1.0.0`. ESI retains `esi-v<version>`. GitHub Actions builds and publishes only that package, uploads the existing Steam Workshop item, and creates the GitHub release.
+Push a tag in the form `<package>-v<version>`, for example `metact-v0.7.0` or `mebootstrapper-v1.0.0`. ESI retains `esi-v<version>`. GitHub Actions builds and publishes only that package, uploads the existing Steam Workshop item, and creates the GitHub release.
 
 ### Steam Workshop setup
 
@@ -71,4 +71,4 @@ The workflow downloads Valve's Windows SteamCMD bootstrap, verifies its Authenti
 
 ## Licensing
 
-Albeoris-authored work is MIT licensed. ESI, M_LSE, game-derived scripts, and vendored tools retain their original authorship notices; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Albeoris-authored work is MIT licensed. ESI, MELSE, game-derived scripts, and vendored tools retain their original authorship notices; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

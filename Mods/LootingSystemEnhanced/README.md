@@ -1,6 +1,6 @@
 # Looting System Enhanced - Memoria Edition
 
-M_LSE automates looting and adds configurable lootable corpses, container handling, treasure notifications, and item filters.
+MELSE automates looting and adds configurable lootable corpses, container handling, treasure notifications, and item filters.
 
 ## Features
 
@@ -13,13 +13,13 @@ M_LSE automates looting and adds configurable lootable corpses, container handli
 
 ## Installation
 
-Remove any legacy LSE installation, then install M_BOOTSTRAPPER, ESI, MEMORIA_CONFIG, and M_LSE by copying each package's `override` contents into the NWN user `override` directory.
+Remove any legacy LSE installation, then install MEBOOTSTRAPPER, ESI, MEMORIA_CONFIG, and MELSE by copying each package's `override` contents into the NWN user `override` directory.
 
 Open **Memoria Configuration** from the inventory and select Looting System Enhanced to change its options.
 
 ## Compatibility
 
-Do not combine M_LSE with legacy LSE or another mod that supplies `nw_c2_default1.ncs`, `nw_c2_default5.ncs`, or `nw_c2_defaultb.ncs`. Logical conflicts are possible with other mods that automate looting, preserve corpses, or change container behavior.
+Do not combine MELSE with legacy LSE or another mod that supplies `nw_c2_default1.ncs`, `nw_c2_default5.ncs`, or `nw_c2_defaultb.ncs`. Logical conflicts are possible with other mods that automate looting, preserve corpses, or change container behavior.
 
 ## Credits
 

@@ -1,8 +1,8 @@
 <Project DefaultTargets="Build">
   <Import Project="..\..\Directory.Build.props" />
   <PropertyGroup>
-    <ModName>M_BOOTSTRAPPER</ModName>
-    <PackageId>m_bootstrapper</PackageId>
+    <ModName>MEBOOTSTRAPPER</ModName>
+    <PackageId>mebootstrapper</PackageId>
     <PackageDisplayName>Memoria Bootstrapper</PackageDisplayName>
   </PropertyGroup>
   <PropertyGroup Label="Steam Workshop">

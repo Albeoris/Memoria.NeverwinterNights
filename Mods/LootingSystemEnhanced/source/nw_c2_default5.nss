@@ -70,5 +70,5 @@ void main()
         SignalEvent(OBJECT_SELF, EventUserDefined(EVENT_ATTACKED));
     }
 
-    ExecuteScript("m_lse_crtphsatt");
+    ExecuteScript("melse_crtphsatt");
 }
