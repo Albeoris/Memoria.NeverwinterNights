@@ -14,7 +14,7 @@ Do not replace localized characters with JSON `\uXXXX` escape sequences. Althoug
 
 `MEMORIA_I18N_GetText` parses and caches the requested emitted table once per module load (stored as module-scoped local JSON, since the same `prefix`+`lang` table is identical for every player), then does an O(1) key lookup. Missing language tables fall back to `<prefix>_loc_en.txt`; a missing key returns `""`, which callers use as a fallback signal (e.g. to the plain-text `label`/`name` field in a `memoria_*.txt` manifest's `configuration` section).
 
-Each mod still owns its own player-facing `<prefix>_is_ru.nss` probe and `<PREFIX>_GetLanguage(oPC)` wrapper around `MEMORIA_GetLanguage` (`memoria_locale.nss`) — `memoria_i18n.nss` only replaces the old per-key `ExecuteScript`-dispatched `.nss` file per language (ternary/`if` chains keyed by integer) with plain data files. Debug/diagnostic-only output is intentionally left as hardcoded English and not routed through this system.
+`MEMORIA_GetLanguage` lives in `memoria_locale.nss` and dispatches the shared `memoria_is_ru.ncs` probe supplied by Framework. The probe compares string 3 with the Russian translation of "Bards". Its checked-in NWScript remains UTF-8; the Toolset detects the Cyrillic literal and compiles a temporary Windows-1251 copy. Mods keep only their `<PREFIX>_GetLanguage(oPC)` wrapper and language cache. Debug/diagnostic-only output is intentionally left as hardcoded English and not routed through this system.
 
 This replaced LSE's older bespoke `melse_sin_lib.nss` "SIN" system, whose language detection was hardcoded to only accept `de`/`en` — removed as part of the migration.
 

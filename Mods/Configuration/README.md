@@ -95,4 +95,4 @@ override/
 
 ## Installation
 
-Install MEBOOTSTRAPPER, ESI, and MEMORIA_CONFIG before any Memoria mod that declares them as dependencies. The manager automatically grants the configuration item to each player.
+Install MEBOOTSTRAPPER, ESI, Framework, and MEMORIA_CONFIG before any Memoria mod that declares them as dependencies. The manager automatically grants the configuration item to each player.

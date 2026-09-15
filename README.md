@@ -10,11 +10,11 @@ ATTENTION: The mods are ready but are currently being debugged. I will release t
 | --- | --- | --- |
 | MEBOOTSTRAPPER | None | Owns `default.ncs`, caches discovered module manifests for the current session and module, and dispatches player heartbeats in priority order. |
 | ESI | MEBOOTSTRAPPER | Event Script Injector with its original `ESI_*`, `esi_*`, and `rav_*` compatibility surface. Always dispatched first. |
-| MEMORIA_CONFIG | MEBOOTSTRAPPER, ESI | Shared inventory tool and NUI Mod Configuration Manager. It reads each package's optional `configuration` section from the shared `memoria_*.txt` manifest. |
+| MEMORIA_CONFIG | MEBOOTSTRAPPER, ESI, Memoria Framework | Shared inventory tool and NUI Mod Configuration Manager. It reads each package's optional `configuration` section from the shared `memoria_*.txt` manifest. |
 | MELSE | MEBOOTSTRAPPER, ESI, MEMORIA_CONFIG | Memoria edition of Looting System Enhanced, namespaced as `MELSE_*` and `melse_*`. |
 | MECALM | MEBOOTSTRAPPER, ESI, MEMORIA_CONFIG | Companion Auto-Lock Manager. |
 | METACT | MEBOOTSTRAPPER, ESI, MEMORIA_CONFIG | Tactics Architect. |
-| Memoria Framework | Compile-time only | Shared `MEMORIA_*` and `memoria_*` NWScript helpers used by MECALM and METACT. |
+| Memoria Framework | None | Shared `MEMORIA_*` and `memoria_*` NWScript helpers plus the Russian language probe used by MEMORIA_CONFIG, MECALM, MELSE, and METACT. |
 | Toolset | .NET 10 | Builds, validates, and packages all projects. |
 
 Memoria-owned mod identifiers and resources use package-specific `ME<PACKAGE>_` and `me<package>_` prefixes. Framework uses `MEMORIA_*` and `memoria_*`; ESI retains its original compatibility names.

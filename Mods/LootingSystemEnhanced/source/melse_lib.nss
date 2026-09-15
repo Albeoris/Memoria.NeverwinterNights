@@ -75,7 +75,6 @@ const float MELSE_DELAY_CORPSE_INITIALIZE = 1.0f;
 
 const string MELSE_I18N_PREFIX = "melse";
 const string MELSE_LOCAL_LANGUAGE = "MELSE_LANGUAGE";
-const string MELSE_LOCAL_IS_RUSSIAN = "MELSE_LANGUAGE_IS_RUSSIAN";
 
 const int MELSE_TEXT_ITEM_TAKEN = 1;
 const int MELSE_TEXT_ITEM_NOTIFY_PLOT = 2;
@@ -110,7 +109,7 @@ void MELSE_DetectLanguage(object oPC)
 {
     object oModule = GetModule();
     if (GetLocalString(oModule, MELSE_LOCAL_LANGUAGE) != "") return;
-    SetLocalString(oModule, MELSE_LOCAL_LANGUAGE, MEMORIA_GetLanguage(oPC, MELSE_LOCAL_LANGUAGE, "melse_is_ru", MELSE_LOCAL_IS_RUSSIAN));
+    SetLocalString(oModule, MELSE_LOCAL_LANGUAGE, MEMORIA_GetLanguage(oPC, MELSE_LOCAL_LANGUAGE));
 }
 
 string MELSE_GetLocalizedText(string sKey)

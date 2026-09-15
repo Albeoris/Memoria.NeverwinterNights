@@ -18,6 +18,7 @@
         <PackageDocument Include="*.md" />
         <NwnRequiredPackage Include="..\Bootstrapper\Bootstrapper.proj" PackageName="Memoria Bootstrapper" />
         <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" PackageName="Event Script Injector (Memoria Edition)" />
+        <NwnRequiredPackage Include="..\Framework\Framework.proj" PackageName="Memoria Framework" />
     </ItemGroup>
     <Import Project="..\..\Build\NwnModProject.targets" />
 </Project>
