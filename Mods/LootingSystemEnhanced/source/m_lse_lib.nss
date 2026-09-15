@@ -21,9 +21,7 @@
 #include "m_lse_sin_lib"
 
 const string M_LSE_VERSION = "1.1";
-const string M_LSE_VERSION_BUILD = "1009";
-
-const string M_LSE_FEAT_OPTIONS = "m_lse_options";
+const string M_LSE_VERSION_BUILD = "1010";
 
 const string M_LSE_SOUND_TAKE_GOLD = "it_coins";
 const string M_LSE_SOUND_TAKE_ITEM = "it_generictiny";
@@ -41,7 +39,6 @@ const string M_LSE_LOCAL_FEATURE_CORPSE_LOOTING_EXAMINED = "M_LSE_FEATURE_CORPSE
 const string M_LSE_LOCAL_FEATURE_CORPSE_LOOTING_KILLED = "M_LSE_FEATURE_CORPSE_LOOTING_KILLED";
 const string M_LSE_LOCAL_FEATURE_CORPSE_LOOTING_KILLED_BY_HENCH = "M_LSE_FEATURE_CORPSE_LOOTING_KILLED_BY_HENCH";
 const string M_LSE_LOCAL_FEATURE_ITEM_DESCRIPTION_ACQUIRED = "M_LSE_FEATURE_ITEM_DESCRIPTION_ACQUIRED";
-const string M_LSE_LOCAL_FEATURE_ITEM_DESCRIPTION_VALUE = "M_LSE_FEATURE_ITEM_DESCRIPTION_VALUE";
 const string M_LSE_LOCAL_PARAM_DELAY_CORPSE_DECAY = "M_LSE_PARAM_DELAY_CORPSE_DECAY";
 const string M_LSE_LOCAL_PARAM_THRESHOLD_ITEM_VALUE = "M_LSE_PARAM_THRESHOLD_ITEM_PRICE";
 const string M_LSE_LOCAL_PARAM_THRESHOLD_ITEM_WEIGHT = "M_LSE_PARAM_THRESHOLD_ITEM_WEIGHT";
@@ -62,7 +59,8 @@ const string M_LSE_LOCAL_ITEM_ACQUIRED_FROM_AREA_NAME = "M_LSE_ACQUIRED_FROM_ARE
 const string M_LSE_LOCAL_NOLOOTING = "M_LSE_NOLOOTING";
 const string M_LSE_LOCAL_CORPSE = "M_LSE_CORPSE";
 const string M_LSE_LOCAL_VERSION_BUILD = "M_LSE_VERSION_BUILD";
-const string M_LSE_LOCAL_LAST_FEAT_TARGET = "M_LSE_LAST_FEAT_TARGET";
+const string M_LSE_LOCAL_EVENTS_BUILD = "M_LSE_EVENTS_BUILD";
+const string M_LSE_LOCAL_AREA_EVENTS_BUILD = "M_LSE_AREA_EVENTS_BUILD";
 
 const string M_LSE_TAG_BODYBAG = "BodyBag";
 const string M_LSE_TAG_GOLD = "NW_IT_GOLD001";
@@ -98,59 +96,12 @@ const int M_LSE_STRREF_ITEM_LOOTED_FROM_AREA = 9;
 const int M_LSE_STRREF_ITEM_NAME_UNIDENTIFIED = 10;
 const int M_LSE_STRREF_ITEM_IGNORED = 11;
 
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_BACK = 100;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_TREASURE_SCANNING = 101;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_TREASURE_TRACKING = 102;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_TREASURE_LOOTING = 103;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_CORPSE_LOOTABLE = 104;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_CORPSE_DECAYING_LOOTED = 105;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_CORPSE_DECAYING_TIMED = 106;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_CORPSE_RAISEABLE = 107;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_CORPSE_LOOTING_EXAMINED = 108;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_CORPSE_LOOTING_KILLED = 109;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_CORPSE_LOOTING_KILLED_BY_HENCH = 110;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_ITEM_DESCRIPTION_ACQUIRED = 111;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_ITEM_DESCRIPTION_VALUE = 112;
-
-const int M_LSE_STRREF_CONFIG_LABEL_PARAM_BACK = 120;
-const int M_LSE_STRREF_CONFIG_LABEL_PARAM_DELAY_CORPSE_DECAY = 121;
-const int M_LSE_STRREF_CONFIG_LABEL_PARAM_THRESHOLD_ITEM_PRICE = 122;
-const int M_LSE_STRREF_CONFIG_LABEL_PARAM_THRESHOLD_ITEM_WEIGHT = 123;
-
-const int M_LSE_STRREF_CONFIG_LABEL_CLOSE = 900;
-const int M_LSE_STRREF_CONFIG_LABEL_FEATURE_OPTION = 901;
-const int M_LSE_STRREF_CONFIG_LABEL_PARAM_OPTION = 902;
-const int M_LSE_STRREF_CONFIG_LABEL_PARAM_OPTION_INCREASE_1 = 911;
-const int M_LSE_STRREF_CONFIG_LABEL_PARAM_OPTION_INCREASE_10 = 912;
-const int M_LSE_STRREF_CONFIG_LABEL_PARAM_OPTION_INCREASE_100 = 913;
-const int M_LSE_STRREF_CONFIG_LABEL_PARAM_OPTION_DECREASE_1 = 914;
-const int M_LSE_STRREF_CONFIG_LABEL_PARAM_OPTION_DECREASE_10 = 915;
-const int M_LSE_STRREF_CONFIG_LABEL_PARAM_OPTION_DECREASE_100 = 916;
-
-const int M_LSE_STRREF_TOOLS_LABEL_DESTROY_CORPSE = 951;
-const int M_LSE_STRREF_TOOLS_LABEL_DESTROY_CORPSES_AREA = 952;
-const int M_LSE_STRREF_TOOLS_LABEL_DESTROY_CORPSES_ALL = 953;
-
-const int M_LSE_STRREF_TUTORIAL_001 = 601;
-const int M_LSE_STRREF_TUTORIAL_002 = 602;
-const int M_LSE_STRREF_TUTORIAL_003 = 603;
-const int M_LSE_STRREF_TUTORIAL_004 = 604;
-const int M_LSE_STRREF_TUTORIAL_005 = 605;
-const int M_LSE_STRREF_TUTORIAL_006 = 606;
-const int M_LSE_STRREF_TUTORIAL_007 = 607;
-const int M_LSE_STRREF_TUTORIAL_008 = 608;
-
 const string M_LSE_SCRIPT_EVENT_MODULE_ACQUIRED_ITEM = "m_lse_modacqit";
 const string M_LSE_SCRIPT_EVENT_CREATURE_DEATH = "m_lse_crtdeath";
-const string M_LSE_SCRIPT_EVENT_CREATURE_ON_SPAWN = "m_lse_crtspawn";
-const string M_LSE_SCRIPT_EVENT_ENCOUNTER_ON_ENTER = "m_lse_encenter";
 const string M_LSE_SCRIPT_EVENT_PLACEABLE_CLOSE = "m_lse_plcclose";
 const string M_LSE_SCRIPT_EVENT_PLACEABLE_OPEN = "m_lse_plcopen";
 const string M_LSE_SCRIPT_EVENT_PLACEABLE_UNLOCK = "m_lse_plcunlck";
-const string M_LSE_SCRIPT_EVENT_PLACEABLE_ON_CLICK = "m_lse_plcclick";
 const string M_LSE_SCRIPT_EVENT_AREA_ENTER = "m_lse_areenter";
-const string M_LSE_SCRIPT_EVENT_MODULE_ON_CLIENT_ENTER = "m_lse_modclent";
-const string M_LSE_SCRIPT_EVENT_MODULE_ON_CLIENT_LEAVE = "m_lse_modcllev";
 
 const string M_LSE_INJECT_KEY_MODULE_ACQUIRED_ITEM = "100";
 const string M_LSE_INJECT_KEY_AREA_ENTER = "200";
@@ -168,83 +119,6 @@ string M_LSE_STRING_TAG_DESCRIPTION_START_RGB = StringToRGBString(M_LSE_STRING_T
 string M_LSE_STRING_TAG_DESCRIPTION_END_RGB = StringToRGBString(M_LSE_STRING_TAG_DESCRIPTION_END, STRING_COLOR_BLACK);
 int M_LSE_STRING_TAG_DESCRIPTION_START_RGB_LENGTH = GetStringLength(M_LSE_STRING_TAG_DESCRIPTION_START_RGB);
 int M_LSE_STRING_TAG_DESCRIPTION_END_RGB_LENGTH = GetStringLength(M_LSE_STRING_TAG_DESCRIPTION_END);
-
-struct ConfigOption
-{
-    string Name;
-    string Type;
-};
-
-struct ConfigOption M_LSE_GetConfigOption(int nOptionKey)
-{
-    struct ConfigOption strResult;
-    switch (nOptionKey)
-    {
-        case 101:
-            strResult.Name = M_LSE_LOCAL_FEATURE_TREASURE_SCANNING;
-            strResult.Type = RAV_TYPE_BOOL;
-            break;
-        case 102:
-            strResult.Name = M_LSE_LOCAL_FEATURE_TREASURE_TRACKING;
-            strResult.Type = RAV_TYPE_BOOL;
-            break;
-        case 103:
-            strResult.Name = M_LSE_LOCAL_FEATURE_TREASURE_LOOTING;
-            strResult.Type = RAV_TYPE_BOOL;
-            break;
-        case 104:
-            strResult.Name = M_LSE_LOCAL_FEATURE_CORPSE_LOOTABLE;
-            strResult.Type = RAV_TYPE_BOOL;
-            break;
-        case 105:
-            strResult.Name = M_LSE_LOCAL_FEATURE_CORPSE_DECAYING_LOOTED;
-            strResult.Type = RAV_TYPE_BOOL;
-            break;
-        case 106:
-            strResult.Name = M_LSE_LOCAL_FEATURE_CORPSE_DECAYING_TIMED;
-            strResult.Type = RAV_TYPE_BOOL;
-            break;
-        case 107:
-            strResult.Name = M_LSE_LOCAL_FEATURE_CORPSE_RAISEABLE;
-            strResult.Type = RAV_TYPE_BOOL;
-            break;
-        case 108:
-            strResult.Name = M_LSE_LOCAL_FEATURE_CORPSE_LOOTING_EXAMINED;
-            strResult.Type = RAV_TYPE_BOOL;
-            break;
-        case 109:
-            strResult.Name = M_LSE_LOCAL_FEATURE_CORPSE_LOOTING_KILLED;
-            strResult.Type = RAV_TYPE_BOOL;
-            break;
-        case 110:
-            strResult.Name = M_LSE_LOCAL_FEATURE_CORPSE_LOOTING_KILLED_BY_HENCH;
-            strResult.Type = RAV_TYPE_BOOL;
-            break;
-        case 111:
-            strResult.Name = M_LSE_LOCAL_FEATURE_ITEM_DESCRIPTION_ACQUIRED;
-            strResult.Type = RAV_TYPE_BOOL;
-            break;
-        // case 112:
-        //     strResult.Name = M_LSE_LOCAL_FEATURE_ITEM_DESCRIPTION_VALUE;
-        //     strResult.Type = RAV_TYPE_BOOL;
-        //     break;
-        case 121:
-            strResult.Name = M_LSE_LOCAL_PARAM_DELAY_CORPSE_DECAY;
-            strResult.Type = RAV_TYPE_INT;
-            break;
-        case 122:
-            strResult.Name = M_LSE_LOCAL_PARAM_THRESHOLD_ITEM_VALUE;
-            strResult.Type = RAV_TYPE_INT;
-            break;
-        case 123:
-            strResult.Name = M_LSE_LOCAL_PARAM_THRESHOLD_ITEM_WEIGHT;
-            strResult.Type = RAV_TYPE_INT;
-            break;
-        default:
-            break;
-    }
-    return strResult;
-}
 
 string M_LSE_GetText(int iKey, object oObject = OBJECT_INVALID, int iStackSize = 0, object oItem = OBJECT_INVALID)
 {
@@ -288,78 +162,10 @@ void M_LSE_SetConfigInt(string sOption, int nValue)
     RAV_SetLocalInt(oModule, sOption, nValue);
 }
 
-void M_LSE_SetConfigFloat(string sOption, float fValue)
-{
-    object oModule = GetModule();
-    RAV_SetLocalFloat(oModule, sOption, fValue);
-}
-
-void M_LSE_SetConfigString(string sOption, string sValue)
-{
-    object oModule = GetModule();
-    RAV_SetLocalString(oModule, sOption, sValue);
-}
-
 int M_LSE_GetConfigInt(string sOption)
 {
     object oModule = GetModule();
     return RAV_GetLocalInt(oModule, sOption);
-}
-
-float M_LSE_GetConfigFloat(string sOption)
-{
-    object oModule = GetModule();
-    return RAV_GetLocalFloat(oModule, sOption);
-}
-
-string M_LSE_GetConfigString(string sOption)
-{
-    object oModule = GetModule();
-    return RAV_GetLocalString(oModule, sOption);
-}
-
-void M_LSE_ToggleConfigBool(string sOption)
-{
-    int bValue = M_LSE_GetConfigInt(sOption);
-    M_LSE_SetConfigInt(sOption, bValue ? FALSE : TRUE);
-}
-
-//::///////////////////////////////////////////////////////////////////////////
-//:: USEABLE FEATS
-//::///////////////////////////////////////////////////////////////////////////
-
-void M_LSE_AddFeat(object oPC, object oSkin, int nPlayerFeat, int nSkinFeat)
-{
-    if(!GetHasFeat(nPlayerFeat, oPC))
-        AddItemProperty(DURATION_TYPE_PERMANENT, ItemPropertyBonusFeat(nSkinFeat), oSkin);
-}
-
-void M_LSE_AddFeats(object oPC)
-{
-    // Create or update creature skin as necessary on PC for Player Tool feats. 
-    object oSkin = GetItemInSlot(INVENTORY_SLOT_CARMOUR, oPC);
-    if(!GetIsObjectValid(oSkin))
-    {
-        oSkin = CreateItemOnObject("x3_it_pchide", oPC);
-        AssignCommand(oPC, ActionEquipItem(oSkin, INVENTORY_SLOT_CARMOUR));
-    }
-
-    M_LSE_AddFeat(oPC, oSkin, FEAT_PLAYER_TOOL_09, IP_CONST_FEAT_PLAYER_TOOL_09);
-}
-
-void M_LSE_UseFeat(object oPC, object oTarget, string sFeat)
-{
-    if (sFeat == M_LSE_FEAT_OPTIONS)
-    {
-        RAV_PrintFunctionStrings("M_LSE_UseFeat", oTarget, sFeat);
-        if (GetIsPC(oTarget))
-            ActionStartConversation(oTarget, "m_lse_config", TRUE, FALSE);
-        else if (GetIsDead(oTarget) && RAV_GetLocalInt(oTarget, M_LSE_LOCAL_MOD_LOOTABLE) && RAV_GetLocalInt(oTarget, M_LSE_LOCAL_MOD_DESTROYABLE))
-        {
-            SetLocalObject(oPC, M_LSE_LOCAL_LAST_FEAT_TARGET, oTarget);
-            ActionStartConversation(oPC, "m_lse_tools", TRUE, FALSE);
-        }
-    }
 }
 
 //::///////////////////////////////////////////////////////////////////////////
@@ -997,19 +803,9 @@ void M_LSE_MAINTENANCE_SetDefaultConfig(object oModule)
     M_LSE_SetConfigInt(M_LSE_LOCAL_FEATURE_CORPSE_LOOTING_KILLED, TRUE);
     M_LSE_SetConfigInt(M_LSE_LOCAL_FEATURE_CORPSE_LOOTING_KILLED_BY_HENCH, TRUE);
     M_LSE_SetConfigInt(M_LSE_LOCAL_FEATURE_ITEM_DESCRIPTION_ACQUIRED, TRUE);
-    // M_LSE_SetConfigInt(M_LSE_LOCAL_FEATURE_ITEM_DESCRIPTION_VALUE, TRUE);
-    
     M_LSE_SetConfigInt(M_LSE_LOCAL_PARAM_DELAY_CORPSE_DECAY, 600);  // 10 minutes decay time by default
     M_LSE_SetConfigInt(M_LSE_LOCAL_PARAM_THRESHOLD_ITEM_VALUE, 8);  // Exclude basic base game books by defaults
     M_LSE_SetConfigInt(M_LSE_LOCAL_PARAM_THRESHOLD_ITEM_WEIGHT, 9); // Exclude heavier armor/weapon items by default
-}
-
-void M_LSE_OpenTutorial(object oPC, int bRetryLaterIfBusy = TRUE)
-{
-    if (!IsInConversation(oPC))
-        ActionStartConversation(oPC, "m_lse_tutorial", TRUE, FALSE);
-    else if (bRetryLaterIfBusy)
-        DelayCommand(3.0f, M_LSE_OpenTutorial(oPC, TRUE));
 }
 
 void M_LSE_MAINTENANCE_Build(object oModule, object oPC, string sNewBuild, string sOldBuild = STRING_EMPTY)
@@ -1023,12 +819,6 @@ void M_LSE_MAINTENANCE_Build(object oModule, object oPC, string sNewBuild, strin
     
     // SIN: Clear text index buffers to apply changed strings
     M_LSE_SIN_ClearBuffer();
-
-    // Add feats to PC
-    M_LSE_AddFeats(oPC);
-
-    // Open tutorial conversation to introduce M_LSE or notify about new features
-    DelayCommand(3.0f, M_LSE_OpenTutorial(oPC));
 
     if (sOldBuild == STRING_EMPTY)
         DelayCommand(8.0f, AssignCommand(oPC, ActionSpeakString(StringToRGBString(M_LSE_SIN_GetText(M_LSE_STRREF_MAINTENANCE_INSTALL) + " " + 
@@ -1048,8 +838,34 @@ void M_LSE_MAINTENANCE_Build(object oModule, object oPC, string sNewBuild, strin
 
 void M_LSE_InjectEventScripts(object oModule)
 {
+    if (RAV_GetLocalString(oModule, M_LSE_LOCAL_EVENTS_BUILD) == M_LSE_VERSION_BUILD)
+        return;
     ESI_InjectToObject(oModule, M_LSE_INJECT_KEY_MODULE_ACQUIRED_ITEM, EVENT_SCRIPT_MODULE_ON_ACQUIRE_ITEM, M_LSE_SCRIPT_EVENT_MODULE_ACQUIRED_ITEM, ESI_INJECTION_PLACEMENT_LAST);
     ESI_InjectToModuleObjects(oModule, M_LSE_INJECT_KEY_AREA_ENTER, ESI_OBJECT_TYPE_AREA, EVENT_SCRIPT_AREA_ON_ENTER, M_LSE_SCRIPT_EVENT_AREA_ENTER, ESI_INJECTION_PLACEMENT_LAST);
+    RAV_SetLocalString(oModule, M_LSE_LOCAL_EVENTS_BUILD, M_LSE_VERSION_BUILD);
+}
+
+void M_LSE_InjectAreaObjects(object oArea)
+{
+    if (!GetIsObjectValid(oArea) || RAV_GetLocalString(oArea, M_LSE_LOCAL_AREA_EVENTS_BUILD) == M_LSE_VERSION_BUILD)
+        return;
+    object oObject = GetFirstObjectInArea(oArea);
+    while (GetIsObjectValid(oObject))
+    {
+        int nObjectType = GetObjectType(oObject);
+        if (nObjectType == OBJECT_TYPE_CREATURE && !GetIsPC(oObject))
+        {
+            ESI_InjectToObject(oObject, M_LSE_INJECT_KEY_CREATURE_DEATH, EVENT_SCRIPT_CREATURE_ON_DEATH, M_LSE_SCRIPT_EVENT_CREATURE_DEATH, ESI_INJECTION_PLACEMENT_LAST);
+        }
+        else if (nObjectType == OBJECT_TYPE_PLACEABLE)
+        {
+            ESI_InjectToObject(oObject, M_LSE_INJECT_KEY_PLACEABLE_OPEN, EVENT_SCRIPT_PLACEABLE_ON_OPEN, M_LSE_SCRIPT_EVENT_PLACEABLE_OPEN, ESI_INJECTION_PLACEMENT_LAST);
+            ESI_InjectToObject(oObject, M_LSE_INJECT_KEY_PLACEABLE_CLOSE, EVENT_SCRIPT_PLACEABLE_ON_CLOSED, M_LSE_SCRIPT_EVENT_PLACEABLE_CLOSE, ESI_INJECTION_PLACEMENT_FIRST);
+            ESI_InjectToObject(oObject, M_LSE_INJECT_KEY_PLACEABLE_UNLOCK, EVENT_SCRIPT_PLACEABLE_ON_UNLOCK, M_LSE_SCRIPT_EVENT_PLACEABLE_UNLOCK, ESI_INJECTION_PLACEMENT_LAST);
+        }
+        oObject = GetNextObjectInArea(oArea);
+    }
+    RAV_SetLocalString(oArea, M_LSE_LOCAL_AREA_EVENTS_BUILD, M_LSE_VERSION_BUILD);
 }
 
 int M_LSE_IsObjectInitialized(object oObject)
@@ -1070,13 +886,12 @@ void M_LSE_Initialize(object oModule, object oPC)
     if (M_LSE_SIN_GetLanguage() != "de" && M_LSE_SIN_GetLanguage() != "en")
         M_LSE_SIN_SetLanguage("en");
 
+    M_LSE_InjectEventScripts(oModule);
     object oArea = GetArea(oPC);
     string sAreaUUID = GetObjectUUID(oArea);
     if (RAV_GetLocalString(oPC, M_LSE_LOCAL_AREA_VISITED_LAST) != sAreaUUID)
     {
         RAV_SetLocalString(oPC, M_LSE_LOCAL_AREA_VISITED_LAST, sAreaUUID);
-        M_LSE_InjectEventScripts(oModule);
-
         // Manually execute area scripts for startup area
         DelayCommand(6.0f, ESI_ExecuteEventScripts(oArea, EVENT_SCRIPT_AREA_ON_ENTER));
     }
@@ -1224,13 +1039,7 @@ void M_LSE_OnOpen(object oObject, object oBy)
 void M_LSE_OnEnter(object oObject, object oEntering)
 {
     if (GetIsPC(oEntering) && oObject == GetArea(oEntering))
-    {
-        object oArea = oObject;
-        ESI_InjectToAreaObjects(oArea, M_LSE_INJECT_KEY_CREATURE_DEATH, OBJECT_TYPE_CREATURE, EVENT_SCRIPT_CREATURE_ON_DEATH, M_LSE_SCRIPT_EVENT_CREATURE_DEATH, ESI_INJECTION_PLACEMENT_LAST);
-        ESI_InjectToAreaObjects(oArea, M_LSE_INJECT_KEY_PLACEABLE_OPEN, OBJECT_TYPE_PLACEABLE, EVENT_SCRIPT_PLACEABLE_ON_OPEN, M_LSE_SCRIPT_EVENT_PLACEABLE_OPEN, ESI_INJECTION_PLACEMENT_LAST);
-        ESI_InjectToAreaObjects(oArea, M_LSE_INJECT_KEY_PLACEABLE_CLOSE, OBJECT_TYPE_PLACEABLE, EVENT_SCRIPT_PLACEABLE_ON_CLOSED, M_LSE_SCRIPT_EVENT_PLACEABLE_CLOSE, ESI_INJECTION_PLACEMENT_FIRST);
-        ESI_InjectToAreaObjects(oArea, M_LSE_INJECT_KEY_PLACEABLE_UNLOCK, OBJECT_TYPE_PLACEABLE, EVENT_SCRIPT_PLACEABLE_ON_UNLOCK, M_LSE_SCRIPT_EVENT_PLACEABLE_UNLOCK, ESI_INJECTION_PLACEMENT_LAST);
-    }    
+        M_LSE_InjectAreaObjects(oObject);
 }
 
 void M_LSE_OnUnlock(object oPlaceable, object oBy)

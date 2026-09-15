@@ -3,13 +3,13 @@
   "AddCost": { "type": "dword", "value": 1 },
   "BaseItem": { "type": "int", "value": 24 },
   "Charges": { "type": "byte", "value": 0 },
-  "Comment": { "type": "cexostring", "value": "M_TACT visual tactics editor; runtime-localized" },
+  "Comment": { "type": "cexostring", "value": "Memoria Configuration Manager activation item" },
   "Cost": { "type": "dword", "value": 1 },
   "Cursed": { "type": "byte", "value": 1 },
-  "DescIdentified": { "type": "cexolocstring", "value": { "0": "Open the Tactics Architect." } },
-  "Description": { "type": "cexolocstring", "value": { "0": "Open the Tactics Architect." } },
+  "DescIdentified": { "type": "cexolocstring", "value": { "0": "Open the Memoria Configuration Manager. Target an object to run registered diagnostics." } },
+  "Description": { "type": "cexolocstring", "value": { "0": "Open the Memoria Configuration Manager. Target an object to run registered diagnostics." } },
   "Identified": { "type": "byte", "value": 1 },
-  "LocalizedName": { "type": "cexolocstring", "value": { "0": "Tactics Architect" } },
+  "LocalizedName": { "type": "cexolocstring", "value": { "0": "Memoria Configuration" } },
   "ModelPart1": { "type": "byte", "value": 36 },
   "PaletteID": { "type": "byte", "value": 23 },
   "Plot": { "type": "byte", "value": 1 },
@@ -30,6 +30,6 @@
   },
   "StackSize": { "type": "word", "value": 1 },
   "Stolen": { "type": "byte", "value": 0 },
-  "Tag": { "type": "cexostring", "value": "M_TACT_TACTICS_ARCHITECT_74C2" },
-  "TemplateResRef": { "type": "resref", "value": "m_tact_modeitem" }
+  "Tag": { "type": "cexostring", "value": "MEMORIA_CONFIGURATION_ITEM" },
+  "TemplateResRef": { "type": "resref", "value": "memoria_config" }
 }

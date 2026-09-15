@@ -9,4 +9,19 @@
     <InvariantGlobalization>false</InvariantGlobalization>
     <Copyright>Copyright (c) Albeoris</Copyright>
   </PropertyGroup>
+  <Target Name="CleanRepositoryArtifacts" AfterTargets="Clean" Condition="Exists('$(RepositoryRoot)artifacts')">
+    <ItemGroup>
+      <_ArtifactDirectory Include="$([System.IO.Directory]::GetDirectories('$(RepositoryRoot)artifacts'))" />
+      <_ArtifactDirectory Remove="$(RepositoryRoot)artifacts\msbuild" />
+      <_ArtifactFile Include="$(RepositoryRoot)artifacts\*" />
+      <_ConfigurationIntermediateDirectory Include="$([System.IO.Directory]::GetDirectories('$(BaseIntermediateOutputPath)'))" Condition="Exists('$(BaseIntermediateOutputPath)')" />
+    </ItemGroup>
+    <RemoveDir Directories="@(_ArtifactDirectory);$(BaseOutputPath);@(_ConfigurationIntermediateDirectory)" />
+    <Delete Files="@(_ArtifactFile)" />
+  </Target>
+  <Target Name="PrepareCommonOutput" BeforeTargets="Build" Condition="'$(CommonOutput)' == 'true'">
+    <RemoveDir Directories="$(CommonOutputPath);$(CommonOutputManifestPath)" />
+    <Delete Files="$(CommonOutputLockFile)" />
+    <MakeDir Directories="$(CommonOutputPath);$(CommonOutputManifestPath)" />
+  </Target>
 </Project>

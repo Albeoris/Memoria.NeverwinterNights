@@ -16,6 +16,7 @@ void main()
                    : nStrRef == 10  ? "Item (Unidentified)"
                    : nStrRef == 11  ? "is ignored."
 
+                   : nStrRef == 99   ? "Looting System Enhanced"
                    : nStrRef == 100  ? "Back..."
                    : nStrRef == 101  ? "Treasure Scanning"
                    : nStrRef == 102  ? "Treasure Tracking"
@@ -63,5 +64,6 @@ void main()
 
                    :                STRING_EMPTY;
 
+    SetLocalString(OBJECT_SELF, "M_LSE_CONFIG_TEXT_RESULT", sString);
     M_LSE_SIN_SetBufferedString(nStrRef, sString);
 }

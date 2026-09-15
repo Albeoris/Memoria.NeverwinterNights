@@ -12,11 +12,11 @@ M_CALM lets companions, henchmen, familiars, animal companions, summons, and dom
 
 ## Installation
 
-Install M_BOOTSTRAPPER, ESI, and then M_CALM by copying each package's `override` contents into the NWN user `override` directory.
+Install M_BOOTSTRAPPER, ESI, MEMORIA_CONFIG, and then M_CALM by copying each package's `override` contents into the NWN user `override` directory.
 
 ## Use
 
-M_CALM creates an **Automatic Lockpicking** inventory item. Use its self-targeted power to toggle automatic lockpicking, or its targeted power on the ground to open settings. Settings are stored on the player character and persist in saved games.
+Open **Memoria Configuration** from the inventory to configure M_CALM. Settings are stored on the player character and persist in saved games. Target a lockable object with the same item to run CALM diagnostics.
 
 ## Compatibility
 

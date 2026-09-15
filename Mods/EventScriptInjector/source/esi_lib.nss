@@ -66,6 +66,7 @@ const string ESI_LOCAL_SUFFIX_INJECTION_LAST = "_LAST";
 const string ESI_LOCAL_SUFFIX_INJECTION_COUNT = "_COUNT";
 const string ESI_LOCAL_SUFFIX_INJECTION_DONE = "_DONE";
 const string ESI_LOCAL_SUFFIX_INJECTION_KEYS = "_KEYS";
+const string ESI_LOCAL_SUFFIX_INJECTION_MAP = "_MAP";
 const string ESI_LOCAL_SUFFIX_SCRIPT_ORIGINAL = "_ORIGINAL";
 
 /* 
@@ -90,6 +91,11 @@ string ESI_GetLocalNameInjection(int nHandler, int nPlacement)
     return ESI_LOCAL_PREFIX_INJECTION + IntToString(nHandler)
         + ( nPlacement == ESI_INJECTION_PLACEMENT_FIRST ? ESI_LOCAL_SUFFIX_INJECTION_FIRST :
             nPlacement == ESI_INJECTION_PLACEMENT_LAST  ? ESI_LOCAL_SUFFIX_INJECTION_LAST  : STRING_EMPTY );
+}
+
+string ESI_GetLocalNameInjectionMap(int nHandler, int nPlacement)
+{
+    return ESI_GetLocalNameInjection(nHandler, nPlacement) + ESI_LOCAL_SUFFIX_INJECTION_MAP;
 }
 
 string ESI_GetEventNumberAlias(int nHandler)
@@ -141,7 +147,7 @@ void ESI_SetInjectionsKey(object oObject, int nHandler, int nPlacement, string s
 {
     string sLocalKeys = RAV_GetLocalNameInjectionKeys(nHandler, nPlacement);
     string sKeyList = RAV_GetLocalString(oObject, sLocalKeys);
-    if (FindSubString(sKeyList, sKey) == -1)
+    if (FindSubString("|" + sKeyList + "|", "|" + sKey + "|") == -1)
     {
         if (sKeyList == STRING_EMPTY)
             RAV_SetLocalString(oObject, sLocalKeys, sKey);
@@ -152,7 +158,7 @@ void ESI_SetInjectionsKey(object oObject, int nHandler, int nPlacement, string s
 
 int ESI_InjectToObject(object oObject, string sKey, int nHandler, string sScript, int nPlacement)
 {
-    int bResult = TRUE;
+    if (!GetIsObjectValid(oObject) || sKey == STRING_EMPTY || sScript == STRING_EMPTY || ESI_GetEventNumberAlias(nHandler) == STRING_EMPTY || (nPlacement != ESI_INJECTION_PLACEMENT_FIRST && nPlacement != ESI_INJECTION_PLACEMENT_LAST)) return FALSE;
 
     string sEventScript = GetEventScript(oObject, nHandler);
     string sUnionScript = ESI_GetUnionScript(nHandler);
@@ -162,16 +168,18 @@ int ESI_InjectToObject(object oObject, string sKey, int nHandler, string sScript
         RAV_SetLocalString(oObject, sOriginalScriptLocal, sEventScript);
     }
 
-    string sLocal = ESI_GetLocalNameInjection(nHandler, nPlacement);
-    string sLocalScript = RAV_GetLocalArrayString(oObject, sLocal, StringToInt(sKey));
+    string sLocalMap = ESI_GetLocalNameInjectionMap(nHandler, nPlacement);
+    json jScripts = GetLocalJson(oObject, sLocalMap);
+    if (JsonGetType(jScripts) != JSON_TYPE_OBJECT) jScripts = JsonObject();
+    string sLocalScript = JsonGetString(JsonObjectGet(jScripts, sKey));
     if (sLocalScript != sScript)
     {
         ESI_SetInjectionsKey(oObject, nHandler, nPlacement, sKey);
-        RAV_SetLocalArrayString(oObject, sLocal, StringToInt(sKey), sScript);
+        SetLocalJson(oObject, sLocalMap, JsonObjectSet(jScripts, sKey, JsonString(sScript)));
+        if (JsonGetLength(RegExpMatch("^[0-9]+$", sKey)) > 0) RAV_SetLocalArrayString(oObject, ESI_GetLocalNameInjection(nHandler, nPlacement), StringToInt(sKey), sScript);
     }
 
-    bResult = SetEventScript(oObject, nHandler, sUnionScript);
-    return bResult;
+    return SetEventScript(oObject, nHandler, sUnionScript);
 }
 
 void ESI_InjectToModuleObjects(object oModule, string sKey, int nObjectType, int nHandler, string sScript, int nPlacement)
@@ -197,7 +205,14 @@ void ESI_InjectToModuleObjects(object oModule, string sKey, int nObjectType, int
     }
 
     string sLocalNameAreaInjectionDone = ESI_GetLocalNameAreaInjectionDone(nObjectType, nHandler, sScript, nPlacement);
-    RAV_SetLocalInt(oArea, sLocalNameAreaInjectionDone, TRUE);
+    RAV_SetLocalInt(oModule, sLocalNameAreaInjectionDone, TRUE);
+}
+
+string ESI_GetInjectedScript(object oObject, int nHandler, int nPlacement, string sKey)
+{
+    json jScript = JsonObjectGet(GetLocalJson(oObject, ESI_GetLocalNameInjectionMap(nHandler, nPlacement)), sKey);
+    if (JsonGetType(jScript) == JSON_TYPE_STRING) return JsonGetString(jScript);
+    return RAV_GetLocalArrayString(oObject, ESI_GetLocalNameInjection(nHandler, nPlacement), StringToInt(sKey));
 }
 
 void ESI_InjectToAreaObjects(object oArea, string sKey, int nObjectType, int nHandler, string sScript, int nPlacement)
@@ -221,7 +236,6 @@ void ESI_ExecuteEventScripts(object oObject, int nHandler)
 
     // Execute injected scripts placed before original script
 
-    string sFirstLocal = ESI_GetLocalNameInjection(nHandler, ESI_INJECTION_PLACEMENT_FIRST);
     string sFirstKeysLocal = RAV_GetLocalNameInjectionKeys(nHandler, ESI_INJECTION_PLACEMENT_FIRST);
     string sFirstKeys = RAV_GetLocalString(oObject, sFirstKeysLocal);
     string sFirstKey;
@@ -231,7 +245,7 @@ void ESI_ExecuteEventScripts(object oObject, int nHandler)
     {
         stFirstTokenizer = AdvanceToNextToken(stFirstTokenizer);
         sFirstKey = GetNextToken(stFirstTokenizer);
-        sFirstScript = RAV_GetLocalArrayString(oObject, sFirstLocal, StringToInt(sFirstKey));
+        sFirstScript = ESI_GetInjectedScript(oObject, nHandler, ESI_INJECTION_PLACEMENT_FIRST, sFirstKey);
         if (sFirstScript != STRING_EMPTY)
             RAV_ExecuteScript(sFirstScript, oObject);
     }
@@ -245,7 +259,6 @@ void ESI_ExecuteEventScripts(object oObject, int nHandler)
 
     // Execute injected scripts placed after original script
 
-    string sLastLocal = ESI_GetLocalNameInjection(nHandler, ESI_INJECTION_PLACEMENT_LAST);
     string sLastKeysLocal = RAV_GetLocalNameInjectionKeys(nHandler, ESI_INJECTION_PLACEMENT_LAST);
     string sLastKeys = RAV_GetLocalString(oObject, sLastKeysLocal);
     string sLastKey;
@@ -255,7 +268,7 @@ void ESI_ExecuteEventScripts(object oObject, int nHandler)
     {
         stLastTokenizer = AdvanceToNextToken(stLastTokenizer);
         sLastKey = GetNextToken(stLastTokenizer);
-        sLastScript = RAV_GetLocalArrayString(oObject, sLastLocal, StringToInt(sLastKey));
+        sLastScript = ESI_GetInjectedScript(oObject, nHandler, ESI_INJECTION_PLACEMENT_LAST, sLastKey);
         if (sLastScript != STRING_EMPTY)
             RAV_ExecuteScript(sLastScript, oObject);
     }

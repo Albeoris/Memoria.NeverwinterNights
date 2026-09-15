@@ -2,7 +2,7 @@
 
 ## Scope and working tree
 
-- The active repository is `C:\Git\NWNMods`.
+- The active repository is `C:\Git\Memoria.NeverwinterNights`.
 - `W:\Work\NWNMods` is the pre-migration backup and reference workspace. Do not modify or rebuild into it unless the user explicitly asks.
 - Use Windows PowerShell and the .NET SDK selected by `global.json`.
 - Preserve unrelated user changes. Generated files are disposable; source files are not.

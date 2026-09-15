@@ -1156,6 +1156,33 @@ void M_TACT_RunDispatcher(object oPC)
     }
 }
 
+int M_TACT_HasRuntimeWork(object oPC)
+{
+    json jProfiles = M_TACT_GetProfiles(oPC);
+    int iProfile;
+    for (iProfile = 0; iProfile < JsonGetLength(jProfiles); iProfile++)
+    {
+        json jProfile = JsonArrayGet(jProfiles, iProfile);
+        json jTactics = JsonObjectGet(jProfile, "tactics");
+        json jTactic = JsonArrayGet(jTactics, JsonGetInt(JsonObjectGet(jProfile, "active")));
+        if (JsonGetType(jTactic) != JSON_TYPE_OBJECT || !JsonGetInt(JsonObjectGet(jTactic, "enabled"))) continue;
+        json jRules = JsonObjectGet(jTactic, "rules");
+        int iRule;
+        for (iRule = 0; iRule < JsonGetLength(jRules); iRule++)
+        {
+            json jRule = JsonArrayGet(jRules, iRule);
+            if (!JsonGetInt(JsonObjectGet(jRule, "enabled"))) continue;
+            json jActions = JsonObjectGet(jRule, "actions");
+            int iAction;
+            for (iAction = 0; iAction < JsonGetLength(jActions); iAction++)
+            {
+                if (JsonGetInt(JsonObjectGet(JsonArrayGet(jActions, iAction), "enabled"))) return TRUE;
+            }
+        }
+    }
+    return FALSE;
+}
+
 void M_TACT_Schedule(object oPC)
 {
     float fDelay = M_TACT_INTERVAL;
@@ -1171,10 +1198,12 @@ void M_TACT_Heartbeat(object oPC)
     if (!GetIsPC(oPC) || GetIsDM(oPC) || GetIsObjectValid(GetMaster(oPC)))
         return;
     M_TACT_InstallHook();
-    M_TACT_EnsureItem(oPC);
-    M_TACT_BuildGroupCache(oPC);
-    M_TACT_RunDispatcher(oPC);
-    M_TACT_Schedule(oPC);
+    if (M_TACT_HasRuntimeWork(oPC))
+    {
+        M_TACT_BuildGroupCache(oPC);
+        M_TACT_RunDispatcher(oPC);
+        M_TACT_Schedule(oPC);
+    }
     if (!GetLocalInt(oPC, M_TACT_LOCAL_INSTALLED))
     {
         SetLocalInt(oPC, M_TACT_LOCAL_INSTALLED, TRUE);

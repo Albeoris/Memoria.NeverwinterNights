@@ -1,6 +1,6 @@
-# Looting System Enhanced — Memoria Edition
+# Looting System Enhanced - Memoria Edition
 
-M_LSE automates looting and adds configurable lootable corpses, container handling, treasure notifications, and item filters. Player Tool 9 opens its settings and troubleshooting tools.
+M_LSE automates looting and adds configurable lootable corpses, container handling, treasure notifications, and item filters.
 
 ## Features
 
@@ -9,16 +9,17 @@ M_LSE automates looting and adds configurable lootable corpses, container handli
 - Lootable corpses with configurable decay time.
 - Treasure notifications and container tracking.
 - Item descriptions with acquisition details.
+- Event injection is performed once per module and each area's static objects are registered in one pass.
 
 ## Installation
 
-Remove any legacy LSE installation, then install M_BOOTSTRAPPER, ESI, and M_LSE by copying each package's `override` contents into the NWN user `override` directory.
+Remove any legacy LSE installation, then install M_BOOTSTRAPPER, ESI, MEMORIA_CONFIG, and M_LSE by copying each package's `override` contents into the NWN user `override` directory.
 
-After first installation or an upgrade, M_LSE starts a short tutorial. Player Tool 9 is available through the Special Abilities radial menu.
+Open **Memoria Configuration** from the inventory and select Looting System Enhanced to change its options.
 
 ## Compatibility
 
-Do not combine M_LSE with legacy LSE or another mod that supplies `nw_c2_default1.ncs`, `nw_c2_default5.ncs`, `nw_c2_defaultb.ncs`, or `x3_pl_tool09.ncs`. Logical conflicts are possible with other mods that automate looting, preserve corpses, or change container behavior.
+Do not combine M_LSE with legacy LSE or another mod that supplies `nw_c2_default1.ncs`, `nw_c2_default5.ncs`, or `nw_c2_defaultb.ncs`. Logical conflicts are possible with other mods that automate looting, preserve corpses, or change container behavior.
 
 ## Credits
 

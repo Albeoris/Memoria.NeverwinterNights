@@ -10,12 +10,13 @@ M_TACT adds a persistent Dragon Age-style behavior editor for the player charact
 - Health, enemy count, challenge rating, cluster, and summon conditions.
 - Predictive area targeting with configurable friendly-fire protection.
 - Persistent profiles and localized runtime UI.
+- The half-second dispatcher remains idle until an enabled tactic contains an enabled action.
 
 ## Installation
 
-Install M_BOOTSTRAPPER, ESI, and then M_TACT by copying each package's `override` contents into the NWN user `override` directory.
+Install M_BOOTSTRAPPER, ESI, MEMORIA_CONFIG, and then M_TACT by copying each package's `override` contents into the NWN user `override` directory.
 
-M_TACT creates a **Tactics Architect** inventory item. Activate its power to open the editor.
+Open **Memoria Configuration** from the inventory, select Tactics Architect, and choose **Open tactics editor**.
 
 ## Compatibility
 

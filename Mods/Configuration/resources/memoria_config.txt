@@ -1,0 +1,1 @@
+{"schema":1,"id":"MEMORIA_CONFIG","heartbeat":"m_config_hb","priority":1}

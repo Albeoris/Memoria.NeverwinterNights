@@ -1,6 +1,7 @@
 void main()
 {
     int i = StringToInt(GetScriptParam("M_TACT_TEXT_KEY"));
+    if (i == 112) { SetLocalString(OBJECT_SELF, "M_TACT_TEXT_RESULT", "Ouvrir l'editeur de tactiques"); return; }
     if (i == 27) { SetLocalString(OBJECT_SELF, "M_TACT_TEXT_RESULT", "Parametres des degats allies"); return; }
     if (i == 64) { SetLocalString(OBJECT_SELF, "M_TACT_TEXT_RESULT", "Difficulte ennemie au moins"); return; }
     if (i == 65) { SetLocalString(OBJECT_SELF, "M_TACT_TEXT_RESULT", "Difficulte ennemie au plus"); return; }

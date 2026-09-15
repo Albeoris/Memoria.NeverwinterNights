@@ -52,6 +52,7 @@
   <Target Name="BuildNwnMod" DependsOnTargets="GenerateNwnModInputs" Condition="'$(DesignTimeBuild)' != 'true'">
     <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; build &quot;$(NwnInputsFile)&quot; --output &quot;$(BuildOutput)&quot; --layouts-output &quot;$(RepositoryRoot)artifacts\layouts\$(ModName)&quot;" />
     <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; verify &quot;$(BuildOutput)&quot;" Condition="Exists('$(BuildOutput)') and '$(VerifyScripts)' != 'false'" />
+    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; merge-output &quot;$(BuildOutput)&quot; --output &quot;$(CommonOutputPath)&quot; --manifests &quot;$(CommonOutputManifestPath)&quot; --lock-file &quot;$(CommonOutputLockFile)&quot; --owner &quot;$(ModName)&quot;" Condition="'$(CommonOutput)' == 'true'" />
   </Target>
 
   <Target Name="CleanNwnMod" Condition="'$(DesignTimeBuild)' != 'true'">

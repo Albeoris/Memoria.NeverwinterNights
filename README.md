@@ -2,15 +2,18 @@
 
 This monorepo contains independently versioned Neverwinter Nights: Enhanced Edition override mods and their shared development toolchain.
 
+ATTENTION: The mods are ready but are currently being debugged. I will release them once testing is complete.
+
 ## Packages
 
 | Package | Runtime dependency | Purpose |
 | --- | --- | --- |
-| M_BOOTSTRAPPER | None | Owns `default.ncs`, discovers module manifests, and dispatches player heartbeats in priority order. |
+| M_BOOTSTRAPPER | None | Owns `default.ncs`, caches discovered module manifests for the current session and module, and dispatches player heartbeats in priority order. |
 | ESI | M_BOOTSTRAPPER | Event Script Injector with its original `ESI_*`, `esi_*`, and `rav_*` compatibility surface. Always dispatched first. |
-| M_LSE | M_BOOTSTRAPPER, ESI | Memoria edition of Looting System Enhanced, namespaced as `M_LSE_*` and `m_lse_*`. |
-| M_CALM | M_BOOTSTRAPPER, ESI | Companion Auto-Lock Manager. |
-| M_TACT | M_BOOTSTRAPPER, ESI | Tactics Architect. |
+| MEMORIA_CONFIG | M_BOOTSTRAPPER, ESI | Shared inventory tool and NUI Mod Configuration Manager. It caches discovered `mconfig_*.txt` registrations for the loaded game or module. |
+| M_LSE | M_BOOTSTRAPPER, ESI, MEMORIA_CONFIG | Memoria edition of Looting System Enhanced, namespaced as `M_LSE_*` and `m_lse_*`. |
+| M_CALM | M_BOOTSTRAPPER, ESI, MEMORIA_CONFIG | Companion Auto-Lock Manager. |
+| M_TACT | M_BOOTSTRAPPER, ESI, MEMORIA_CONFIG | Tactics Architect. |
 | Memoria Framework | Compile-time only | Shared `MEMORIA_*` and `memoria_*` NWScript helpers used by M_CALM and M_TACT. |
 | Toolset | .NET 10 | Builds, validates, and packages all projects. |
 
@@ -28,7 +31,7 @@ Requirements: Windows and the .NET 10 SDK. A local NWN installation is not requi
 dotnet build Memoria.NeverwinterNights.slnx -c Release
 ```
 
-The build compiles every entry-point script, converts UTI resources, verifies generated NCS files, and runs every M_TACT NUI layout through the layout emulator.
+The build compiles every entry-point script, converts UTI resources, verifies generated NCS files, and runs every MEMORIA_CONFIG and M_TACT NUI layout through the layout emulator.
 
 Mod projects use wildcard items for `source`, `resources`, documentation, and layouts. MSBuild writes the evaluated inputs to `artifacts/inputs`; there are no hand-maintained file manifests. NWScript sources remain UTF-8 in the repository. The Toolset detects executable entry points, converts a temporary compiler copy to Windows-1251 when Cyrillic is present or Windows-1252 otherwise, and leaves the source unchanged.
 
@@ -40,6 +43,13 @@ dotnet msbuild Mods/TacticsArchitect/TacticsArchitect.proj -restore -t:Publish -
 ```
 
 Publish output contains a Workshop-ready directory and a Nexus-ready ZIP under `artifacts/publish`.
+
+For local testing, enable the common-output mode on either build or publish. It merges every package's flat override output into `artifacts/common_output` and fails if two packages produce the same resource:
+
+```powershell
+dotnet build Memoria.NeverwinterNights.slnx -c Release -p:CommonOutput=true
+dotnet msbuild Memoria.NeverwinterNights.slnx -restore -t:Publish -p:Configuration=Release -p:Version=0.0.0-test -p:CommonOutput=true -m:1
+```
 
 ## Releases
 

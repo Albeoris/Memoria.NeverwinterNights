@@ -1,0 +1,4 @@
+void main()
+{
+    SetLocalInt(OBJECT_SELF, "MEMORIA_CONFIG_LANGUAGE_IS_RUSSIAN", GetStringByStrRef(3) == "Ð‘Ð°Ñ€Ð´Ñ‹");
+}

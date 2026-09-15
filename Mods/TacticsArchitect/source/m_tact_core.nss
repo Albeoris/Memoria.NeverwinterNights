@@ -6,19 +6,13 @@
 #include "memoria_locale"
 
 const string M_TACT_VERSION = "0.7.0";
-const string M_TACT_ITEM_RESREF = "m_tact_modeitem";
-const string M_TACT_ITEM_TAG = "M_TACT_TACTICS_ARCHITECT_74C2";
-const string M_TACT_ACTIVATE_HANDLER = "m_tact_evact";
 const string M_TACT_ESI_KEY = "7421";
 const string M_TACT_LOCAL_DATABASE = "M_TACT_DATABASE_V1";
 const string M_TACT_LOCAL_STORAGE_READY = "M_TACT_STORAGE_READY";
 const string M_TACT_LOCAL_STORAGE_SYNCED = "M_TACT_STORAGE_SYNCED";
 const string M_TACT_LOCAL_INSTALLED = "M_TACT_INSTALLED";
-const string M_TACT_LOCAL_ESI = "M_TACT_ESI_INSTALLED";
 const string M_TACT_LOCAL_ESI_GUI = "M_TACT_ESI_GUI_INSTALLED";
 const string M_TACT_LOCAL_ESI_TARGET = "M_TACT_ESI_TARGET_INSTALLED";
-const string M_TACT_LOCAL_ITEM_SCHEMA = "M_TACT_ITEM_SCHEMA";
-const string M_TACT_LOCAL_ITEM_LANGUAGE = "M_TACT_ITEM_LANGUAGE";
 const string M_TACT_LOCAL_LANGUAGE = "M_TACT_LANGUAGE";
 const string M_TACT_LOCAL_TEXT = "M_TACT_TEXT_RESULT";
 const string M_TACT_LOCAL_IS_RUSSIAN = "M_TACT_LANGUAGE_IS_RUSSIAN";
@@ -69,7 +63,6 @@ const string M_TACT_LOCAL_BLOCKED_ITEM_UNTIL = "M_TACT_BLOCKED_ITEM_UNTIL";
 const string M_TACT_PARAM_TEXT_KEY = "M_TACT_TEXT_KEY";
 
 const int M_TACT_SCHEMA = 2;
-const int M_TACT_ITEM_SCHEMA = 1;
 const int M_TACT_MAX_GROUP = 32;
 const int M_TACT_SCOPE_PC = 0;
 const int M_TACT_SCOPE_EXACT = 1;
@@ -89,8 +82,6 @@ const int M_TACT_AOE_SAFETY_SAFE = 1;
 const int M_TACT_AOE_SAFETY_VERY_SAFE = 2;
 const int M_TACT_AOE_SAFETY_STATIONARY = 3;
 
-const int M_TACT_TEXT_ITEM_NAME = 1;
-const int M_TACT_TEXT_ITEM_DESCRIPTION = 2;
 const int M_TACT_TEXT_INSTALLED = 3;
 const int M_TACT_TEXT_TITLE = 4;
 const int M_TACT_TEXT_PROFILE = 5;
@@ -404,39 +395,9 @@ void M_TACT_BuildGroupCache(object oPC)
     MEMORIA_BuildGroupCache(oPC, M_TACT_LOCAL_GROUP_COUNT, M_TACT_LOCAL_GROUP_MEMBER, M_TACT_MAX_GROUP);
 }
 
-void M_TACT_LocalizeItem(object oItem, object oPC)
-{
-    SetName(oItem, M_TACT_GetText(M_TACT_TEXT_ITEM_NAME, oPC));
-    SetDescription(oItem, M_TACT_GetText(M_TACT_TEXT_ITEM_DESCRIPTION, oPC), TRUE);
-    SetDescription(oItem, M_TACT_GetText(M_TACT_TEXT_ITEM_DESCRIPTION, oPC), FALSE);
-    SetLocalString(oItem, M_TACT_LOCAL_ITEM_LANGUAGE, M_TACT_GetLanguage(oPC));
-}
-
-void M_TACT_EnsureItem(object oPC)
-{
-    object oItem = GetItemPossessedBy(oPC, M_TACT_ITEM_TAG);
-    if (GetIsObjectValid(oItem) && GetLocalInt(oItem, M_TACT_LOCAL_ITEM_SCHEMA) != M_TACT_ITEM_SCHEMA)
-    {
-        DestroyObject(oItem);
-        oItem = OBJECT_INVALID;
-    }
-    if (!GetIsObjectValid(oItem))
-        oItem = CreateItemOnObject(M_TACT_ITEM_RESREF, oPC, 1, M_TACT_ITEM_TAG);
-    if (GetIsObjectValid(oItem))
-    {
-        SetLocalInt(oItem, M_TACT_LOCAL_ITEM_SCHEMA, M_TACT_ITEM_SCHEMA);
-        SetPlotFlag(oItem, TRUE);
-        SetItemCursedFlag(oItem, TRUE);
-        if (GetLocalString(oItem, M_TACT_LOCAL_ITEM_LANGUAGE) != M_TACT_GetLanguage(oPC))
-            M_TACT_LocalizeItem(oItem, oPC);
-    }
-}
-
 void M_TACT_InstallHook()
 {
     object oModule = GetModule();
-    if (!GetLocalInt(oModule, M_TACT_LOCAL_ESI) && ESI_InjectToObject(oModule, M_TACT_ESI_KEY, EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, M_TACT_ACTIVATE_HANDLER, ESI_INJECTION_PLACEMENT_FIRST))
-        SetLocalInt(oModule, M_TACT_LOCAL_ESI, TRUE);
     if (!GetLocalInt(oModule, M_TACT_LOCAL_ESI_GUI) && ESI_InjectToObject(oModule, M_TACT_ESI_KEY, EVENT_SCRIPT_MODULE_ON_PLAYER_GUIEVENT, "m_tact_guievt", ESI_INJECTION_PLACEMENT_FIRST))
         SetLocalInt(oModule, M_TACT_LOCAL_ESI_GUI, TRUE);
     if (!GetLocalInt(oModule, M_TACT_LOCAL_ESI_TARGET) && ESI_InjectToObject(oModule, M_TACT_ESI_KEY, EVENT_SCRIPT_MODULE_ON_PLAYER_TARGET, "m_tact_target", ESI_INJECTION_PLACEMENT_FIRST))

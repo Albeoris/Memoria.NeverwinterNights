@@ -24,6 +24,7 @@ internal static class ToolsetApp
                 "doctor" => await DoctorAsync(context),
                 "compile" => await CompileCommandAsync(context, tail),
                 "build" => await ModBuilder.BuildAsync(context, tail),
+                "merge-output" => await CommonOutputMerger.MergeAsync(context, tail),
                 "verify" => await VerifyAsync(context, tail),
                 "gff-to-json" => await GffCommandAsync(context, tail, "gff", "json"),
                 "gff-from-json" => await GffCommandAsync(context, tail, "json", "gff"),
@@ -210,6 +211,7 @@ internal static class ToolsetApp
         Console.WriteLine("  doctor");
         Console.WriteLine("  compile <source.nss> [-o output.ncs] [--includes dir1,dir2] [--encoding utf-8|windows-1251|windows-1252]");
         Console.WriteLine("  build <generated-inputs> --output directory [--layouts-output directory]");
+        Console.WriteLine("  merge-output <source-directory> --output directory --manifests directory --lock-file file --owner name");
         Console.WriteLine("  verify <file.ncs|directory>");
         Console.WriteLine("  gff-to-json <input> <output.json>");
         Console.WriteLine("  gff-from-json <input.json> <output>");

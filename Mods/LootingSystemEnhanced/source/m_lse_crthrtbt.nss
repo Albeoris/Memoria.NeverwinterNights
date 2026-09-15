@@ -5,6 +5,7 @@
 
 void main() 
 {
-    SetLocalString(GetModule(), "M_LSE_RUNTIME", "1.1-memoria.1");
+    object oModule = GetModule();
+    if (GetLocalString(oModule, "M_LSE_RUNTIME") != "1.1-memoria.1") SetLocalString(oModule, "M_LSE_RUNTIME", "1.1-memoria.1");
     M_LSE_OnHeartbeat(OBJECT_SELF);
 }

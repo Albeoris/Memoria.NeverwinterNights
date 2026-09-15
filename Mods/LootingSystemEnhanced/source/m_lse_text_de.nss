@@ -16,6 +16,7 @@ void main()
                    : nStrRef == 10  ? "Gegenstand (Nicht identifiziert)"
                    : nStrRef == 11  ? "wird ignoriert."
 
+                   : nStrRef == 99   ? "Looting System Enhanced"
                    : nStrRef == 100  ? "Zurück..."
                    : nStrRef == 101  ? "Behältnisse scannen"
                    : nStrRef == 102  ? "Behältnisse nachverfolgen"
@@ -63,5 +64,6 @@ void main()
 
                    :                STRING_EMPTY;
 
+    SetLocalString(OBJECT_SELF, "M_LSE_CONFIG_TEXT_RESULT", sString);
     M_LSE_SIN_SetBufferedString(nStrRef, sString);
 }

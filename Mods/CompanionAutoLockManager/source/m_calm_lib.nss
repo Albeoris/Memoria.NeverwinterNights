@@ -7,9 +7,6 @@
 #include "memoria_locale"
 
 const string M_CALM_VERSION = "1.2.7";
-const string M_CALM_ITEM_RESREF = "m_calm_modeitem";
-const string M_CALM_ITEM_TAG = "M_CALM_AUTO_UNLOCK_MODE_TOGGLE_9F31";
-const string M_CALM_ACTIVATE_HANDLER = "m_calm_evact";
 const string M_CALM_ESI_INJECTION_KEY = "9317";
 const string M_CALM_LOCAL_INSTALLED = "M_CALM_INSTALLED";
 const string M_CALM_LOCAL_ENABLED = "M_CALM_MODE_ENABLED";
@@ -31,8 +28,6 @@ const string M_CALM_LOCAL_INITIAL_COMMAND = "M_CALM_INITIAL_COMMAND";
 const string M_CALM_LOCAL_NEXT_ASSOCIATE = "M_CALM_NEXT_ASSOCIATE";
 const string M_CALM_LOCAL_TEXT = "M_CALM_TEXT_RESULT";
 const string M_CALM_LOCAL_IS_RUSSIAN = "M_CALM_LANGUAGE_IS_RUSSIAN";
-const string M_CALM_LOCAL_ITEM_LANGUAGE = "M_CALM_ITEM_LANGUAGE";
-const string M_CALM_LOCAL_ITEM_SCHEMA = "M_CALM_ITEM_SCHEMA";
 const string M_CALM_LOCAL_LANGUAGE = "M_CALM_LANGUAGE";
 const string M_CALM_LOCAL_GROUP_COUNT = "M_CALM_GROUP_COUNT";
 const string M_CALM_LOCAL_GROUP_MEMBER = "M_CALM_GROUP_MEMBER_";
@@ -73,37 +68,12 @@ const float M_CALM_STALL_SECONDS = 3.0f;
 const int M_CALM_MAX_PATH_RETRIES = 2;
 const int M_CALM_MAX_GROUP_MEMBERS = 32;
 const int M_CALM_MAX_VISIBLE_LOCKS = 64;
-const int M_CALM_ITEM_SCHEMA = 4;
-
-const int M_CALM_TEXT_ITEM_NAME = 1;
-const int M_CALM_TEXT_ITEM_DESCRIPTION = 2;
-const int M_CALM_TEXT_MODE_ENABLED = 3;
-const int M_CALM_TEXT_MODE_DISABLED = 4;
 const int M_CALM_TEXT_MODE_PAUSED = 5;
 const int M_CALM_TEXT_PATH_FAILED = 6;
 const int M_CALM_TEXT_INSTALLED = 7;
 const int M_CALM_TEXT_SCAN_LOCKS = 8;
 const int M_CALM_TEXT_SCAN_LOCKSMITHS = 9;
-const int M_CALM_TEXT_STATE_ON = 10;
-const int M_CALM_TEXT_STATE_OFF = 11;
 const int M_CALM_TEXT_LOCK_CLAIM = 12;
-const int M_CALM_TEXT_SETTINGS_TITLE = 13;
-const int M_CALM_TEXT_AUTO_LOCK = 14;
-const int M_CALM_TEXT_ENABLED = 15;
-const int M_CALM_TEXT_SEARCH_RADIUS = 16;
-const int M_CALM_TEXT_LOCK_INTERVAL = 17;
-const int M_CALM_TEXT_REQUIRE_LOS = 18;
-const int M_CALM_TEXT_ATTACK_SAFETY = 19;
-const int M_CALM_TEXT_HIGHLIGHT = 20;
-const int M_CALM_TEXT_OVERHEAD_MESSAGES = 21;
-const int M_CALM_TEXT_DEBUG = 22;
-const int M_CALM_TEXT_AUTO_DETECT = 23;
-const int M_CALM_TEXT_DETECT_INTERVAL = 24;
-const int M_CALM_TEXT_DETECT_DELAY = 25;
-const int M_CALM_TEXT_SAVE = 26;
-const int M_CALM_TEXT_CANCEL = 27;
-const int M_CALM_TEXT_INVALID_SETTINGS = 28;
-const int M_CALM_TEXT_SETTINGS_SAVED = 29;
 
 object M_CALM_GetRootMaster(object oCreature)
 {
@@ -191,46 +161,6 @@ string M_CALM_GetText(int iKey, object oPC, string sLang = "")
 {
     if (sLang == "") sLang = M_CALM_GetLanguage(oPC);
     return MEMORIA_GetText(iKey, oPC, sLang, "m_calm_txt_", M_CALM_LOCAL_TEXT, M_CALM_PARAM_TEXT_KEY);
-}
-
-void M_CALM_LocalizeItem(object oItem, object oPC)
-{
-    string sLang = M_CALM_GetLanguage(oPC);
-    string sDescription = M_CALM_GetText(M_CALM_TEXT_ITEM_DESCRIPTION, oPC, sLang);
-    string sState = M_CALM_GetText(GetLocalInt(oPC, M_CALM_LOCAL_ENABLED) ? M_CALM_TEXT_STATE_ON : M_CALM_TEXT_STATE_OFF, oPC, sLang);
-    SetName(oItem, M_CALM_GetText(M_CALM_TEXT_ITEM_NAME, oPC, sLang) + " [" + sState + "]");
-    SetDescription(oItem, sDescription, TRUE);
-    SetDescription(oItem, sDescription, FALSE);
-    SetLocalString(oItem, M_CALM_LOCAL_ITEM_LANGUAGE, sLang);
-}
-
-void M_CALM_EnsureModeItem(object oPC)
-{
-    object oItem = GetItemPossessedBy(oPC, M_CALM_ITEM_TAG);
-    if (GetIsObjectValid(oItem) && GetLocalInt(oItem, M_CALM_LOCAL_ITEM_SCHEMA) != M_CALM_ITEM_SCHEMA)
-    {
-        DestroyObject(oItem);
-        oItem = OBJECT_INVALID;
-    }
-    if (!GetIsObjectValid(oItem))
-        oItem = CreateItemOnObject(M_CALM_ITEM_RESREF, oPC, 1, M_CALM_ITEM_TAG);
-    if (GetIsObjectValid(oItem))
-    {
-        SetLocalInt(oItem, M_CALM_LOCAL_ITEM_SCHEMA, M_CALM_ITEM_SCHEMA);
-        SetPlotFlag(oItem, TRUE);
-        SetItemCursedFlag(oItem, TRUE);
-        if (GetLocalString(oItem, M_CALM_LOCAL_ITEM_LANGUAGE) != M_CALM_GetLanguage(oPC))
-            M_CALM_LocalizeItem(oItem, oPC);
-    }
-}
-
-void M_CALM_InstallActivateHook()
-{
-    object oModule = GetModule();
-    if (GetLocalInt(oModule, M_CALM_LOCAL_ESI_INSTALLED))
-        return;
-    if (ESI_InjectToObject(oModule, M_CALM_ESI_INJECTION_KEY, EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, M_CALM_ACTIVATE_HANDLER, ESI_INJECTION_PLACEMENT_FIRST))
-        SetLocalInt(oModule, M_CALM_LOCAL_ESI_INSTALLED, TRUE);
 }
 
 int M_CALM_IsPartyInCombat(object oPC)
@@ -1182,8 +1112,6 @@ void M_CALM_Heartbeat(object oPC)
     if (!M_CALM_IsRootPlayer(oPC))
         return;
     M_CALM_InitializeSettings(oPC);
-    M_CALM_InstallActivateHook();
-    M_CALM_EnsureModeItem(oPC);
     ExecuteScript("m_calm_registry", oPC);
     ExecuteScript("m_calm_lock", oPC);
     ExecuteScript("m_calm_schedule", oPC);

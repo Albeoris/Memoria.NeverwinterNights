@@ -1,0 +1,23 @@
+<Project DefaultTargets="Build">
+  <Import Project="..\..\Directory.Build.props" />
+  <PropertyGroup>
+    <ModName>MEMORIA_CONFIG</ModName>
+    <PackageId>memoria_config</PackageId>
+    <PackageDisplayName>Memoria Configuration Manager</PackageDisplayName>
+  </PropertyGroup>
+  <PropertyGroup Label="Steam Workshop">
+    <WorkshopPublishedFileId />
+    <WorkshopTags>override</WorkshopTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Tools\Toolset\Memoria.NeverwinterNights.Toolset.csproj" />
+    <NwnSource Include="source\**\*.nss" />
+    <NwnResource Include="resources\**\*" Exclude="resources\layouts\**\*;resources\**\.gitkeep" />
+    <NwnLayout Include="resources\layouts\**\*.json" />
+    <NwnIncludeDirectory Include="..\EventScriptInjector\source;..\Framework\source" />
+    <PackageDocument Include="*.md" />
+    <NwnRequiredPackage Include="..\Bootstrapper\Bootstrapper.proj" PackageName="Memoria Bootstrapper" />
+    <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" PackageName="Event Script Injector (Memoria Edition)" />
+  </ItemGroup>
+  <Import Project="..\..\Build\NwnModProject.targets" />
+</Project>
