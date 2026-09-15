@@ -32,6 +32,8 @@ A shared manifest has package-wide `schema` and `id` fields. Bootstrapper and Co
 
 Both consumers discover `memoria_*.txt` resources once per loaded game or module and cache only their own extracted data. A missing section is valid and is ignored by the consumer that does not use it.
 
+Package `id` values must be unique. Configuration Manager reports and ignores a later manifest whose `id` duplicates an already loaded package, matching Bootstrapper's behavior.
+
 ## Minimal configurable mod
 
 This example adds player boolean and integer settings, a module float setting, an action button, and localized labels using the shared `memoria_i18n` loader.

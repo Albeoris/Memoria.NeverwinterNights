@@ -28,6 +28,24 @@ const string MEMORIA_CONFIG_TEXT_SAVE = "save";
 const string MEMORIA_CONFIG_TEXT_CLOSE = "close";
 const string MEMORIA_CONFIG_TEXT_RANGE_ERROR = "range_error";
 
+void MEMORIA_CONFIG_ReportError(object oPC, string sManifest, string sError)
+{
+    string sLocal = "MEMORIA_CONFIG_ERR_" + sManifest;
+    if (GetLocalString(oPC, sLocal) == sError) return;
+    SetLocalString(oPC, sLocal, sError);
+    SendMessageToPC(oPC, "Memoria Configuration Manager ignored " + sManifest + ".txt: " + sError);
+}
+
+int MEMORIA_CONFIG_HasId(json jModules, string sId)
+{
+    int nIndex;
+    for (nIndex = 0; nIndex < JsonGetLength(jModules); nIndex++)
+    {
+        if (JsonGetString(JsonObjectGet(JsonArrayGet(jModules, nIndex), "id")) == sId) return TRUE;
+    }
+    return FALSE;
+}
+
 string MEMORIA_CONFIG_GetLanguage(object oPC)
 {
     return MEMORIA_GetLanguage(oPC, MEMORIA_CONFIG_LOCAL_LANGUAGE);
@@ -100,7 +118,7 @@ json MEMORIA_CONFIG_LocalizeModules(object oPC, json jModules)
     return jLocalized;
 }
 
-json MEMORIA_CONFIG_LoadModules()
+json MEMORIA_CONFIG_LoadModules(object oPC)
 {
     json jModules = JsonArray();
     int nNth = 1;
@@ -114,15 +132,19 @@ json MEMORIA_CONFIG_LoadModules()
         if (bValid)
         {
             jModule = JsonObjectSet(jModule, "id", JsonString(sId));
-            int nInsert = JsonGetLength(jModules);
-            string sName = JsonGetString(JsonObjectGet(jModule, "name"));
-            jModules = JsonArrayInsert(jModules, jModule);
-            while (nInsert > 0 && MEMORIA_CONFIG_CompareNames(sName, JsonGetString(JsonObjectGet(JsonArrayGet(jModules, nInsert - 1), "name"))) < 0)
+            if (MEMORIA_CONFIG_HasId(jModules, sId)) MEMORIA_CONFIG_ReportError(oPC, sResource, "duplicate module id " + sId);
+            else
             {
-                jModules = JsonArraySet(jModules, nInsert, JsonArrayGet(jModules, nInsert - 1));
-                nInsert--;
+                int nInsert = JsonGetLength(jModules);
+                string sName = JsonGetString(JsonObjectGet(jModule, "name"));
+                jModules = JsonArrayInsert(jModules, jModule);
+                while (nInsert > 0 && MEMORIA_CONFIG_CompareNames(sName, JsonGetString(JsonObjectGet(JsonArrayGet(jModules, nInsert - 1), "name"))) < 0)
+                {
+                    jModules = JsonArraySet(jModules, nInsert, JsonArrayGet(jModules, nInsert - 1));
+                    nInsert--;
+                }
+                jModules = JsonArraySet(jModules, nInsert, jModule);
             }
-            jModules = JsonArraySet(jModules, nInsert, jModule);
         }
         nNth++;
         sResource = ResManFindPrefix(MEMORIA_CONFIG_MANIFEST_PREFIX, RESTYPE_TXT, nNth, FALSE);
@@ -143,7 +165,7 @@ json MEMORIA_CONFIG_GetModules(object oPC)
     json jModules = NuiGetUserData(oCacheOwner, nToken);
     if (nToken == 0 || JsonGetType(jModules) != JSON_TYPE_ARRAY)
     {
-        jModules = MEMORIA_CONFIG_LoadModules();
+        jModules = MEMORIA_CONFIG_LoadModules(oPC);
         oCacheOwner = oPC;
         nToken = NuiFindWindow(oCacheOwner, MEMORIA_CONFIG_CACHE_WINDOW);
         if (nToken == 0) nToken = NuiCreate(oCacheOwner, MEMORIA_CONFIG_BuildCacheWindow(), MEMORIA_CONFIG_CACHE_WINDOW, "meconfig_noop");
