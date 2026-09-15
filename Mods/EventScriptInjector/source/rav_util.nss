@@ -18,9 +18,6 @@ const string RAV_TYPE_INT = "int";
 const string RAV_TYPE_FLOAT = "float";
 const string RAV_TYPE_STRING = "string";
 
-const int RAV_STRREF_BASE = 16777216;
-const int RAV_STRREF_OFFSET = 0;
-
 //::///////////////////////////////////////////////////////////////////////////
 //:: Methods copied from nw_o0_itemmaker.nss
 
@@ -125,12 +122,6 @@ object RAV_GetLocalObject(object oObject, string sVarName)
     object oValue = GetLocalObject(oObject, sVarName);
     // RAV_PrintVariableObject("RAV_GetLocalObject->" + sVarName, oValue, oObject);
     return oValue;
-}
-
-string RAV_GetStringByStrRef(int nStrRef) 
-{
-    string sString = GetStringByStrRef(RAV_STRREF_BASE + RAV_STRREF_OFFSET + nStrRef);
-    return sString;
 }
 
 int RAV_IsItemGold(object oItem, int iStackSize) 
