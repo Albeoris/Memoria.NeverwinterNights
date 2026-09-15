@@ -1,6 +1,79 @@
 {
   "schema": 1,
   "id": "MECALM",
-  "heartbeat": "mecalm_hb",
-  "priority": 200
+  "bootstrapper": {
+    "heartbeat": "mecalm_hb",
+    "priority": 200
+  },
+  "configuration": {
+    "name": "Companion Auto-Lock Manager",
+    "name_key": "mod_display_name",
+    "localization": {
+      "prefix": "mecalm"
+    },
+    "apply": "mecalm_cfgapply",
+    "diagnostic": "mecalm_cfgdiag",
+    "options": [
+      {
+        "type": "bool",
+        "scope": "player",
+        "local": "MECALM_MODE_ENABLED",
+        "label": "Automatic lockpicking",
+        "label_key": "auto_lockpicking_option_label"
+      },
+      {
+        "type": "float",
+        "scope": "player",
+        "local": "MECALM_CFG_SEARCH_RADIUS",
+        "label": "Search radius",
+        "label_key": "search_radius_label",
+        "minimum": 1,
+        "maximum": 100
+      },
+      {
+        "type": "float",
+        "scope": "player",
+        "local": "MECALM_CFG_LOCK_INTERVAL",
+        "label": "Lock interval",
+        "label_key": "lock_interval_label",
+        "minimum": 0.1,
+        "maximum": 6
+      },
+      {
+        "type": "bool",
+        "scope": "player",
+        "local": "MECALM_CFG_REQUIRE_LOS",
+        "label": "Require line of sight",
+        "label_key": "require_los_label"
+      },
+      {
+        "type": "bool",
+        "scope": "player",
+        "local": "MECALM_CFG_ATTACK_SAFETY",
+        "label": "Prevent attacks on worked locks",
+        "label_key": "attack_safety_label"
+      },
+      {
+        "type": "bool",
+        "scope": "player",
+        "local": "MECALM_CFG_HIGHLIGHT",
+        "label": "Highlight targets",
+        "label_key": "highlight_label"
+      },
+      {
+        "type": "bool",
+        "scope": "player",
+        "local": "MECALM_CFG_OVERHEAD_MESSAGES",
+        "label": "Show overhead messages",
+        "label_key": "overhead_messages_label"
+      },
+      {
+        "type": "bool",
+        "scope": "player",
+        "local": "MECALM_CFG_DEBUG",
+        "label": "Enable diagnostics",
+        "label_key": "debug_output_label"
+      }
+    ]
+  }
 }

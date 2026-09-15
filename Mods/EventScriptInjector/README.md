@@ -15,7 +15,7 @@ This example registers an `OnActivateItem` handler without replacing the module'
 `override/memoria_acme_evt.txt`:
 
 ```json
-{"schema":1,"id":"ACME_TINY_EVT","heartbeat":"acme_evt_hb","priority":200}
+{"schema":1,"id":"ACME_TINY_EVT","bootstrapper":{"heartbeat":"acme_evt_hb","priority":200}}
 ```
 
 `acme_evt_hb.nss`, compiled as `override/acme_evt_hb.ncs`:
@@ -52,7 +52,7 @@ override/
 └── acme_evt_hb.ncs
 ```
 
-`ACME` stands for the mod author's own unique prefix. The `memoria_` filename prefix belongs to Bootstrapper's discovery protocol. The injection key `acme_evt` must be unique within this event and placement. The module local and the ESI registration are saved with the module, so subsequent heartbeats are cheap.
+`ACME` stands for the mod author's own unique prefix. The `memoria_` filename prefix identifies the shared package manifest; Bootstrapper reads its `bootstrapper` section. The injection key `acme_evt` must be unique within this event and placement. The module local and the ESI registration are saved with the module, so subsequent heartbeats are cheap.
 
 ## Compatibility
 

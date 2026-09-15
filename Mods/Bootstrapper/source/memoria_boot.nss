@@ -39,10 +39,13 @@ json MEBOOTSTRAPPER_DiscoverEntries(object oPlayer)
         string sError = JsonGetError(jManifest);
         int nSchema = JsonGetInt(JsonObjectGet(jManifest, "schema"));
         string sId = JsonGetString(JsonObjectGet(jManifest, "id"));
-        string sHeartbeat = JsonGetString(JsonObjectGet(jManifest, "heartbeat"));
-        int nPriority = JsonGetInt(JsonObjectGet(jManifest, "priority"));
+        json jBootstrapper = JsonObjectGet(jManifest, "bootstrapper");
+        string sHeartbeat = JsonGetString(JsonObjectGet(jBootstrapper, "heartbeat"));
+        int nPriority = JsonGetInt(JsonObjectGet(jBootstrapper, "priority"));
         if (sError != "") MEBOOTSTRAPPER_ReportError(oPlayer, sManifest, sError);
-        else if (JsonGetType(jManifest) != JSON_TYPE_OBJECT || nSchema != 1 || sId == "" || sHeartbeat == "") MEBOOTSTRAPPER_ReportError(oPlayer, sManifest, "invalid schema, id, or heartbeat resource");
+        else if (JsonGetType(jManifest) != JSON_TYPE_OBJECT || nSchema != 1 || sId == "") MEBOOTSTRAPPER_ReportError(oPlayer, sManifest, "invalid schema or id");
+        else if (JsonGetType(jBootstrapper) == JSON_TYPE_NULL) { }
+        else if (JsonGetType(jBootstrapper) != JSON_TYPE_OBJECT || sHeartbeat == "") MEBOOTSTRAPPER_ReportError(oPlayer, sManifest, "invalid bootstrapper section or heartbeat resource");
         else if (MEBOOTSTRAPPER_HasId(jEntries, sId)) MEBOOTSTRAPPER_ReportError(oPlayer, sManifest, "duplicate module id " + sId);
         else if (ResManGetAliasFor(sHeartbeat, RESTYPE_NCS) == "") MEBOOTSTRAPPER_ReportError(oPlayer, sManifest, "heartbeat script " + sHeartbeat + ".ncs was not found");
         else

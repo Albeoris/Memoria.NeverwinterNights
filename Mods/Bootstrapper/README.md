@@ -13,7 +13,7 @@ This example initializes once for a player character and then prints a debug mes
 `resources/memoria_acme.json` (emitted as `override/memoria_acme.txt`):
 
 ```json
-{"schema":1,"id":"ACME_TINY","heartbeat":"acme_tiny_hb","priority":200}
+{"schema":1,"id":"ACME_TINY","bootstrapper":{"heartbeat":"acme_tiny_hb","priority":200}}
 ```
 
 `acme_tiny_hb.nss`, compiled as `override/acme_tiny_hb.ncs`:
@@ -46,7 +46,7 @@ override/
 └── acme_tiny_hb.ncs
 ```
 
-`ACME` stands for the mod author's own unique prefix; it is not a Memoria namespace. The `memoria_` filename prefix is required only so Bootstrapper can discover the registration. The initialization flag is stored on the player character and persists in saved games. A real mod can replace `ACME_TINY_Initialize` with default-setting, migration, or event-registration code and change the flag name when a new initialization version is required. Lower priorities run first. Every registered heartbeat is dispatched in its own execution context; if one aborts, the player receives its manifest `id` and script name, and the other queued mods continue to run.
+`ACME` stands for the mod author's own unique prefix; it is not a Memoria namespace. The `memoria_` filename prefix identifies the shared package manifest. Bootstrapper reads only its optional `bootstrapper` section; other consumers can own sibling sections in the same file. The initialization flag is stored on the player character and persists in saved games. A real mod can replace `ACME_TINY_Initialize` with default-setting, migration, or event-registration code and change the flag name when a new initialization version is required. Lower priorities run first. Every registered heartbeat is dispatched in its own execution context; if one aborts, the player receives its manifest `id` and script name, and the other queued mods continue to run.
 
 ## Compatibility
 

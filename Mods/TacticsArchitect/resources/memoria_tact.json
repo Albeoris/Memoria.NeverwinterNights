@@ -1,6 +1,23 @@
 {
   "schema": 1,
   "id": "METACT",
-  "heartbeat": "metact_hb",
-  "priority": 300
+  "bootstrapper": {
+    "heartbeat": "metact_hb",
+    "priority": 300
+  },
+  "configuration": {
+    "name": "Tactics Architect",
+    "name_key": "mod_display_name",
+    "localization": {
+      "prefix": "metact"
+    },
+    "options": [
+      {
+        "type": "action",
+        "label": "Open tactics editor",
+        "label_key": "open_tactics_editor_label",
+        "script": "metact_open"
+      }
+    ]
+  }
 }

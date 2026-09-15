@@ -5,3 +5,4 @@ Short, single-topic docs for architecture decisions and conventions that aren't 
 | Doc | Topic |
 | --- | --- |
 | [localization.md](localization.md) | Shared per-mod localization table loader (`memoria_i18n.nss`): resource naming, key naming, and caching. |
+| [PackageManifests.md](PackageManifests.md) | Shared `memoria_*.txt` package envelope and subsystem-owned sections. |

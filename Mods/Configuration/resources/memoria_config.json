@@ -1,6 +1,8 @@
 {
   "schema": 1,
   "id": "MEMORIA_CONFIG",
-  "heartbeat": "meconfig_hb",
-  "priority": 1
+  "bootstrapper": {
+    "heartbeat": "meconfig_hb",
+    "priority": 1
+  }
 }

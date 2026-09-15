@@ -3,7 +3,7 @@
 #include "memoria_i18n"
 #include "nw_inc_nui"
 
-const string MEMORIA_CONFIG_MANIFEST_PREFIX = "mconfig_";
+const string MEMORIA_CONFIG_MANIFEST_PREFIX = "memoria_";
 const string MEMORIA_CONFIG_ITEM_RESREF = "memoria_config";
 const string MEMORIA_CONFIG_ITEM_TAG = "MEMORIA_CONFIGURATION_ITEM";
 const string MEMORIA_CONFIG_ACTIVATE_HANDLER = "meconfig_evact";
@@ -108,10 +108,13 @@ json MEMORIA_CONFIG_LoadModules()
     string sResource = ResManFindPrefix(MEMORIA_CONFIG_MANIFEST_PREFIX, RESTYPE_TXT, nNth, FALSE);
     while (sResource != "")
     {
-        json jModule = JsonParse(ResManGetFileContents(sResource, RESTYPE_TXT));
-        int bValid = JsonGetError(jModule) == "" && JsonGetType(jModule) == JSON_TYPE_OBJECT && JsonGetInt(JsonObjectGet(jModule, "schema")) == 1 && JsonGetString(JsonObjectGet(jModule, "id")) != "" && JsonGetString(JsonObjectGet(jModule, "name")) != "";
+        json jManifest = JsonParse(ResManGetFileContents(sResource, RESTYPE_TXT));
+        json jModule = JsonObjectGet(jManifest, "configuration");
+        string sId = JsonGetString(JsonObjectGet(jManifest, "id"));
+        int bValid = JsonGetError(jManifest) == "" && JsonGetType(jManifest) == JSON_TYPE_OBJECT && JsonGetInt(JsonObjectGet(jManifest, "schema")) == 1 && sId != "" && JsonGetType(jModule) == JSON_TYPE_OBJECT && JsonGetString(JsonObjectGet(jModule, "name")) != "";
         if (bValid)
         {
+            jModule = JsonObjectSet(jModule, "id", JsonString(sId));
             int nInsert = JsonGetLength(jModules);
             string sName = JsonGetString(JsonObjectGet(jModule, "name"));
             jModules = JsonArrayInsert(jModules, jModule);
