@@ -28,7 +28,7 @@ A shared manifest has package-wide `schema` and `id` fields. Bootstrapper and Co
 }
 ```
 
-`scope` is `player` or `module`; `int` and `float` options must also declare inclusive `minimum` and `maximum` values. `apply` runs after settings are saved, and `diagnostic` runs when the shared item targets an object. `localization`, `name_key`, and `label_key` are optional; when present, `name_key` and `label_key` name keys in the mod's own `<prefix>_i18n_<language>.txt` table, falling back to the manifest's plain `name` or `label` text when the key or table is missing.
+`scope` is `player` or `module`; `int` and `float` options must also declare inclusive `minimum` and `maximum` values. `apply` runs after settings are saved, and `diagnostic` runs when the shared item targets an object. `localization`, `name_key`, and `label_key` are optional; when present, `name_key` and `label_key` name keys in the mod's own `<prefix>_loc_<language>.txt` table, falling back to the manifest's plain `name` or `label` text when the key or table is missing.
 
 Both consumers discover `memoria_*.txt` resources once per loaded game or module and cache only their own extracted data. A missing section is valid and is ignored by the consumer that does not use it.
 
@@ -57,7 +57,7 @@ This example adds player boolean and integer settings, a module float setting, a
 }
 ```
 
-`resources/acme_cfg_i18n_en.resjson`:
+`resources/acme_cfg_loc_en.resjson`:
 
 ```json
 {
@@ -88,10 +88,10 @@ override/
 |-- memoria_acme.txt
 |-- acme_cfg_apply.ncs
 |-- acme_cfg_ping.ncs
-`-- acme_cfg_i18n_en.txt
+`-- acme_cfg_loc_en.txt
 ```
 
-`ACME` stands for the mod author's own unique prefix. Config stores each value directly in the declared local variable. UTF-8 `<prefix>_i18n_<language>.resjson` sources are validated and converted to game-local `<prefix>_i18n_<language>.txt` resources during the build, then cached once per module load. Languages without their own table fall back to `<prefix>_i18n_en.txt`, and missing keys fall back to the manifest's plain text.
+`ACME` stands for the mod author's own unique prefix. Config stores each value directly in the declared local variable. UTF-8 `<prefix>_loc_<language>.resjson` sources are validated and converted to game-local `<prefix>_loc_<language>.txt` resources during the build, then cached once per module load. Languages without their own table fall back to `<prefix>_loc_en.txt`, and missing keys fall back to the manifest's plain text.
 
 ## Installation
 
