@@ -1,0 +1,10 @@
+{
+  "mod_display_name": "Memoria Configuration Manager",
+  "item_name": "Configuration de Memoria",
+  "item_description": "Ouvre le gestionnaire de configuration de Memoria. Ciblez un objet pour lancer les diagnostics disponibles.",
+  "window_title": "Configuration de Memoria",
+  "no_modules": "Aucun mod Memoria enregistré.",
+  "save": "Enregistrer",
+  "close": "Fermer",
+  "range_error": "doit être compris entre"
+}

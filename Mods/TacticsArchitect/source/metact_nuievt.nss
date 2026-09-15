@@ -378,7 +378,7 @@ void METACT_HandleWatch(object oPC, int iToken, string sWindow, string sElement)
     {
         int iPolicy = JsonGetInt(NuiGetBind(oPC, iToken, "friendly_fire_policy"));
         if (iPolicy < 0 || iPolicy > 3) iPolicy = 1;
-        NuiSetBind(oPC, iToken, "friendly_fire_policy_help", JsonString(METACT_GetText(METACT_TEXT_FRIENDLY_FIRE_UNRESTRICTED_HELP + iPolicy, oPC)));
+        NuiSetBind(oPC, iToken, "friendly_fire_policy_help", JsonString(METACT_GetText(METACT_GetFriendlyFireHelpKey(iPolicy), oPC)));
     }
 }
 

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "id": "MECALM",
+  "heartbeat": "mecalm_hb",
+  "priority": 200
+}

@@ -52,6 +52,7 @@ internal static class ToolsetApp
             string versionLine = version.StandardOutput.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).LastOrDefault(line => line.StartsWith("neverwinter ", StringComparison.OrdinalIgnoreCase)) ?? $"exit {version.ExitCode}";
             Console.WriteLine($"{Path.GetFileName(tool),-24} {versionLine}");
         }
+
         return 0;
     }
 
@@ -98,6 +99,7 @@ internal static class ToolsetApp
             {
                 WriteCompilerErrors(result, source, effectiveIncludes);
             }
+
             return result.ExitCode;
         }
         finally
@@ -121,6 +123,7 @@ internal static class ToolsetApp
             Console.Error.WriteLine($"{diagnosticFile}({lineNumber}): ERROR: {line[(markerIndex + marker.Length)..].Trim()}");
             wroteError = true;
         }
+
         if (wroteError) return;
         Console.Write(result.StandardOutput);
         Console.Error.Write(result.StandardError);
@@ -135,6 +138,7 @@ internal static class ToolsetApp
             string candidate = Path.GetFullPath(Path.Combine(directory, reportedFile));
             if (File.Exists(candidate)) return candidate;
         }
+
         return reportedFile;
     }
 
@@ -155,6 +159,7 @@ internal static class ToolsetApp
                 Console.Error.WriteLine($"ERR {file}: {result.StandardError.Trim()}");
             }
         }
+
         Console.WriteLine($"Verified: {files.Length}; failures: {failures}.");
         return failures == 0 ? 0 : 1;
     }
@@ -185,6 +190,7 @@ internal static class ToolsetApp
             arguments.RemoveRange(index, 2);
             return value;
         }
+
         return null;
     }
 

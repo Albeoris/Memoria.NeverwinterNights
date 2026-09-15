@@ -5,8 +5,10 @@
 #include "memoria_core"
 #include "memoria_group"
 #include "memoria_locale"
+#include "memoria_i18n"
 
 const string MECALM_VERSION = "1.2.7";
+const string MECALM_I18N_PREFIX = "mecalm";
 const string MECALM_ESI_INJECTION_KEY = "9317";
 const string MECALM_LOCAL_INSTALLED = "MECALM_INSTALLED";
 const string MECALM_LOCAL_ENABLED = "MECALM_MODE_ENABLED";
@@ -26,7 +28,6 @@ const string MECALM_LOCAL_BLOCKING_DOOR = "MECALM_BLOCKING_DOOR";
 const string MECALM_LOCAL_INITIAL_BLOCKING_DOOR = "MECALM_INITIAL_BLOCKING_DOOR";
 const string MECALM_LOCAL_INITIAL_COMMAND = "MECALM_INITIAL_COMMAND";
 const string MECALM_LOCAL_NEXT_ASSOCIATE = "MECALM_NEXT_ASSOCIATE";
-const string MECALM_LOCAL_TEXT = "MECALM_TEXT_RESULT";
 const string MECALM_LOCAL_IS_RUSSIAN = "MECALM_LANGUAGE_IS_RUSSIAN";
 const string MECALM_LOCAL_LANGUAGE = "MECALM_LANGUAGE";
 const string MECALM_LOCAL_GROUP_COUNT = "MECALM_GROUP_COUNT";
@@ -55,7 +56,6 @@ const string MECALM_LOCAL_DETECT_STILL_TIME = "MECALM_DETECT_STILL_TIME";
 const string MECALM_LOCAL_DETECT_OWNED = "MECALM_DETECT_OWNED";
 const string MECALM_LOCAL_DETECT_REMOVED = "MECALM_DETECT_REMOVED";
 const string MECALM_LOCAL_HIGHLIGHTED = "MECALM_HIGHLIGHTED";
-const string MECALM_PARAM_TEXT_KEY = "MECALM_TEXT_KEY";
 const string MECALM_ASSOCIATE_STATE = "NW_ASSOCIATE_MASTER";
 const string MECALM_ASSOCIATE_MOVEMENT_MODE = "NW_COM_MODE_MOVEMENT";
 const string MECALM_HIGHLIGHT_EFFECT_TAG = "MECALM_LOCK_GLOW_9F31";
@@ -68,12 +68,12 @@ const float MECALM_STALL_SECONDS = 3.0f;
 const int MECALM_MAX_PATH_RETRIES = 2;
 const int MECALM_MAX_GROUP_MEMBERS = 32;
 const int MECALM_MAX_VISIBLE_LOCKS = 64;
-const int MECALM_TEXT_MODE_PAUSED = 5;
-const int MECALM_TEXT_PATH_FAILED = 6;
-const int MECALM_TEXT_INSTALLED = 7;
-const int MECALM_TEXT_SCAN_LOCKS = 8;
-const int MECALM_TEXT_SCAN_LOCKSMITHS = 9;
-const int MECALM_TEXT_LOCK_CLAIM = 12;
+const string MECALM_TEXT_MODE_PAUSED = "familiar_pause_message";
+const string MECALM_TEXT_PATH_FAILED = "task_released_message";
+const string MECALM_TEXT_INSTALLED = "installed_message";
+const string MECALM_TEXT_SCAN_LOCKS = "scan_locks_message";
+const string MECALM_TEXT_SCAN_LOCKSMITHS = "scan_locksmiths_message";
+const string MECALM_TEXT_LOCK_CLAIM = "lock_claim_message";
 
 object MECALM_GetRootMaster(object oCreature)
 {
@@ -157,10 +157,9 @@ string MECALM_GetLanguage(object oPC)
     return MEMORIA_GetLanguage(oPC, MECALM_LOCAL_LANGUAGE, "mecalm_is_ru", MECALM_LOCAL_IS_RUSSIAN);
 }
 
-string MECALM_GetText(int iKey, object oPC, string sLang = "")
+string MECALM_GetText(string sKey, object oPC)
 {
-    if (sLang == "") sLang = MECALM_GetLanguage(oPC);
-    return MEMORIA_GetText(iKey, oPC, sLang, "mecalm_txt_", MECALM_LOCAL_TEXT, MECALM_PARAM_TEXT_KEY);
+    return MEMORIA_I18N_GetText(MECALM_I18N_PREFIX, MECALM_GetLanguage(oPC), sKey);
 }
 
 int MECALM_IsPartyInCombat(object oPC)

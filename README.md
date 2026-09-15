@@ -31,9 +31,9 @@ Requirements: Windows and the .NET 10 SDK. A local NWN installation is not requi
 dotnet build Memoria.NeverwinterNights.slnx -c Release
 ```
 
-The build compiles every entry-point script, converts UTI resources, verifies generated NCS files, and runs every MEMORIA_CONFIG and METACT NUI layout through the layout emulator.
+The build compiles every entry-point script, converts UTI and ResJSON resources, verifies generated NCS files, and runs every MEMORIA_CONFIG and METACT NUI layout through the layout emulator.
 
-Mod projects use wildcard items for `source`, `resources`, documentation, and layouts. MSBuild writes the evaluated inputs to `artifacts/inputs`; there are no hand-maintained file manifests. NWScript sources remain UTF-8 in the repository. The Toolset detects executable entry points, converts a temporary compiler copy to Windows-1251 when Cyrillic is present or Windows-1252 otherwise, and leaves the source unchanged.
+Mod projects use wildcard items for `source`, `resources`, documentation, and layouts. MSBuild writes the evaluated inputs to `artifacts/inputs`; there are no hand-maintained file manifests. NWScript sources and `.resjson` resources remain UTF-8 in the repository. The Toolset detects executable entry points, converts a temporary compiler copy to Windows-1251 when Cyrillic is present or Windows-1252 otherwise, and leaves the source unchanged. It also validates each `.resjson` file and emits a `.txt` resource in Windows-1251 when Cyrillic is present or Windows-1252 otherwise, matching the game-local encoding expected by `JsonParse`. Plain `.json` resources are validated as non-localized English ASCII and emitted as `.txt`, allowing registration manifests to remain readable, pretty-printed JSON in the project.
 
 Build or publish one package independently:
 

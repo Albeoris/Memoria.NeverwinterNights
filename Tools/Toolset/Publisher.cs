@@ -43,18 +43,21 @@ internal static partial class Publisher
             File.Copy(document, Path.Combine(workshopRoot, Path.GetFileName(document)), true);
             File.Copy(document, Path.Combine(nexusRoot, Path.GetFileName(document)), true);
         }
+
         foreach (string document in new[] { Path.Combine(context.RepositoryRoot, "LICENSE"), Path.Combine(context.RepositoryRoot, "THIRD_PARTY_NOTICES.md") })
         {
             if (!File.Exists(document)) continue;
             File.Copy(document, Path.Combine(workshopRoot, Path.GetFileName(document)), true);
             File.Copy(document, Path.Combine(nexusRoot, Path.GetFileName(document)), true);
         }
+
         if (inputs.Dependencies.Count > 0)
         {
             string[] dependencyLines = ["Required packages, installed first:", .. inputs.Dependencies.Distinct(StringComparer.OrdinalIgnoreCase).Select((dependency, index) => $"{index + 1}. {dependency}")];
             await File.WriteAllLinesAsync(Path.Combine(workshopRoot, "dependencies.txt"), dependencyLines, new UTF8Encoding(false));
             await File.WriteAllLinesAsync(Path.Combine(nexusRoot, "dependencies.txt"), dependencyLines, new UTF8Encoding(false));
         }
+
         if (inputs.WorkshopTags.Count > 0) await File.WriteAllLinesAsync(Path.Combine(workshopRoot, "tags.txt"), inputs.WorkshopTags.Distinct(StringComparer.OrdinalIgnoreCase), new UTF8Encoding(false));
 
         string? workshopManifest = await CreateWorkshopManifestAsync(inputs, packageRoot, workshopRoot, displayName, version);

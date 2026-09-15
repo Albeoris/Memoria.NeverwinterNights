@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "id": "MELSE",
+  "name": "Looting System Enhanced",
+  "name_key": "mod_display_name",
+  "localization": {
+    "prefix": "melse"
+  },
+  "options": [
+    {
+      "type": "bool",
+      "scope": "module",
+      "local": "MELSE_FEATURE_TREASURE_SCANNING",
+      "label": "Scan for treasure",
+      "label_key": "feature_treasure_scanning_label"
+    },
+    {
+      "type": "bool",
+      "scope": "module",
+      "local": "MELSE_FEATURE_TREASURE_TRACKING",
+      "label": "Track found treasure",
+      "label_key": "feature_treasure_tracking_label"
+    },
+    {
+      "type": "bool",
+      "scope": "module",
+      "local": "MELSE_FEATURE_TREASURE_LOOTING",
+      "label": "Automatically loot treasure",
+      "label_key": "feature_treasure_looting_label"
+    },
+    {
+      "type": "bool",
+      "scope": "module",
+      "local": "MELSE_FEATURE_CORPSE_LOOTABLE",
+      "label": "Make corpses lootable",
+      "label_key": "feature_lootable_corpses_label"
+    },
+    {
+      "type": "bool",
+      "scope": "module",
+      "local": "MELSE_FEATURE_CORPSE_DECAYING_LOOTED",
+      "label": "Remove looted corpses",
+      "label_key": "feature_corpse_decay_looted_label"
+    },
+    {
+      "type": "bool",
+      "scope": "module",
+      "local": "MELSE_FEATURE_CORPSE_DECAYING_TIMED",
+      "label": "Remove corpses over time",
+      "label_key": "feature_corpse_decay_timed_label"
+    },
+    {
+      "type": "bool",
+      "scope": "module",
+      "local": "MELSE_FEATURE_CORPSE_RAISEABLE",
+      "label": "Allow Raise Dead on corpses",
+      "label_key": "feature_corpse_raiseable_label"
+    },
+    {
+      "type": "bool",
+      "scope": "module",
+      "local": "MELSE_FEATURE_CORPSE_LOOTING_EXAMINED",
+      "label": "Loot examined corpses",
+      "label_key": "feature_corpse_loot_examined_label"
+    },
+    {
+      "type": "bool",
+      "scope": "module",
+      "local": "MELSE_FEATURE_CORPSE_LOOTING_KILLED",
+      "label": "Loot creatures killed by player",
+      "label_key": "feature_corpse_loot_killed_label"
+    },
+    {
+      "type": "bool",
+      "scope": "module",
+      "local": "MELSE_FEATURE_CORPSE_LOOTING_KILLED_BY_HENCH",
+      "label": "Loot creatures killed by companions",
+      "label_key": "feature_corpse_loot_killed_by_companion_label"
+    },
+    {
+      "type": "bool",
+      "scope": "module",
+      "local": "MELSE_FEATURE_ITEM_DESCRIPTION_ACQUIRED",
+      "label": "Show item acquisition details",
+      "label_key": "feature_item_description_acquired_label"
+    },
+    {
+      "type": "int",
+      "scope": "module",
+      "local": "MELSE_PARAM_DELAY_CORPSE_DECAY",
+      "label": "Corpse decay time (seconds)",
+      "label_key": "param_corpse_decay_seconds_label",
+      "minimum": 0,
+      "maximum": 86400
+    },
+    {
+      "type": "int",
+      "scope": "module",
+      "local": "MELSE_PARAM_THRESHOLD_ITEM_PRICE",
+      "label": "Minimum item value",
+      "label_key": "param_min_item_price_label",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    {
+      "type": "int",
+      "scope": "module",
+      "local": "MELSE_PARAM_THRESHOLD_ITEM_WEIGHT",
+      "label": "Maximum item weight",
+      "label_key": "param_max_item_weight_label",
+      "minimum": 0,
+      "maximum": 1000000
+    }
+  ]
+}

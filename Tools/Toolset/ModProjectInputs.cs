@@ -47,6 +47,7 @@ internal sealed class ModProjectInputs
                 default: throw new InvalidDataException($"Unknown mod input kind: {kind}");
             }
         }
+
         return inputs;
     }
 

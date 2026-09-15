@@ -10,7 +10,7 @@ Copy the package's `override` contents into the NWN user `override` directory be
 
 This example initializes once for a player character and then prints a debug message on every six-second dispatch.
 
-`override/memoria_acme.txt`:
+`resources/memoria_acme.json` (emitted as `override/memoria_acme.txt`):
 
 ```json
 {"schema":1,"id":"ACME_TINY","heartbeat":"acme_tiny_hb","priority":200}

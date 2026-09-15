@@ -1,13 +1,114 @@
 {
-  "screen": { "width": 3440, "height": 1440, "uiScale": 2.0 },
-  "window": { "coverage": 0.9, "titleHeight": 24, "padding": 8 },
+  "screen": {
+    "width": 3440,
+    "height": 1440,
+    "uiScale": 2.0
+  },
+  "window": {
+    "coverage": 0.9,
+    "titleHeight": 24,
+    "padding": 8
+  },
   "root": {
-    "id": "picker-items", "type": "column", "gap": 0,
+    "id": "picker-items",
+    "type": "column",
+    "gap": 0,
     "children": [
-      { "id": "search", "type": "control", "height": 30 },
-      { "id": "source-tabs", "type": "row", "height": 40, "children": [ { "id": "spells", "type": "control", "width": 40 }, { "id": "cast-items", "type": "control", "width": 40 }, { "id": "equip-items", "type": "control", "width": 40 }, { "id": "gap", "type": "control", "width": 8 }, { "id": "label", "type": "spacer" } ] },
-      { "id": "items", "type": "shelf", "height": 503, "unit": 40, "scroll": true, "items": [ { "id": "staff", "width": 1, "height": 5 }, { "id": "large", "width": 2, "height": 3 }, { "id": "scroll-a", "width": 1, "height": 2 }, { "id": "scroll-b", "width": 1, "height": 2 }, { "id": "wand-a", "width": 1, "height": 2 }, { "id": "wand-b", "width": 1, "height": 2 }, { "id": "potion-a", "width": 1, "height": 1 }, { "id": "potion-b", "width": 1, "height": 1 }, { "id": "potion-c", "width": 1, "height": 1 } ] },
-      { "id": "navigation", "type": "control", "height": 30 }
+      {
+        "id": "search",
+        "type": "control",
+        "height": 30
+      },
+      {
+        "id": "source-tabs",
+        "type": "row",
+        "height": 40,
+        "children": [
+          {
+            "id": "spells",
+            "type": "control",
+            "width": 40
+          },
+          {
+            "id": "cast-items",
+            "type": "control",
+            "width": 40
+          },
+          {
+            "id": "equip-items",
+            "type": "control",
+            "width": 40
+          },
+          {
+            "id": "gap",
+            "type": "control",
+            "width": 8
+          },
+          {
+            "id": "label",
+            "type": "spacer"
+          }
+        ]
+      },
+      {
+        "id": "items",
+        "type": "shelf",
+        "height": 503,
+        "unit": 40,
+        "scroll": true,
+        "items": [
+          {
+            "id": "staff",
+            "width": 1,
+            "height": 5
+          },
+          {
+            "id": "large",
+            "width": 2,
+            "height": 3
+          },
+          {
+            "id": "scroll-a",
+            "width": 1,
+            "height": 2
+          },
+          {
+            "id": "scroll-b",
+            "width": 1,
+            "height": 2
+          },
+          {
+            "id": "wand-a",
+            "width": 1,
+            "height": 2
+          },
+          {
+            "id": "wand-b",
+            "width": 1,
+            "height": 2
+          },
+          {
+            "id": "potion-a",
+            "width": 1,
+            "height": 1
+          },
+          {
+            "id": "potion-b",
+            "width": 1,
+            "height": 1
+          },
+          {
+            "id": "potion-c",
+            "width": 1,
+            "height": 1
+          }
+        ]
+      },
+      {
+        "id": "navigation",
+        "type": "control",
+        "height": 30
+      }
     ]
   }
 }

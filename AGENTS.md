@@ -12,6 +12,7 @@
 - `Mods/<Project>` contains one independently publishable mod, its matching SDK-independent `<Project>.proj`, `README.md`, optional `CHANGELOG.md`, `source`, and `resources`.
 - `Tools/Toolset` contains the C# build, validation, layout-emulation, and publishing application.
 - `Tools/NeverwinterNim`, `Tools/NwnIncludes`, and `Tools/NwnRoot` are vendored build dependencies. `Tools/NwnRoot/bin` is part of the minimal compiler resource tree, not generated output.
+- `Docs/` holds short, single-topic write-ups for architecture decisions that aren't obvious from the code alone (e.g. shared subsystems, caching strategies). Start from `Docs/README.md`, which is the registry/index of these files. Add a new short doc there whenever you introduce a similar shared subsystem.
 - `Build/NwnModProject.targets` is a checked-in MSBuild definition. The `Build` directory must not contain `bin`, `obj`, manifests, or other generated files.
 - Every generated or temporary file must be placed under the ignored `artifacts` directory. This includes MSBuild `bin`/`obj`, evaluated project inputs, compiled mods, layout previews, and release packages.
 
@@ -48,6 +49,7 @@ MSBuild evaluates these items into `artifacts/inputs/<Mod>.inputs`. Toolset auto
 - compiles `.nss` files containing `void main()` or `int StartingConditional()`;
 - treats other `.nss` files as includes;
 - converts resources named like `*.uti.json` from JSON to their three-letter GFF type;
+- validates plain `.json` resources as non-localized English ASCII and emits them as `.txt` resources;
 - copies ordinary resources into the flat NWN override output;
 - validates every `NwnLayout` with the NUI layout emulator;
 - rejects duplicate output resrefs.

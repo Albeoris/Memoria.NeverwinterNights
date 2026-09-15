@@ -27,19 +27,3 @@ string MEMORIA_GetLanguage(object oPlayer, string sLanguageLocal, string sRussia
     SetLocalString(oPlayer, sLanguageLocal, sResult);
     return sResult;
 }
-
-/// @brief Executes a language-specific text script and retrieves the localized text it writes to the player.
-/// @param iKey Numeric text key passed to the localization script.
-/// @param oPlayer Player used as the script target and result-local owner.
-/// @param sLang Language suffix appended to the text script prefix.
-/// @param sTextScriptPrefix Prefix of the language-specific text script resource.
-/// @param sTextResultLocal Name of the local string containing the script result.
-/// @param sTextKeyParam Name of the script parameter that receives iKey.
-/// @return Localized text written by the executed script, or an empty string when no result is written.
-string MEMORIA_GetText(int iKey, object oPlayer, string sLang, string sTextScriptPrefix, string sTextResultLocal, string sTextKeyParam)
-{
-    DeleteLocalString(oPlayer, sTextResultLocal);
-    SetScriptParam(sTextKeyParam, IntToString(iKey));
-    ExecuteScript(sTextScriptPrefix + sLang, oPlayer);
-    return GetLocalString(oPlayer, sTextResultLocal);
-}

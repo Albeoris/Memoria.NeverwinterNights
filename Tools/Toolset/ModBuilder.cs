@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace Memoria.NeverwinterNights.Toolset;
@@ -37,6 +38,7 @@ internal static partial class ModBuilder
                 includes++;
                 continue;
             }
+
             string output = ReserveOutput(outputDirectory, Path.GetFileNameWithoutExtension(source) + ".ncs", outputNames);
             string encoding = SelectNwnEncoding(text, source);
             int exitCode = await ToolsetApp.CompileAsync(context, source, output, includeDirectories, encoding);
@@ -44,17 +46,31 @@ internal static partial class ModBuilder
             compiled++;
         }
 
-        int converted = 0;
+        int gffConverted = 0;
+        int resJsonConverted = 0;
+        int jsonTextConverted = 0;
         int copied = 0;
         foreach (string resource in inputs.Resources.Distinct(StringComparer.OrdinalIgnoreCase).Order())
         {
             EnsureFileExists(resource);
-            if (IsGffJson(resource))
+            if (IsResJson(resource))
+            {
+                string output = ReserveOutput(outputDirectory, Path.GetFileNameWithoutExtension(resource) + ".txt", outputNames);
+                await ConvertResJsonAsync(resource, output);
+                resJsonConverted++;
+            }
+            else if (IsGffJson(resource))
             {
                 string output = ReserveOutput(outputDirectory, Path.GetFileNameWithoutExtension(resource), outputNames);
                 int exitCode = await ToolsetApp.GffConvertAsync(context, resource, output, "json", "gff");
                 if (exitCode != 0) return exitCode;
-                converted++;
+                gffConverted++;
+            }
+            else if (IsJsonTextResource(resource))
+            {
+                string output = ReserveOutput(outputDirectory, Path.GetFileNameWithoutExtension(resource) + ".txt", outputNames);
+                await ConvertJsonTextResourceAsync(resource, output);
+                jsonTextConverted++;
             }
             else
             {
@@ -62,6 +78,7 @@ internal static partial class ModBuilder
                 copied++;
             }
         }
+
         foreach (string packageFile in inputs.PackageFiles.Distinct(StringComparer.OrdinalIgnoreCase).Order())
         {
             EnsureFileExists(packageFile);
@@ -80,7 +97,7 @@ internal static partial class ModBuilder
             layouts++;
         }
 
-        Console.WriteLine($"Mod build completed: {compiled} scripts, {includes} includes, {converted} GFF resources, {copied} copied files, {layouts} layouts.");
+        Console.WriteLine($"Mod build completed: {compiled} scripts, {includes} includes, {gffConverted} GFF resources, {resJsonConverted} ResJSON resources, {jsonTextConverted} JSON text resources, {copied} copied files, {layouts} layouts.");
         return 0;
     }
 
@@ -94,7 +111,7 @@ internal static partial class ModBuilder
     {
         if (CanEncode(text, 1252)) return "windows-1252";
         if (CanEncode(text, 1251)) return "windows-1251";
-        throw new InvalidDataException($"NWScript contains characters unsupported by Windows-1252 and Windows-1251: {source}");
+        throw new InvalidDataException($"Text contains characters unsupported by Windows-1252 and Windows-1251: {source}");
     }
 
     private static bool CanEncode(string text, int codePage)
@@ -115,6 +132,49 @@ internal static partial class ModBuilder
         if (!Path.GetExtension(path).Equals(".json", StringComparison.OrdinalIgnoreCase)) return false;
         string innerExtension = Path.GetExtension(Path.GetFileNameWithoutExtension(path));
         return innerExtension.Length == 4 && innerExtension[1..].All(char.IsLetterOrDigit);
+    }
+
+    private static bool IsResJson(string path)
+    {
+        return Path.GetExtension(path).Equals(".resjson", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsJsonTextResource(string path)
+    {
+        return Path.GetExtension(path).Equals(".json", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static async Task ConvertResJsonAsync(string source, string output)
+    {
+        try
+        {
+            string text = await File.ReadAllTextAsync(source, new UTF8Encoding(false, true));
+            using JsonDocument document = JsonDocument.Parse(text);
+            string encodingName = SelectNwnEncoding(text, source);
+            Encoding targetEncoding = Encoding.GetEncoding(encodingName, EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback);
+            await File.WriteAllTextAsync(output, text, targetEncoding);
+            Console.WriteLine($"Converted ResJSON [{encodingName}]: {source} -> {output}");
+        }
+        catch (JsonException exception)
+        {
+            throw new InvalidDataException($"Invalid ResJSON resource: {source}", exception);
+        }
+    }
+
+    private static async Task ConvertJsonTextResourceAsync(string source, string output)
+    {
+        try
+        {
+            string text = await File.ReadAllTextAsync(source, new UTF8Encoding(false, true));
+            using JsonDocument document = JsonDocument.Parse(text);
+            if (text.Any(character => character > 127)) throw new InvalidDataException($"JSON text resources must contain English ASCII text only: {source}");
+            await File.WriteAllTextAsync(output, text, new UTF8Encoding(false));
+            Console.WriteLine($"Converted JSON text resource: {source} -> {output}");
+        }
+        catch (JsonException exception)
+        {
+            throw new InvalidDataException($"Invalid JSON text resource: {source}", exception);
+        }
     }
 
     private static string ReserveOutput(string outputDirectory, string fileName, HashSet<string> outputNames)

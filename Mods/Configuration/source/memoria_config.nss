@@ -1,5 +1,6 @@
 #include "esi_lib"
 #include "memoria_locale"
+#include "memoria_i18n"
 #include "nw_inc_nui"
 
 const string MEMORIA_CONFIG_MANIFEST_PREFIX = "mconfig_";
@@ -7,36 +8,35 @@ const string MEMORIA_CONFIG_ITEM_RESREF = "memoria_config";
 const string MEMORIA_CONFIG_ITEM_TAG = "MEMORIA_CONFIGURATION_ITEM";
 const string MEMORIA_CONFIG_ACTIVATE_HANDLER = "meconfig_evact";
 const string MEMORIA_CONFIG_WINDOW_ID = "memoria_config";
+const string MEMORIA_CONFIG_I18N_PREFIX = "meconfig";
 const string MEMORIA_CONFIG_LOCAL_ITEM_SCHEMA = "MEMORIA_CONFIG_ITEM_SCHEMA";
 const string MEMORIA_CONFIG_LOCAL_ESI_INSTALLED = "MEMORIA_CONFIG_ESI_INSTALLED";
 const string MEMORIA_CONFIG_LOCAL_SELECTED_ID = "MEMORIA_CONFIG_SELECTED_ID";
 const string MEMORIA_CONFIG_LOCAL_DIAGNOSTIC_TARGET = "MEMORIA_CONFIG_DIAGNOSTIC_TARGET";
 const string MEMORIA_CONFIG_LOCAL_LANGUAGE = "MEMORIA_CONFIG_LANGUAGE";
 const string MEMORIA_CONFIG_LOCAL_IS_RUSSIAN = "MEMORIA_CONFIG_LANGUAGE_IS_RUSSIAN";
-const string MEMORIA_CONFIG_LOCAL_TEXT = "MEMORIA_CONFIG_TEXT_RESULT";
 const string MEMORIA_CONFIG_LOCAL_ITEM_LANGUAGE = "MEMORIA_CONFIG_ITEM_LANGUAGE";
 const string MEMORIA_CONFIG_LOCAL_ITEM_OBJECT = "MEMORIA_CONFIG_ITEM_OBJECT";
 const string MEMORIA_CONFIG_CACHE_OWNER_LOCAL = "MEMORIA_CONFIG_CACHE_OWNER";
 const string MEMORIA_CONFIG_CACHE_WINDOW = "meconfig_cache";
-const string MEMORIA_CONFIG_TEXT_PARAM = "MEMORIA_CONFIG_TEXT_KEY";
 const int MEMORIA_CONFIG_ITEM_SCHEMA = 1;
 
-const int MEMORIA_CONFIG_TEXT_ITEM_NAME = 1;
-const int MEMORIA_CONFIG_TEXT_ITEM_DESCRIPTION = 2;
-const int MEMORIA_CONFIG_TEXT_WINDOW_TITLE = 3;
-const int MEMORIA_CONFIG_TEXT_NO_MODULES = 4;
-const int MEMORIA_CONFIG_TEXT_SAVE = 5;
-const int MEMORIA_CONFIG_TEXT_CLOSE = 6;
-const int MEMORIA_CONFIG_TEXT_RANGE_ERROR = 7;
+const string MEMORIA_CONFIG_TEXT_ITEM_NAME = "item_name";
+const string MEMORIA_CONFIG_TEXT_ITEM_DESCRIPTION = "item_description";
+const string MEMORIA_CONFIG_TEXT_WINDOW_TITLE = "window_title";
+const string MEMORIA_CONFIG_TEXT_NO_MODULES = "no_modules";
+const string MEMORIA_CONFIG_TEXT_SAVE = "save";
+const string MEMORIA_CONFIG_TEXT_CLOSE = "close";
+const string MEMORIA_CONFIG_TEXT_RANGE_ERROR = "range_error";
 
 string MEMORIA_CONFIG_GetLanguage(object oPC)
 {
     return MEMORIA_GetLanguage(oPC, MEMORIA_CONFIG_LOCAL_LANGUAGE, "meconfig_is_ru", MEMORIA_CONFIG_LOCAL_IS_RUSSIAN);
 }
 
-string MEMORIA_CONFIG_GetText(object oPC, int nKey)
+string MEMORIA_CONFIG_GetText(object oPC, string sKey)
 {
-    return MEMORIA_GetText(nKey, oPC, MEMORIA_CONFIG_GetLanguage(oPC), "meconfig_txt_", MEMORIA_CONFIG_LOCAL_TEXT, MEMORIA_CONFIG_TEXT_PARAM);
+    return MEMORIA_I18N_GetText(MEMORIA_CONFIG_I18N_PREFIX, MEMORIA_CONFIG_GetLanguage(oPC), sKey);
 }
 
 int MEMORIA_CONFIG_CompareNames(string sLeft, string sRight)
@@ -64,19 +64,10 @@ int MEMORIA_CONFIG_CompareNames(string sLeft, string sRight)
 string MEMORIA_CONFIG_GetLocalizedValue(object oPC, json jModule, json jValue, string sFallbackField, string sKeyField)
 {
     string sFallback = JsonGetString(JsonObjectGet(jValue, sFallbackField));
-    int nKey = JsonGetInt(JsonObjectGet(jValue, sKeyField));
-    json jLocalization = JsonObjectGet(jModule, "localization");
-    string sPrefix = JsonGetString(JsonObjectGet(jLocalization, "prefix"));
-    string sParameter = JsonGetString(JsonObjectGet(jLocalization, "parameter"));
-    string sResult = JsonGetString(JsonObjectGet(jLocalization, "result"));
-    if (nKey <= 0 || sPrefix == "" || sParameter == "" || sResult == "") return sFallback;
-    string sScript = sPrefix + MEMORIA_CONFIG_GetLanguage(oPC);
-    if (ResManGetAliasFor(sScript, RESTYPE_NCS) == "") sScript = sPrefix + "en";
-    if (ResManGetAliasFor(sScript, RESTYPE_NCS) == "") return sFallback;
-    DeleteLocalString(oPC, sResult);
-    SetScriptParam(sParameter, IntToString(nKey));
-    ExecuteScript(sScript, oPC);
-    string sLocalized = GetLocalString(oPC, sResult);
+    string sKey = JsonGetString(JsonObjectGet(jValue, sKeyField));
+    string sPrefix = JsonGetString(JsonObjectGet(JsonObjectGet(jModule, "localization"), "prefix"));
+    if (sKey == "" || sPrefix == "") return sFallback;
+    string sLocalized = MEMORIA_I18N_GetText(sPrefix, MEMORIA_CONFIG_GetLanguage(oPC), sKey);
     return sLocalized == "" ? sFallback : sLocalized;
 }
 

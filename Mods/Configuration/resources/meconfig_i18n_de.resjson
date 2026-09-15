@@ -1,0 +1,10 @@
+{
+  "mod_display_name": "Memoria Configuration Manager",
+  "item_name": "Memoria-Konfiguration",
+  "item_description": "Öffnet die Memoria-Konfiguration. Wähle ein Objekt als Ziel, um registrierte Diagnosen auszuführen.",
+  "window_title": "Memoria-Konfiguration",
+  "no_modules": "Keine registrierten Memoria-Mods.",
+  "save": "Speichern",
+  "close": "Schließen",
+  "range_error": "muss im Bereich liegen"
+}

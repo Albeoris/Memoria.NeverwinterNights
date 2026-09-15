@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "id": "METACT",
+  "heartbeat": "metact_hb",
+  "priority": 300
+}

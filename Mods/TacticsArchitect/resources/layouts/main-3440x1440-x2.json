@@ -1,12 +1,174 @@
 {
-  "screen": { "width": 3440, "height": 1440, "uiScale": 2.0 },
-  "window": { "coverage": 0.9, "titleHeight": 24, "padding": 8 },
-  "root": { "id": "main", "type": "column", "children": [
-    { "id": "actor", "type": "control", "height": 28 }, { "id": "tactic", "type": "control", "height": 28 }, { "id": "name", "type": "control", "height": 28 }, { "id": "debug", "type": "control", "height": 28 },
-    { "id": "content", "type": "row", "height": 465, "gap": 8, "children": [
-      { "id": "rules-panel", "type": "column", "width": 423.36, "children": [ { "id": "rules-header", "type": "control", "height": 24 }, { "id": "rules", "type": "list", "height": 411, "rowHeight": 32, "sampleRows": 12, "cells": [ { "id": "select", "grow": 1 }, { "id": "edit", "width": 28 }, { "id": "up", "width": 28 }, { "id": "down", "width": 28 } ] }, { "id": "add-rule", "type": "control", "height": 30 } ] },
-      { "id": "actions-panel", "type": "column", "width": 635.04, "children": [ { "id": "actions-header", "type": "control", "height": 24 }, { "id": "actions", "type": "list", "height": 411, "rowHeight": 32, "sampleRows": 12, "cells": [ { "id": "edit", "grow": 1 }, { "id": "up", "width": 28 }, { "id": "down", "width": 28 } ] }, { "id": "add-actions", "type": "control", "height": 30 } ] },
-      { "id": "priorities-panel", "type": "column", "width": 453.6, "children": [ { "id": "priorities-header", "type": "control", "height": 24 }, { "id": "scope", "type": "control", "height": 30 }, { "id": "priorities", "type": "list", "height": 351, "rowHeight": 32, "sampleRows": 10, "cells": [ { "id": "edit", "grow": 1 }, { "id": "up", "width": 28 }, { "id": "down", "width": 28 } ] }, { "id": "fallback", "type": "control", "height": 30 }, { "id": "add-priority", "type": "control", "height": 30 } ] }
-    ] }
-  ] }
+  "screen": {
+    "width": 3440,
+    "height": 1440,
+    "uiScale": 2.0
+  },
+  "window": {
+    "coverage": 0.9,
+    "titleHeight": 24,
+    "padding": 8
+  },
+  "root": {
+    "id": "main",
+    "type": "column",
+    "children": [
+      {
+        "id": "actor",
+        "type": "control",
+        "height": 28
+      },
+      {
+        "id": "tactic",
+        "type": "control",
+        "height": 28
+      },
+      {
+        "id": "name",
+        "type": "control",
+        "height": 28
+      },
+      {
+        "id": "debug",
+        "type": "control",
+        "height": 28
+      },
+      {
+        "id": "content",
+        "type": "row",
+        "height": 465,
+        "gap": 8,
+        "children": [
+          {
+            "id": "rules-panel",
+            "type": "column",
+            "width": 423.36,
+            "children": [
+              {
+                "id": "rules-header",
+                "type": "control",
+                "height": 24
+              },
+              {
+                "id": "rules",
+                "type": "list",
+                "height": 411,
+                "rowHeight": 32,
+                "sampleRows": 12,
+                "cells": [
+                  {
+                    "id": "select",
+                    "grow": 1
+                  },
+                  {
+                    "id": "edit",
+                    "width": 28
+                  },
+                  {
+                    "id": "up",
+                    "width": 28
+                  },
+                  {
+                    "id": "down",
+                    "width": 28
+                  }
+                ]
+              },
+              {
+                "id": "add-rule",
+                "type": "control",
+                "height": 30
+              }
+            ]
+          },
+          {
+            "id": "actions-panel",
+            "type": "column",
+            "width": 635.04,
+            "children": [
+              {
+                "id": "actions-header",
+                "type": "control",
+                "height": 24
+              },
+              {
+                "id": "actions",
+                "type": "list",
+                "height": 411,
+                "rowHeight": 32,
+                "sampleRows": 12,
+                "cells": [
+                  {
+                    "id": "edit",
+                    "grow": 1
+                  },
+                  {
+                    "id": "up",
+                    "width": 28
+                  },
+                  {
+                    "id": "down",
+                    "width": 28
+                  }
+                ]
+              },
+              {
+                "id": "add-actions",
+                "type": "control",
+                "height": 30
+              }
+            ]
+          },
+          {
+            "id": "priorities-panel",
+            "type": "column",
+            "width": 453.6,
+            "children": [
+              {
+                "id": "priorities-header",
+                "type": "control",
+                "height": 24
+              },
+              {
+                "id": "scope",
+                "type": "control",
+                "height": 30
+              },
+              {
+                "id": "priorities",
+                "type": "list",
+                "height": 351,
+                "rowHeight": 32,
+                "sampleRows": 10,
+                "cells": [
+                  {
+                    "id": "edit",
+                    "grow": 1
+                  },
+                  {
+                    "id": "up",
+                    "width": 28
+                  },
+                  {
+                    "id": "down",
+                    "width": 28
+                  }
+                ]
+              },
+              {
+                "id": "fallback",
+                "type": "control",
+                "height": 30
+              },
+              {
+                "id": "add-priority",
+                "type": "control",
+                "height": 30
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

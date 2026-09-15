@@ -1,0 +1,10 @@
+{
+  "mod_display_name": "Memoria Configuration Manager",
+  "item_name": "Memoria Configuration",
+  "item_description": "Open the Memoria Configuration Manager. Target an object to run registered diagnostics.",
+  "window_title": "Memoria Configuration",
+  "no_modules": "No registered Memoria mods.",
+  "save": "Save",
+  "close": "Close",
+  "range_error": "must be between"
+}

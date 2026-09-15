@@ -1,0 +1,10 @@
+{
+  "mod_display_name": "Memoria Configuration Manager",
+  "item_name": "Настройки Memoria",
+  "item_description": "Открывает менеджер настроек Memoria. Выберите объект целью, чтобы запустить доступную диагностику.",
+  "window_title": "Настройки Memoria",
+  "no_modules": "Зарегистрированные моды Memoria не найдены.",
+  "save": "Сохранить",
+  "close": "Закрыть",
+  "range_error": "должно быть в диапазоне"
+}

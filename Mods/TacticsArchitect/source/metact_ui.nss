@@ -53,13 +53,23 @@ json METACT_IconButton(string sIcon, string sId, string sTooltip)
     return NuiTooltip(NuiId(NuiButtonImage(JsonString(sIcon)), sId), JsonString(sTooltip));
 }
 
-json METACT_ComboEntries(object oPC, int iFirstKey, int iLastKey)
+json METACT_ComboEntries2(object oPC, string sKeyA, string sKeyB)
 {
     json jEntries = JsonArray();
-    int iKey;
-    for (iKey = iFirstKey; iKey <= iLastKey; iKey++)
-        jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(iKey, oPC), iKey - iFirstKey));
-    return jEntries;
+    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(sKeyA, oPC), 0));
+    return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(sKeyB, oPC), 1));
+}
+
+json METACT_ComboEntries3(object oPC, string sKeyA, string sKeyB, string sKeyC)
+{
+    json jEntries = METACT_ComboEntries2(oPC, sKeyA, sKeyB);
+    return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(sKeyC, oPC), 2));
+}
+
+json METACT_ComboEntries4(object oPC, string sKeyA, string sKeyB, string sKeyC, string sKeyD)
+{
+    json jEntries = METACT_ComboEntries3(oPC, sKeyA, sKeyB, sKeyC);
+    return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(sKeyD, oPC), 3));
 }
 
 json METACT_ConditionEntries(object oPC)
@@ -84,7 +94,7 @@ json METACT_RatingEntries()
 
 json METACT_FriendlyFirePolicyEntries(object oPC)
 {
-    return METACT_ComboEntries(oPC, METACT_TEXT_FRIENDLY_FIRE_UNRESTRICTED, METACT_TEXT_FRIENDLY_FIRE_STATIONARY);
+    return METACT_ComboEntries4(oPC, METACT_TEXT_FRIENDLY_FIRE_UNRESTRICTED, METACT_TEXT_FRIENDLY_FIRE_PRECAST, METACT_TEXT_FRIENDLY_FIRE_DURING_CAST, METACT_TEXT_FRIENDLY_FIRE_STATIONARY);
 }
 
 json METACT_NewAction()
@@ -162,15 +172,18 @@ json METACT_NewPriority(json jPriorities)
 string METACT_PriorityLabel(object oPC, json jPriority)
 {
     string sKind = JsonGetString(JsonObjectGet(jPriority, "kind"));
-    int iKey = sKind == "caster" ? METACT_TEXT_PRIORITY_CASTER : sKind == "rating_high" ? METACT_TEXT_PRIORITY_RATING_HIGH : sKind == "rating_low" ? METACT_TEXT_PRIORITY_RATING_LOW : sKind == "health_low" ? METACT_TEXT_PRIORITY_HEALTH_LOW : METACT_TEXT_PRIORITY_HEALTH_HIGH;
-    return METACT_GetText(iKey, oPC);
+    string sKey = sKind == "caster" ? METACT_TEXT_PRIORITY_CASTER : sKind == "rating_high" ? METACT_TEXT_PRIORITY_RATING_HIGH : sKind == "rating_low" ? METACT_TEXT_PRIORITY_RATING_LOW : sKind == "health_low" ? METACT_TEXT_PRIORITY_HEALTH_LOW : METACT_TEXT_PRIORITY_HEALTH_HIGH;
+    return METACT_GetText(sKey, oPC);
 }
 
 json METACT_PriorityEntries(object oPC)
 {
     json jEntries = JsonArray();
-    int iKind;
-    for (iKind = 0; iKind < 5; iKind++) jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_CASTER + iKind, oPC), iKind));
+    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_CASTER, oPC), 0));
+    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_RATING_HIGH, oPC), 1));
+    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_RATING_LOW, oPC), 2));
+    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_HEALTH_LOW, oPC), 3));
+    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_HEALTH_HIGH, oPC), 4));
     return jEntries;
 }
 
@@ -326,10 +339,10 @@ json METACT_BuildPrioritiesPanel(object oPC, float fHeight)
 
 void METACT_RefreshPrioritiesPanel(object oPC, int iToken, int iScope)
 {
-    int iScopeKey = iScope == METACT_PRIORITY_SCOPE_ACTION ? METACT_TEXT_ACTION_PRIORITIES : iScope == METACT_PRIORITY_SCOPE_RULE ? METACT_TEXT_LOCAL_PRIORITIES : METACT_TEXT_GLOBAL_PRIORITIES;
-    int iFallbackKey = iScope == METACT_PRIORITY_SCOPE_ACTION ? METACT_TEXT_ACTION_PRIORITY_FALLBACK : iScope == METACT_PRIORITY_SCOPE_RULE ? METACT_TEXT_RULE_PRIORITY_FALLBACK : METACT_TEXT_PRIORITY_DEFAULT;
-    NuiSetBind(oPC, iToken, "priority_scope_label", JsonString(METACT_GetText(iScopeKey, oPC)));
-    NuiSetBind(oPC, iToken, "priority_fallback_label", JsonString(METACT_GetText(iFallbackKey, oPC)));
+    string sScopeKey = iScope == METACT_PRIORITY_SCOPE_ACTION ? METACT_TEXT_ACTION_PRIORITIES : iScope == METACT_PRIORITY_SCOPE_RULE ? METACT_TEXT_LOCAL_PRIORITIES : METACT_TEXT_GLOBAL_PRIORITIES;
+    string sFallbackKey = iScope == METACT_PRIORITY_SCOPE_ACTION ? METACT_TEXT_ACTION_PRIORITY_FALLBACK : iScope == METACT_PRIORITY_SCOPE_RULE ? METACT_TEXT_RULE_PRIORITY_FALLBACK : METACT_TEXT_PRIORITY_DEFAULT;
+    NuiSetBind(oPC, iToken, "priority_scope_label", JsonString(METACT_GetText(sScopeKey, oPC)));
+    NuiSetBind(oPC, iToken, "priority_fallback_label", JsonString(METACT_GetText(sFallbackKey, oPC)));
     json jPriorities = METACT_GetPrioritiesForScope(oPC, iScope);
     json jPrioritySummaries = JsonArray();
     json jPrioritySelected = JsonArray();
@@ -587,7 +600,7 @@ json METACT_BuildActionPanel(object oPC, float fPanelWidth)
     jAction = JsonArrayInsert(jAction, NuiHeight(METACT_Label(METACT_GetText(METACT_TEXT_TARGET, oPC)), 20.0f));
     jAction = JsonArrayInsert(jAction, NuiHeight(NuiCombo(NuiBind("target_entries"), NuiBind("target_sel")), 28.0f));
     jAction = JsonArrayInsert(jAction, NuiHeight(METACT_Label(METACT_GetText(METACT_TEXT_SOURCE, oPC)), 20.0f));
-    jAction = JsonArrayInsert(jAction, NuiHeight(NuiCombo(METACT_ComboEntries(oPC, METACT_TEXT_SOURCE_ANY, METACT_TEXT_SOURCE_ITEM), NuiBind("source_sel")), 28.0f));
+    jAction = JsonArrayInsert(jAction, NuiHeight(NuiCombo(METACT_ComboEntries3(oPC, METACT_TEXT_SOURCE_ANY, METACT_TEXT_SOURCE_SPELL, METACT_TEXT_SOURCE_ITEM), NuiBind("source_sel")), 28.0f));
     jAction = JsonArrayInsert(jAction, NuiHeight(NuiCheck(JsonString(METACT_GetText(METACT_TEXT_ALLOW_MOVEMENT, oPC)), NuiBind("allow_move")), 26.0f));
     json jFriendlyFire = JsonArray();
     jFriendlyFire = JsonArrayInsert(jFriendlyFire, NuiHeight(METACT_Label(METACT_GetText(METACT_TEXT_FRIENDLY_FIRE, oPC)), 20.0f));
@@ -604,13 +617,13 @@ json METACT_BuildConditionPanel(object oPC)
     jCondition = JsonArrayInsert(jCondition, NuiHeight(NuiCombo(METACT_ConditionEntries(oPC), NuiBind("condition_sel")), 30.0f));
     json jConditionRating = JsonArray();
     jConditionRating = JsonArrayInsert(jConditionRating, NuiHeight(METACT_Label(METACT_GetText(METACT_TEXT_COMPARISON, oPC)), 20.0f));
-    jConditionRating = JsonArrayInsert(jConditionRating, NuiHeight(NuiCombo(METACT_ComboEntries(oPC, METACT_TEXT_AT_LEAST, METACT_TEXT_AT_MOST), NuiBind("comparison_sel")), 28.0f));
+    jConditionRating = JsonArrayInsert(jConditionRating, NuiHeight(NuiCombo(METACT_ComboEntries2(oPC, METACT_TEXT_AT_LEAST, METACT_TEXT_AT_MOST), NuiBind("comparison_sel")), 28.0f));
     jConditionRating = JsonArrayInsert(jConditionRating, NuiHeight(METACT_Label(METACT_GetText(METACT_TEXT_THRESHOLD, oPC)), 20.0f));
     jConditionRating = JsonArrayInsert(jConditionRating, NuiHeight(NuiCombo(METACT_RatingEntries(), NuiBind("rating_sel")), 28.0f));
     jCondition = JsonArrayInsert(jCondition, NuiHeight(NuiVisible(NuiCol(jConditionRating), NuiBind("show_condition_rating")), 96.0f));
     json jConditionSubject = JsonArray();
     jConditionSubject = JsonArrayInsert(jConditionSubject, NuiHeight(METACT_Label(METACT_GetText(METACT_TEXT_SUBJECT, oPC)), 20.0f));
-    jConditionSubject = JsonArrayInsert(jConditionSubject, NuiHeight(NuiCombo(METACT_ComboEntries(oPC, METACT_TEXT_SUBJECT_SELF, METACT_TEXT_SUBJECT_ALLY), NuiBind("subject_sel")), 28.0f));
+    jConditionSubject = JsonArrayInsert(jConditionSubject, NuiHeight(NuiCombo(METACT_ComboEntries2(oPC, METACT_TEXT_SUBJECT_SELF, METACT_TEXT_SUBJECT_ALLY), NuiBind("subject_sel")), 28.0f));
     jCondition = JsonArrayInsert(jCondition, NuiHeight(NuiVisible(NuiCol(jConditionSubject), NuiBind("show_condition_subject")), 48.0f));
     json jConditionValues = JsonArray();
     jConditionValues = JsonArrayInsert(jConditionValues, NuiHeight(METACT_Label(METACT_GetText(METACT_TEXT_THRESHOLD, oPC)), 20.0f));
@@ -783,7 +796,7 @@ void METACT_RefreshActionEditor(object oPC, int iToken)
     if (iAoeSafety < METACT_AOE_SAFETY_SAFE || iAoeSafety > METACT_AOE_SAFETY_STATIONARY) iAoeSafety = METACT_AOE_SAFETY_SAFE;
     int iFriendlyFirePolicy = JsonGetInt(JsonObjectGet(jAction, "friendly_fire")) ? 0 : iAoeSafety;
     NuiSetBind(oPC, iToken, "friendly_fire_policy", JsonInt(iFriendlyFirePolicy));
-    NuiSetBind(oPC, iToken, "friendly_fire_policy_help", JsonString(METACT_GetText(METACT_TEXT_FRIENDLY_FIRE_UNRESTRICTED_HELP + iFriendlyFirePolicy, oPC)));
+    NuiSetBind(oPC, iToken, "friendly_fire_policy_help", JsonString(METACT_GetText(METACT_GetFriendlyFireHelpKey(iFriendlyFirePolicy), oPC)));
     int iSpell = JsonGetInt(JsonObjectGet(jAction, "spell"));
     NuiSetBind(oPC, iToken, "show_friendly_fire", JsonBool(iSpell >= 0 && METACT_IsSpellHostile(iSpell) && METACT_IsSpellArea(iSpell) && METACT_CanSpellHitAllies(iSpell)));
     NuiSetBind(oPC, iToken, "action_existing", JsonBool(GetLocalInt(oPC, METACT_LOCAL_ACTION) >= 0));

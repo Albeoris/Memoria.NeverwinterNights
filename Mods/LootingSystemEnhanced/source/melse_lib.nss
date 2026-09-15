@@ -18,7 +18,9 @@
 #include "nw_i0_tool"
 #include "nw_i0_spells"
 #include "esi_lib"
-#include "melse_sin_lib"
+#include "rav_util"
+#include "memoria_locale"
+#include "memoria_i18n"
 
 const string MELSE_VERSION = "1.1";
 const string MELSE_VERSION_BUILD = "1010";
@@ -71,7 +73,9 @@ const float MELSE_DELAY_TREASURE_NOTIFY = 0.1f;
 const float MELSE_DELAY_TREASURE_TRACK = 0.1f;
 const float MELSE_DELAY_CORPSE_INITIALIZE = 1.0f;
 
-const string MELSE_TEXT_INDEX = "melse_text";
+const string MELSE_I18N_PREFIX = "melse";
+const string MELSE_LOCAL_LANGUAGE = "MELSE_LANGUAGE";
+const string MELSE_LOCAL_IS_RUSSIAN = "MELSE_LANGUAGE_IS_RUSSIAN";
 
 const int MELSE_TEXT_ITEM_TAKEN = 1;
 const int MELSE_TEXT_ITEM_NOTIFY_PLOT = 2;
@@ -81,20 +85,38 @@ const int MELSE_TEXT_ITEM_LOOTED_FROM = 5;
 const int MELSE_TEXT_ITEM_LOOTED_FROM_AREA = 6;
 const int MELSE_TEXT_ITEM_IGNORED = 7;
 
-const int MELSE_STRREF_MAINTENANCE_INSTALL = 501;
-const int MELSE_STRREF_MAINTENANCE_UPDATE = 502;
+const string MELSE_STRREF_MAINTENANCE_INSTALL = "installed_version_message";
+const string MELSE_STRREF_MAINTENANCE_UPDATE = "updated_version_message";
 
-const int MELSE_STRREF_TREASURE_FOUND = 1;
-const int MELSE_STRREF_TREASURE_NOT_FOUND = 2;
-const int MELSE_STRREF_ACQUIRED_ITEM = 3;
-const int MELSE_STRREF_ACQUIRED_GOLD = 6;
-const int MELSE_STRREF_ACQUIRED_FROM = 4;
-const int MELSE_STRREF_DROPPED_ITEM_PLOT = 5;
-const int MELSE_STRREF_DROPPED_ITEM_SLOT = 7;
-const int MELSE_STRREF_ITEM_LOOTED_FROM = 8;
-const int MELSE_STRREF_ITEM_LOOTED_FROM_AREA = 9;
-const int MELSE_STRREF_ITEM_NAME_UNIDENTIFIED = 10;
-const int MELSE_STRREF_ITEM_IGNORED = 11;
+const string MELSE_STRREF_TREASURE_FOUND = "treasure_area_hint";
+const string MELSE_STRREF_TREASURE_NOT_FOUND = "treasure_area_clear";
+const string MELSE_STRREF_ACQUIRED_ITEM = "acquired_item_message";
+const string MELSE_STRREF_ACQUIRED_GOLD = "acquired_gold_message";
+const string MELSE_STRREF_ACQUIRED_FROM = "acquired_from_message";
+const string MELSE_STRREF_DROPPED_ITEM_PLOT = "dropped_quest_item";
+const string MELSE_STRREF_DROPPED_ITEM_SLOT = "dropped_equipped_item";
+const string MELSE_STRREF_ITEM_LOOTED_FROM = "item_looted_from_label";
+const string MELSE_STRREF_ITEM_LOOTED_FROM_AREA = "item_looted_from_area_label";
+const string MELSE_STRREF_ITEM_NAME_UNIDENTIFIED = "item_name_unidentified";
+const string MELSE_STRREF_ITEM_IGNORED = "item_ignored_suffix";
+
+string MELSE_GetLanguage()
+{
+    string sResult = GetLocalString(GetModule(), MELSE_LOCAL_LANGUAGE);
+    return sResult == "" ? "en" : sResult;
+}
+
+void MELSE_DetectLanguage(object oPC)
+{
+    object oModule = GetModule();
+    if (GetLocalString(oModule, MELSE_LOCAL_LANGUAGE) != "") return;
+    SetLocalString(oModule, MELSE_LOCAL_LANGUAGE, MEMORIA_GetLanguage(oPC, MELSE_LOCAL_LANGUAGE, "melse_is_ru", MELSE_LOCAL_IS_RUSSIAN));
+}
+
+string MELSE_GetLocalizedText(string sKey)
+{
+    return MEMORIA_I18N_GetText(MELSE_I18N_PREFIX, MELSE_GetLanguage(), sKey);
+}
 
 const string MELSE_SCRIPT_EVENT_MODULE_ACQUIRED_ITEM = "melse_modacqit";
 const string MELSE_SCRIPT_EVENT_CREATURE_DEATH = "melse_crtdeath";
@@ -127,31 +149,31 @@ string MELSE_GetText(int iKey, object oObject = OBJECT_INVALID, int iStackSize =
     if (iKey == MELSE_TEXT_ITEM_TAKEN)
         sResult = StringToRGBString(GetName(oObject) + " >> " +
                                         IntToString(iStackSize) + "x " + 
-                                        (GetIdentified(oItem) ? GetName(oItem) : MELSE_SIN_GetText(MELSE_STRREF_ITEM_NAME_UNIDENTIFIED)),
+                                        (GetIdentified(oItem) ? GetName(oItem) : MELSE_GetLocalizedText(MELSE_STRREF_ITEM_NAME_UNIDENTIFIED)),
                                     STRING_COLOR_GREEN);
     else if (iKey == MELSE_TEXT_ITEM_IGNORED)
         sResult = StringToRGBString(GetName(oObject) + " || " +
                                         IntToString(iStackSize) + "x " + 
-                                        (GetIdentified(oItem) ? GetName(oItem) : MELSE_SIN_GetText(MELSE_STRREF_ITEM_NAME_UNIDENTIFIED)) + " " +
-                                        MELSE_SIN_GetText(MELSE_STRREF_ITEM_IGNORED),
+                                        (GetIdentified(oItem) ? GetName(oItem) : MELSE_GetLocalizedText(MELSE_STRREF_ITEM_NAME_UNIDENTIFIED)) + " " +
+                                        MELSE_GetLocalizedText(MELSE_STRREF_ITEM_IGNORED),
                                     STRING_COLOR_RED);
     else if (iKey == MELSE_TEXT_ITEM_NOTIFY_PLOT)
         sResult = StringToRGBString(GetName(oObject) + " " +
-                                        MELSE_SIN_GetText(MELSE_STRREF_DROPPED_ITEM_PLOT),
+                                        MELSE_GetLocalizedText(MELSE_STRREF_DROPPED_ITEM_PLOT),
                                     STRING_COLOR_RED);
     else if (iKey == MELSE_TEXT_ITEM_NOTIFY_SLOT)
         sResult = StringToRGBString(GetName(oObject) + " " +
-                                        MELSE_SIN_GetText(MELSE_STRREF_DROPPED_ITEM_SLOT),
+                                        MELSE_GetLocalizedText(MELSE_STRREF_DROPPED_ITEM_SLOT),
                                     STRING_COLOR_RED);
     else if (iKey == MELSE_TEXT_GOLD_TAKEN)
         sResult = StringToRGBString(GetName(oObject) + " >> " +
                                         IntToString(iStackSize) + "x Gold",
                                     STRING_COLOR_GREEN);
     else if (iKey == MELSE_TEXT_ITEM_LOOTED_FROM)
-        sResult = StringToRGBString(MELSE_SIN_GetText(MELSE_STRREF_ITEM_LOOTED_FROM),
+        sResult = StringToRGBString(MELSE_GetLocalizedText(MELSE_STRREF_ITEM_LOOTED_FROM),
                                     STRING_COLOR_GREEN);
     else if (iKey == MELSE_TEXT_ITEM_LOOTED_FROM_AREA)
-        sResult = StringToRGBString(MELSE_SIN_GetText(MELSE_STRREF_ITEM_LOOTED_FROM_AREA),
+        sResult = StringToRGBString(MELSE_GetLocalizedText(MELSE_STRREF_ITEM_LOOTED_FROM_AREA),
                                     STRING_COLOR_GREEN);
     return sResult;
 }
@@ -629,11 +651,11 @@ void MELSE_NotifyTreasure(object oPC, object oArea, int bNotifyPositive = TRUE)
         if (MELSE_GetHasTreasure(oArea))
         {
             if (bNotifyPositive)
-                AssignCommand(oPC, SpeakString(StringToRGBString(MELSE_SIN_GetText(MELSE_STRREF_TREASURE_FOUND), STRING_COLOR_WHITE)));
+                AssignCommand(oPC, SpeakString(StringToRGBString(MELSE_GetLocalizedText(MELSE_STRREF_TREASURE_FOUND), STRING_COLOR_WHITE)));
         }
         else
         {
-            AssignCommand(oPC, SpeakString(StringToRGBString(MELSE_SIN_GetText(MELSE_STRREF_TREASURE_NOT_FOUND), STRING_COLOR_WHITE)));
+            AssignCommand(oPC, SpeakString(StringToRGBString(MELSE_GetLocalizedText(MELSE_STRREF_TREASURE_NOT_FOUND), STRING_COLOR_WHITE)));
         }
     }
 }
@@ -816,16 +838,13 @@ void MELSE_MAINTENANCE_Build(object oModule, object oPC, string sNewBuild, strin
     // Initialize default config after first install or update from initial release build
     if (sOldBuild == STRING_EMPTY || sOldBuild == "1001")
         MELSE_MAINTENANCE_SetDefaultConfig(oModule);
-    
-    // SIN: Clear text index buffers to apply changed strings
-    MELSE_SIN_ClearBuffer();
 
     if (sOldBuild == STRING_EMPTY)
-        DelayCommand(8.0f, AssignCommand(oPC, ActionSpeakString(StringToRGBString(MELSE_SIN_GetText(MELSE_STRREF_MAINTENANCE_INSTALL) + " " + 
+        DelayCommand(8.0f, AssignCommand(oPC, ActionSpeakString(StringToRGBString(MELSE_GetLocalizedText(MELSE_STRREF_MAINTENANCE_INSTALL) + " " + 
                                                                                   MELSE_VERSION + " (Build " + sNewBuild + ")",
                                                                                   STRING_COLOR_GREEN))));
     else
-        DelayCommand(8.0f, AssignCommand(oPC, ActionSpeakString(StringToRGBString(MELSE_SIN_GetText(MELSE_STRREF_MAINTENANCE_UPDATE) + " " + 
+        DelayCommand(8.0f, AssignCommand(oPC, ActionSpeakString(StringToRGBString(MELSE_GetLocalizedText(MELSE_STRREF_MAINTENANCE_UPDATE) + " " + 
                                                                                   MELSE_VERSION + " (Build " + sNewBuild + ")",
                                                                                   STRING_COLOR_GREEN))));
 
@@ -881,10 +900,7 @@ void MELSE_Initialize(object oModule, object oPC)
     if (StringToInt(sVersionBuild) != StringToInt(MELSE_VERSION_BUILD))
         MELSE_MAINTENANCE_Build(oModule, oPC, MELSE_VERSION_BUILD, sVersionBuild);
 
-    if (MELSE_SIN_GetIndex() != MELSE_TEXT_INDEX)
-        MELSE_SIN_SetIndex(MELSE_TEXT_INDEX);
-    if (MELSE_SIN_GetLanguage() != "de" && MELSE_SIN_GetLanguage() != "en")
-        MELSE_SIN_SetLanguage("en");
+    MELSE_DetectLanguage(oPC);
 
     MELSE_InjectEventScripts(oModule);
     object oArea = GetArea(oPC);

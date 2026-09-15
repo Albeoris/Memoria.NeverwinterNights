@@ -4,8 +4,10 @@
 #include "memoria_group"
 #include "memoria_item"
 #include "memoria_locale"
+#include "memoria_i18n"
 
 const string METACT_VERSION = "0.7.0";
+const string METACT_I18N_PREFIX = "metact";
 const string METACT_ESI_KEY = "7421";
 const string METACT_LOCAL_DATABASE = "METACT_DATABASE_V1";
 const string METACT_LOCAL_STORAGE_READY = "METACT_STORAGE_READY";
@@ -14,7 +16,6 @@ const string METACT_LOCAL_INSTALLED = "METACT_INSTALLED";
 const string METACT_LOCAL_ESI_GUI = "METACT_ESI_GUI_INSTALLED";
 const string METACT_LOCAL_ESI_TARGET = "METACT_ESI_TARGET_INSTALLED";
 const string METACT_LOCAL_LANGUAGE = "METACT_LANGUAGE";
-const string METACT_LOCAL_TEXT = "METACT_TEXT_RESULT";
 const string METACT_LOCAL_IS_RUSSIAN = "METACT_LANGUAGE_IS_RUSSIAN";
 const string METACT_LOCAL_GROUP_COUNT = "METACT_GROUP_COUNT";
 const string METACT_LOCAL_GROUP_MEMBER = "METACT_GROUP_MEMBER_";
@@ -60,7 +61,6 @@ const string METACT_LOCAL_AOE_CLEARANCE = "METACT_AOE_CLEARANCE";
 const string METACT_LOCAL_ACTOR_TICK = "METACT_ACTOR_TICK";
 const string METACT_LOCAL_BLOCKED_ITEM = "METACT_BLOCKED_ITEM";
 const string METACT_LOCAL_BLOCKED_ITEM_UNTIL = "METACT_BLOCKED_ITEM_UNTIL";
-const string METACT_PARAM_TEXT_KEY = "METACT_TEXT_KEY";
 
 const int METACT_SCHEMA = 2;
 const int METACT_MAX_GROUP = 32;
@@ -82,123 +82,131 @@ const int METACT_AOE_SAFETY_SAFE = 1;
 const int METACT_AOE_SAFETY_VERY_SAFE = 2;
 const int METACT_AOE_SAFETY_STATIONARY = 3;
 
-const int METACT_TEXT_INSTALLED = 3;
-const int METACT_TEXT_TITLE = 4;
-const int METACT_TEXT_PROFILE = 5;
-const int METACT_TEXT_SCOPE = 6;
-const int METACT_TEXT_SCOPE_EXACT = 7;
-const int METACT_TEXT_SCOPE_TYPE = 8;
-const int METACT_TEXT_TACTIC = 9;
-const int METACT_TEXT_NEW = 10;
-const int METACT_TEXT_DELETE = 11;
-const int METACT_TEXT_ENABLED = 12;
-const int METACT_TEXT_TACTIC_NAME = 13;
-const int METACT_TEXT_RENAME = 14;
-const int METACT_TEXT_ACTION = 15;
-const int METACT_TEXT_CONDITION = 16;
-const int METACT_TEXT_UP = 17;
-const int METACT_TEXT_DOWN = 18;
-const int METACT_TEXT_EDIT = 19;
-const int METACT_TEXT_ADD_RULE = 20;
-const int METACT_TEXT_CLOSE = 21;
-const int METACT_TEXT_RULE_EDITOR = 22;
-const int METACT_TEXT_CHOOSE_ACTION = 23;
-const int METACT_TEXT_CHOOSE_CONDITION = 24;
-const int METACT_TEXT_ADVANCED = 25;
-const int METACT_TEXT_ALLOW_MOVEMENT = 26;
-const int METACT_TEXT_FRIENDLY_FIRE = 27;
-const int METACT_TEXT_SOURCE = 28;
-const int METACT_TEXT_SOURCE_ANY = 29;
-const int METACT_TEXT_SOURCE_SPELL = 30;
-const int METACT_TEXT_SOURCE_ITEM = 31;
-const int METACT_TEXT_TARGET = 32;
-const int METACT_TEXT_TARGET_AUTO = 33;
-const int METACT_TEXT_TARGET_SELF = 34;
-const int METACT_TEXT_TARGET_ENEMY = 35;
-const int METACT_TEXT_TARGET_ALLY = 36;
-const int METACT_TEXT_TARGET_CLUSTER = 37;
-const int METACT_TEXT_COND_ALWAYS = 38;
-const int METACT_TEXT_COND_ENEMIES = 39;
-const int METACT_TEXT_COND_CLUSTER = 40;
-const int METACT_TEXT_COND_SELF_HP = 41;
-const int METACT_TEXT_COND_ALLY_HP = 42;
-const int METACT_TEXT_COND_NO_SUMMON = 43;
-const int METACT_TEXT_COND_NO_FAMILIAR = 44;
-const int METACT_TEXT_THRESHOLD = 45;
-const int METACT_TEXT_RADIUS = 46;
-const int METACT_TEXT_SAVE = 47;
-const int METACT_TEXT_CANCEL = 48;
-const int METACT_TEXT_PICKER = 49;
-const int METACT_TEXT_SEARCH = 50;
-const int METACT_TEXT_PREVIOUS = 51;
-const int METACT_TEXT_NEXT = 52;
-const int METACT_TEXT_CHOOSE = 53;
-const int METACT_TEXT_SUMMON_FAMILIAR = 54;
-const int METACT_TEXT_BASIC_ATTACK = 55;
-const int METACT_TEXT_SELECT_POWER = 56;
-const int METACT_TEXT_UNCONFIGURED = 57;
-const int METACT_TEXT_DEFAULT_TACTIC = 58;
-const int METACT_TEXT_NO_RULES = 59;
-const int METACT_TEXT_PROFILE_PC = 60;
-const int METACT_TEXT_INVALID = 61;
-const int METACT_TEXT_TARGET_ENEMY_LOW = 62;
-const int METACT_TEXT_TARGET_ENEMY_HIGH = 63;
-const int METACT_TEXT_COND_ENEMY_RATING_MIN = 64;
-const int METACT_TEXT_COND_ENEMY_RATING_MAX = 65;
-const int METACT_TEXT_TARGET_PRIORITIES = 66;
-const int METACT_TEXT_ADD_PRIORITY = 67;
-const int METACT_TEXT_PRIORITY_EDITOR = 68;
-const int METACT_TEXT_PRIORITY_CASTER = 69;
-const int METACT_TEXT_PRIORITY_RATING_HIGH = 70;
-const int METACT_TEXT_PRIORITY_RATING_LOW = 71;
-const int METACT_TEXT_PRIORITY_HEALTH_LOW = 72;
-const int METACT_TEXT_PRIORITY_HEALTH_HIGH = 73;
-const int METACT_TEXT_PRIORITY_DEFAULT = 74;
-const int METACT_TEXT_PRIORITY_KIND = 75;
-const int METACT_TEXT_RULES = 76;
-const int METACT_TEXT_DEBUG = 77;
-const int METACT_TEXT_INSPECT_TARGET = 78;
-const int METACT_TEXT_INSPECT_PROMPT = 79;
-const int METACT_TEXT_INSPECT_CANCELLED = 80;
-const int METACT_TEXT_AREA_FROM_SPELL = 81;
-const int METACT_TEXT_FRIENDLY_FIRE_UNRESTRICTED = 82;
-const int METACT_TEXT_FRIENDLY_FIRE_PRECAST = 83;
-const int METACT_TEXT_FRIENDLY_FIRE_DURING_CAST = 84;
-const int METACT_TEXT_FRIENDLY_FIRE_STATIONARY = 85;
-const int METACT_TEXT_ACTIONS = 86;
-const int METACT_TEXT_GLOBAL_PRIORITIES = 88;
-const int METACT_TEXT_LOCAL_PRIORITIES = 89;
-const int METACT_TEXT_ACTION_EDITOR = 90;
-const int METACT_TEXT_ADD_ACTION = 91;
-const int METACT_TEXT_COND_ENEMY_RATING = 92;
-const int METACT_TEXT_COMPARISON = 93;
-const int METACT_TEXT_AT_LEAST = 94;
-const int METACT_TEXT_AT_MOST = 95;
-const int METACT_TEXT_COND_HEALTH = 96;
-const int METACT_TEXT_SUBJECT = 97;
-const int METACT_TEXT_SUBJECT_SELF = 98;
-const int METACT_TEXT_SUBJECT_ALLY = 99;
-const int METACT_TEXT_CLUSTER_HINT = 100;
-const int METACT_TEXT_TARGET_BY_PRIORITIES = 101;
-const int METACT_TEXT_NO_ACTIONS = 102;
-const int METACT_TEXT_ACTION_PRIORITIES = 103;
-const int METACT_TEXT_RULE_PRIORITY_FALLBACK = 104;
-const int METACT_TEXT_ACTION_PRIORITY_FALLBACK = 105;
-const int METACT_TEXT_FRIENDLY_FIRE_UNRESTRICTED_HELP = 106;
-const int METACT_TEXT_FRIENDLY_FIRE_PRECAST_HELP = 107;
-const int METACT_TEXT_FRIENDLY_FIRE_DURING_CAST_HELP = 108;
-const int METACT_TEXT_FRIENDLY_FIRE_STATIONARY_HELP = 109;
-const int METACT_TEXT_EQUIP_ITEM = 110;
-const int METACT_TEXT_EQUIPPABLE_ITEMS = 111;
+const string METACT_TEXT_INSTALLED = "installed";
+const string METACT_TEXT_TITLE = "title";
+const string METACT_TEXT_PROFILE = "profile";
+const string METACT_TEXT_SCOPE = "scope";
+const string METACT_TEXT_SCOPE_EXACT = "scope_exact";
+const string METACT_TEXT_SCOPE_TYPE = "scope_type";
+const string METACT_TEXT_TACTIC = "tactic";
+const string METACT_TEXT_NEW = "new";
+const string METACT_TEXT_DELETE = "delete";
+const string METACT_TEXT_ENABLED = "enabled";
+const string METACT_TEXT_TACTIC_NAME = "tactic_name";
+const string METACT_TEXT_RENAME = "rename";
+const string METACT_TEXT_ACTION = "action";
+const string METACT_TEXT_CONDITION = "condition";
+const string METACT_TEXT_UP = "up";
+const string METACT_TEXT_DOWN = "down";
+const string METACT_TEXT_EDIT = "edit";
+const string METACT_TEXT_ADD_RULE = "add_rule";
+const string METACT_TEXT_CLOSE = "close";
+const string METACT_TEXT_RULE_EDITOR = "rule_editor";
+const string METACT_TEXT_CHOOSE_ACTION = "choose_action";
+const string METACT_TEXT_CHOOSE_CONDITION = "choose_condition";
+const string METACT_TEXT_ADVANCED = "advanced";
+const string METACT_TEXT_ALLOW_MOVEMENT = "allow_movement";
+const string METACT_TEXT_FRIENDLY_FIRE = "friendly_fire";
+const string METACT_TEXT_SOURCE = "source";
+const string METACT_TEXT_SOURCE_ANY = "source_any";
+const string METACT_TEXT_SOURCE_SPELL = "source_spell";
+const string METACT_TEXT_SOURCE_ITEM = "source_item";
+const string METACT_TEXT_TARGET = "target";
+const string METACT_TEXT_TARGET_AUTO = "target_auto";
+const string METACT_TEXT_TARGET_SELF = "target_self";
+const string METACT_TEXT_TARGET_ENEMY = "target_enemy";
+const string METACT_TEXT_TARGET_ALLY = "target_ally";
+const string METACT_TEXT_TARGET_CLUSTER = "target_cluster";
+const string METACT_TEXT_COND_ALWAYS = "cond_always";
+const string METACT_TEXT_COND_ENEMIES = "cond_enemies";
+const string METACT_TEXT_COND_CLUSTER = "cond_cluster";
+const string METACT_TEXT_COND_SELF_HP = "cond_self_hp";
+const string METACT_TEXT_COND_ALLY_HP = "cond_ally_hp";
+const string METACT_TEXT_COND_NO_SUMMON = "cond_no_summon";
+const string METACT_TEXT_COND_NO_FAMILIAR = "cond_no_familiar";
+const string METACT_TEXT_THRESHOLD = "threshold";
+const string METACT_TEXT_RADIUS = "radius";
+const string METACT_TEXT_SAVE = "save";
+const string METACT_TEXT_CANCEL = "cancel";
+const string METACT_TEXT_PICKER = "picker";
+const string METACT_TEXT_SEARCH = "search";
+const string METACT_TEXT_PREVIOUS = "previous";
+const string METACT_TEXT_NEXT = "next";
+const string METACT_TEXT_CHOOSE = "choose";
+const string METACT_TEXT_SUMMON_FAMILIAR = "summon_familiar";
+const string METACT_TEXT_BASIC_ATTACK = "basic_attack";
+const string METACT_TEXT_SELECT_POWER = "select_power";
+const string METACT_TEXT_UNCONFIGURED = "unconfigured";
+const string METACT_TEXT_DEFAULT_TACTIC = "default_tactic";
+const string METACT_TEXT_NO_RULES = "no_rules";
+const string METACT_TEXT_PROFILE_PC = "profile_pc";
+const string METACT_TEXT_INVALID = "invalid";
+const string METACT_TEXT_TARGET_ENEMY_LOW = "target_enemy_low";
+const string METACT_TEXT_TARGET_ENEMY_HIGH = "target_enemy_high";
+const string METACT_TEXT_COND_ENEMY_RATING_MIN = "cond_enemy_rating_min";
+const string METACT_TEXT_COND_ENEMY_RATING_MAX = "cond_enemy_rating_max";
+const string METACT_TEXT_TARGET_PRIORITIES = "target_priorities";
+const string METACT_TEXT_ADD_PRIORITY = "add_priority";
+const string METACT_TEXT_PRIORITY_EDITOR = "priority_editor";
+const string METACT_TEXT_PRIORITY_CASTER = "priority_caster";
+const string METACT_TEXT_PRIORITY_RATING_HIGH = "priority_rating_high";
+const string METACT_TEXT_PRIORITY_RATING_LOW = "priority_rating_low";
+const string METACT_TEXT_PRIORITY_HEALTH_LOW = "priority_health_low";
+const string METACT_TEXT_PRIORITY_HEALTH_HIGH = "priority_health_high";
+const string METACT_TEXT_PRIORITY_DEFAULT = "priority_default";
+const string METACT_TEXT_PRIORITY_KIND = "priority_kind";
+const string METACT_TEXT_RULES = "rules";
+const string METACT_TEXT_DEBUG = "debug";
+const string METACT_TEXT_INSPECT_TARGET = "inspect_target";
+const string METACT_TEXT_INSPECT_PROMPT = "inspect_prompt";
+const string METACT_TEXT_INSPECT_CANCELLED = "inspect_cancelled";
+const string METACT_TEXT_AREA_FROM_SPELL = "area_from_spell";
+const string METACT_TEXT_FRIENDLY_FIRE_UNRESTRICTED = "friendly_fire_unrestricted";
+const string METACT_TEXT_FRIENDLY_FIRE_PRECAST = "friendly_fire_precast";
+const string METACT_TEXT_FRIENDLY_FIRE_DURING_CAST = "friendly_fire_during_cast";
+const string METACT_TEXT_FRIENDLY_FIRE_STATIONARY = "friendly_fire_stationary";
+const string METACT_TEXT_ACTIONS = "actions";
+const string METACT_TEXT_GLOBAL_PRIORITIES = "global_priorities";
+const string METACT_TEXT_LOCAL_PRIORITIES = "local_priorities";
+const string METACT_TEXT_ACTION_EDITOR = "action_editor";
+const string METACT_TEXT_ADD_ACTION = "add_action";
+const string METACT_TEXT_COND_ENEMY_RATING = "cond_enemy_rating";
+const string METACT_TEXT_COMPARISON = "comparison";
+const string METACT_TEXT_AT_LEAST = "at_least";
+const string METACT_TEXT_AT_MOST = "at_most";
+const string METACT_TEXT_COND_HEALTH = "cond_health";
+const string METACT_TEXT_SUBJECT = "subject";
+const string METACT_TEXT_SUBJECT_SELF = "subject_self";
+const string METACT_TEXT_SUBJECT_ALLY = "subject_ally";
+const string METACT_TEXT_CLUSTER_HINT = "cluster_hint";
+const string METACT_TEXT_TARGET_BY_PRIORITIES = "target_by_priorities";
+const string METACT_TEXT_NO_ACTIONS = "no_actions";
+const string METACT_TEXT_ACTION_PRIORITIES = "action_priorities";
+const string METACT_TEXT_RULE_PRIORITY_FALLBACK = "rule_priority_fallback";
+const string METACT_TEXT_ACTION_PRIORITY_FALLBACK = "action_priority_fallback";
+const string METACT_TEXT_FRIENDLY_FIRE_UNRESTRICTED_HELP = "friendly_fire_unrestricted_help";
+const string METACT_TEXT_FRIENDLY_FIRE_PRECAST_HELP = "friendly_fire_precast_help";
+const string METACT_TEXT_FRIENDLY_FIRE_DURING_CAST_HELP = "friendly_fire_during_cast_help";
+const string METACT_TEXT_FRIENDLY_FIRE_STATIONARY_HELP = "friendly_fire_stationary_help";
+const string METACT_TEXT_EQUIP_ITEM = "equip_item";
+const string METACT_TEXT_EQUIPPABLE_ITEMS = "equippable_items";
 
 string METACT_GetLanguage(object oPC)
 {
     return MEMORIA_GetLanguage(oPC, METACT_LOCAL_LANGUAGE, "metact_is_ru", METACT_LOCAL_IS_RUSSIAN);
 }
 
-string METACT_GetText(int iKey, object oPC)
+string METACT_GetText(string sKey, object oPC)
 {
-    return MEMORIA_GetText(iKey, oPC, METACT_GetLanguage(oPC), "metact_txt_", METACT_LOCAL_TEXT, METACT_PARAM_TEXT_KEY);
+    return MEMORIA_I18N_GetText(METACT_I18N_PREFIX, METACT_GetLanguage(oPC), sKey);
+}
+
+string METACT_GetFriendlyFireHelpKey(int iPolicy)
+{
+    return iPolicy == METACT_AOE_SAFETY_SAFE ? METACT_TEXT_FRIENDLY_FIRE_PRECAST_HELP
+         : iPolicy == METACT_AOE_SAFETY_VERY_SAFE ? METACT_TEXT_FRIENDLY_FIRE_DURING_CAST_HELP
+         : iPolicy == METACT_AOE_SAFETY_STATIONARY ? METACT_TEXT_FRIENDLY_FIRE_STATIONARY_HELP
+         : METACT_TEXT_FRIENDLY_FIRE_UNRESTRICTED_HELP;
 }
 
 json METACT_NewTactic(object oPC)

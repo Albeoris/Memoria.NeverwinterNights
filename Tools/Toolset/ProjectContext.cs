@@ -25,6 +25,7 @@ internal sealed class ProjectContext
                 directory = directory.Parent;
             }
         }
+
         throw new FileNotFoundException("Could not locate the Memoria.NeverwinterNights repository root.");
     }
 

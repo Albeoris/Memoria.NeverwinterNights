@@ -9,6 +9,7 @@ namespace Memoria.NeverwinterNights.Toolset;
 internal static class NuiLayoutTool
 {
     private sealed record Rect(double X, double Y, double Width, double Height);
+
     private sealed record Element(string Id, string Type, Rect Logical, Rect Physical);
 
     public static int Run(string[] arguments)
@@ -85,11 +86,13 @@ internal static class NuiLayoutTool
             Rect vertical = new(bounds.X + bounds.Width - borderInset - scrollbarSize, bounds.Y + borderInset, scrollbarSize, viewportHeight);
             elements.Add(new Element(id + ".scrollbar-y", "scrollbar-y", vertical, ToPhysical(vertical, scale, physicalWindow)));
         }
+
         if (hasHorizontal)
         {
             Rect horizontal = new(bounds.X + borderInset, bounds.Y + bounds.Height - borderInset - scrollbarSize, viewportWidth, scrollbarSize);
             elements.Add(new Element(id + ".scrollbar-x", "scrollbar-x", horizontal, ToPhysical(horizontal, scale, physicalWindow)));
         }
+
         return viewport;
     }
 
@@ -120,6 +123,7 @@ internal static class NuiLayoutTool
             if (grow > 0.0) growTotal += grow;
             else fixedMain += Number(child, horizontal ? "width" : "height", 0.0);
         }
+
         double remaining = Math.Max(0.0, availableMain - fixedMain);
         bool scroll = node["scroll"]?.GetValue<bool>() ?? false;
         if (!scroll && fixedMain > availableMain + 0.01) diagnostics.Add($"{Text(node, "id", horizontal ? "row" : "column")}: fixed children consume {fixedMain:0.##} of {availableMain:0.##}.");
@@ -151,6 +155,7 @@ internal static class NuiLayoutTool
             if (grow > 0.0) growTotal += grow;
             else fixedWidth += Number(cell, "width", 0.0);
         }
+
         if (fixedWidth > viewport.Width + 0.01) diagnostics.Add($"{Text(node, "id", "list")}: fixed cells consume {fixedWidth:0.##} of {viewport.Width:0.##}.");
         for (int row = 0; row < sampleRows && (row + 1) * rowHeight <= viewport.Height + 0.01; row++)
         {
@@ -202,6 +207,7 @@ internal static class NuiLayoutTool
             JsonObject item = configuredItems[index]?.AsObject() ?? [];
             items.Add((Text(item, "id", "item" + index), Number(item, "width", 1.0) * unit, Number(item, "height", 1.0) * unit));
         }
+
         items = items.OrderByDescending(item => item.Width * item.Height).ThenByDescending(item => item.Height).ToList();
         double x = viewport.X;
         double y = viewport.Y;
@@ -214,11 +220,13 @@ internal static class NuiLayoutTool
                 y += rowHeight;
                 rowHeight = 0.0;
             }
+
             Rect itemRect = new(x, y, width, height);
             elements.Add(new Element($"{Text(node, "id", "shelf")}.{id}", "shelf-item", itemRect, ToPhysical(itemRect, scale, physicalWindow)));
             x += width;
             rowHeight = Math.Max(rowHeight, height);
         }
+
         double usedHeight = y - viewport.Y + rowHeight;
         if (!scroll && usedHeight > viewport.Height + 0.01) diagnostics.Add($"{Text(node, "id", "shelf")}: packed height {usedHeight:0.##} exceeds {viewport.Height:0.##}.");
     }
@@ -249,6 +257,7 @@ internal static class NuiLayoutTool
             svg.AppendLine(RectSvg(element.Physical, fill, "#8293a6", 1.0));
             if (element.Physical.Width >= 70.0 && element.Physical.Height >= 24.0) svg.AppendLine(FormattableString.Invariant($"<text x=\"{element.Physical.X + 5.0:0.##}\" y=\"{element.Physical.Y + 18.0:0.##}\" fill=\"#e8e8e8\" font-family=\"Segoe UI\" font-size=\"14\">{EscapeXml(element.Id)}</text>"));
         }
+
         if (diagnostics.Count > 0) svg.AppendLine($"<text x=\"20\" y=\"30\" fill=\"#ff6060\" font-family=\"Segoe UI\" font-size=\"20\">{diagnostics.Count} layout warning(s)</text>");
         svg.AppendLine("</svg>");
         return svg.ToString();
@@ -289,6 +298,7 @@ internal static class NuiLayoutTool
             arguments.RemoveRange(index, 2);
             return value;
         }
+
         return null;
     }
 

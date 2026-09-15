@@ -20,9 +20,13 @@ internal static class AoeSimulator
     }
 
     private sealed record Agent(string Name, string Team, Point Position, Point Velocity, bool Engaged = false, double VelocityChangeAt = -1.0, Point? VelocityAfter = null);
+
     private sealed record Expectations(int MinimumInitialHits = 0, bool SafeStarts = false, bool VerySafeCancels = false, bool StationaryWaits = false, bool StationaryEventuallyStarts = false);
+
     private sealed record Scenario(string Name, Point Caster, Agent[] Agents, int MinimumTargets = 3, Expectations? Expected = null);
+
     private sealed record Result(string Scenario, double Radius, double ImpactTime, Point Aim, string[] EnemiesHit, string[] AlliesAtRisk, bool Safe);
+
     private sealed record PolicyResult(string Mode, string Decision, double? StartsAt, double? CancelledAt, int EnemiesHitAtImpact, string[] AlliesAtRiskAtImpact, bool RoundLostToCancellation);
 
     public static int Run(string[] arguments)
@@ -32,6 +36,7 @@ internal static class AoeSimulator
             Console.Error.WriteLine("aoe-sim: specify exactly one output JSON file.");
             return 1;
         }
+
         Scenario[] scenarios = BuildScenarios();
         object[] scenarioReports = scenarios.Select(BuildScenarioReport).ToArray();
         var report = new { model = new { spell = "Fireball", radiusMetres = Radius, castTimeSeconds = CastTime, projectileSpeedMetresPerSecond = ProjectileSpeed, allySafetyMarginMetres = AllyMargin, engagementDistanceMetres = EngagementDistance, recheckSeconds = RecheckInterval, stationarySpeedMetresPerSecond = StationarySpeed, prediction = "constant velocity; first hostile contact clamp; circle intersections; ally-aware shifts; swept ally segment; piecewise actual velocity for policy regression tests" }, scenarios = scenarioReports };
@@ -50,6 +55,7 @@ internal static class AoeSimulator
             Console.WriteLine($"{scenario.Name}: initial={(initial.Safe ? $"safe/{initial.EnemiesHit.Length}" : "none")}, safe={safe.Decision}, very-safe={verySafe.Decision}, stationary={stationary.Decision}{failure}");
             if (failure.Length > 0) failures++;
         }
+
         return failures == 0 ? 0 : 2;
     }
 
@@ -94,6 +100,7 @@ internal static class AoeSimulator
             if (Distance(initial.Aim, snapshot.Caster) <= Radius + AllyMargin) risk = risk.Append("caster").ToArray();
             if (risk.Length > 0) return new PolicyResult("very-safe", $"cancels at {elapsed:F1}s: {string.Join(", ", risk)} may enter", 0.0, elapsed, 0, risk, true);
         }
+
         (string[] hit, string[] atRisk) = ActualImpact(scenario, initial.Aim, initial.ImpactTime);
         return new PolicyResult("very-safe", "casts; all rechecks remain safe", 0.0, null, hit.Length, atRisk, false);
     }
@@ -112,6 +119,7 @@ internal static class AoeSimulator
             string decision = elapsed <= 0.0 ? "casts immediately: allies stationary" : $"waits, then casts at {elapsed:F1}s after allies stop";
             return new PolicyResult("stationary", decision, elapsed, null, hit.Length, atRisk, false);
         }
+
         return new PolicyResult("stationary", "waits: allies do not become stationary within 6.0s", null, null, 0, [], false);
     }
 
@@ -141,6 +149,7 @@ internal static class AoeSimulator
             double allyDistance = Distance(enemy, closestAlly);
             if (allyDistance > 0.01) seeds.Add(enemy + (enemy - closestAlly) * (Radius * 0.98 / allyDistance));
         }
+
         for (int left = 0; left < predicted.Length; left++)
         {
             for (int right = left + 1; right < predicted.Length; right++)
@@ -156,6 +165,7 @@ internal static class AoeSimulator
                 seeds.Add(midpoint - perpendicular * height);
             }
         }
+
         Result? best = null;
         foreach (Point seed in seeds)
         {
@@ -168,6 +178,7 @@ internal static class AoeSimulator
             if (hit.Length < minimumTargets || requireSafety && !safe) continue;
             if (best is null || hit.Length > best.EnemiesHit.Length || hit.Length == best.EnemiesHit.Length && risk.Length < best.AlliesAtRisk.Length || hit.Length == best.EnemiesHit.Length && risk.Length == best.AlliesAtRisk.Length && impactTime < best.ImpactTime) best = candidate;
         }
+
         return best ?? new Result(scenario.Name, Radius, 0, scenario.Caster, [], [], false);
     }
 
@@ -212,9 +223,11 @@ internal static class AoeSimulator
                     if (Distance(RawPosition(agent, middle), RawPosition(contact, middle)) <= EngagementDistance) high = middle;
                     else low = middle;
                 }
+
                 return (RawPosition(agent, high), new Point(0, 0));
             }
         }
+
         return (RawPosition(agent, elapsed), VelocityAt(agent, elapsed));
     }
 
@@ -256,6 +269,7 @@ internal static class AoeSimulator
                 }
             }
         }
+
         return Predict(ally, stopTime);
     }
 

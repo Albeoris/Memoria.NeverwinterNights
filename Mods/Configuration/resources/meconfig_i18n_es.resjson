@@ -1,0 +1,10 @@
+{
+  "mod_display_name": "Memoria Configuration Manager",
+  "item_name": "Configuración de Memoria",
+  "item_description": "Abre el administrador de configuración de Memoria. Selecciona un objeto para ejecutar los diagnósticos disponibles.",
+  "window_title": "Configuración de Memoria",
+  "no_modules": "No hay mods de Memoria registrados.",
+  "save": "Guardar",
+  "close": "Cerrar",
+  "range_error": "debe estar entre"
+}

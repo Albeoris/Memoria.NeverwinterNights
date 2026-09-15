@@ -40,6 +40,7 @@ internal static partial class CommonOutputMerger
             string relativePath = Path.GetRelativePath(sourceDirectory, sourceFile);
             if (ownedPaths.TryGetValue(relativePath, out string? existingOwner)) return Fail($"Common output collision: {relativePath} is produced by both {existingOwner} and {owner}.");
         }
+
         foreach (string sourceFile in sourceFiles)
         {
             string relativePath = Path.GetRelativePath(sourceDirectory, sourceFile);
@@ -48,6 +49,7 @@ internal static partial class CommonOutputMerger
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
             File.Copy(sourceFile, destination, true);
         }
+
         await File.WriteAllLinesAsync(Path.Combine(manifestsDirectory, owner + ".inputs"), sourceFiles.Select(sourceFile => Path.GetRelativePath(sourceDirectory, sourceFile)), new UTF8Encoding(false));
         Console.WriteLine($"Common output: merged {sourceFiles.Length} files from {owner} into {outputDirectory}.");
         return 0;
@@ -65,6 +67,7 @@ internal static partial class CommonOutputMerger
                 if (!ownedPaths.TryAdd(relativePath, owner)) throw new InvalidDataException($"Common output manifests assign {relativePath} to both {ownedPaths[relativePath]} and {owner}.");
             }
         }
+
         return ownedPaths;
     }
 
