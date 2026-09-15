@@ -1,5 +1,8 @@
 // Original authorship and copyright notice retained below.
-// Relicensed under the MIT License by Albeoris. See THIRD_PARTY_NOTICES.md.
+// Modifications Copyright (c) 2026 Albeoris.
+// Modifications by Albeoris are licensed under the MIT License.
+// This license does not apply to the original Neverwinter Nights code,
+// which remains subject to its original copyright and license terms.
 
 //::///////////////////////////////////////////////
 //:: Default On Attacked
