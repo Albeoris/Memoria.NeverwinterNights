@@ -1,0 +1,12 @@
+{
+  "screen": { "width": 1920, "height": 1080, "uiScale": 2.0 },
+  "window": { "coverage": 0.9, "titleHeight": 24, "padding": 8 },
+  "root": { "id": "main-1920", "type": "column", "children": [
+    { "id": "actor", "type": "control", "height": 28 }, { "id": "scope", "type": "control", "height": 28 }, { "id": "tactic", "type": "control", "height": 28 }, { "id": "name", "type": "control", "height": 28 }, { "id": "debug", "type": "control", "height": 28 },
+    { "id": "content", "type": "row", "height": 275, "gap": 8, "children": [
+      { "id": "rules", "type": "list", "width": 230.72, "rowHeight": 32, "sampleRows": 6, "cells": [ { "id": "select", "grow": 1 }, { "id": "edit", "width": 28 }, { "id": "up", "width": 28 }, { "id": "down", "width": 28 } ] },
+      { "id": "actions", "type": "list", "width": 346.08, "rowHeight": 32, "sampleRows": 6, "cells": [ { "id": "edit", "grow": 1 }, { "id": "up", "width": 28 }, { "id": "down", "width": 28 } ] },
+      { "id": "priorities", "type": "list", "width": 251.2, "rowHeight": 32, "sampleRows": 4, "cells": [ { "id": "edit", "grow": 1 }, { "id": "up", "width": 28 }, { "id": "down", "width": 28 } ] }
+    ] }
+  ] }
+}

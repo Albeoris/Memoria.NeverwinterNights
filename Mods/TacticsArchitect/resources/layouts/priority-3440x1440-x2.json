@@ -1,0 +1,13 @@
+{
+  "screen": { "width": 3440, "height": 1440, "uiScale": 2.0 },
+  "window": { "coverage": 0.9, "logicalWidth": 560, "logicalHeight": 180, "titleHeight": 24, "padding": 8 },
+  "root": {
+    "id": "priority-editor", "type": "column", "gap": 0,
+    "children": [
+      { "id": "criterion", "type": "row", "height": 30, "children": [ { "id": "criterion-label", "type": "control", "width": 120 }, { "id": "criterion-combo", "type": "control", "grow": 1 } ] },
+      { "id": "enabled", "type": "control", "height": 28 },
+      { "id": "operations", "type": "control", "height": 32 },
+      { "id": "save-cancel", "type": "control", "height": 32 }
+    ]
+  }
+}

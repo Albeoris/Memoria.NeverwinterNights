@@ -1,0 +1,67 @@
+<Project>
+  <ItemGroup>
+    <None Include="$(MSBuildProjectFullPath)" Link="$(MSBuildProjectFile)" />
+    <NwnRequiredPackage Update="@(NwnRequiredPackage)" Visible="false" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- NWN mods are MSBuild projects, but they do not produce managed assemblies or require a target framework. -->
+    <RestoreProjectStyle>None</RestoreProjectStyle>
+    <ToolsetAssembly>$(RepositoryRoot)artifacts\msbuild\Memoria.NeverwinterNights.Toolset\bin\$(Configuration)\net10.0\Memoria.NeverwinterNights.Toolset.dll</ToolsetAssembly>
+    <NwnInputsFile>$(RepositoryRoot)artifacts\inputs\$(ModName).inputs</NwnInputsFile>
+    <BuildOutput>$(RepositoryRoot)artifacts\build\$(ModName)</BuildOutput>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildToolsPath)\NuGet.targets" />
+
+  <Target Name="Build" DependsOnTargets="BuildToolset;BuildNwnMod" />
+
+  <Target Name="Rebuild" DependsOnTargets="Clean;Build" />
+
+  <Target Name="Clean" DependsOnTargets="CleanNwnMod" />
+
+  <Target Name="Publish" DependsOnTargets="Build;PublishNwnMod" />
+
+  <Target Name="BuildToolset">
+    <MSBuild Projects="@(ProjectReference)" Targets="Build" BuildInParallel="true" Properties="Configuration=$(Configuration)" />
+  </Target>
+
+  <Target Name="GenerateNwnModInputs">
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(NwnInputsFile)'))" />
+    <ItemGroup>
+      <_NwnInput Remove="@(_NwnInput)" />
+      <_NwnInput Include="@(NwnSource->'source|%(FullPath)')" />
+      <_NwnInput Include="@(NwnResource->'resource|%(FullPath)')" />
+      <_NwnInput Include="@(NwnLayout->'layout|%(FullPath)')" />
+      <_NwnInput Include="@(NwnPackageFile->'package|%(FullPath)')" />
+      <_NwnInput Include="@(NwnIncludeDirectory->'include|%(FullPath)')" />
+      <_NwnInput Include="@(PackageDocument->'document|%(FullPath)')" />
+      <_NwnInput Include="@(NwnRequiredPackage->'dependency|%(PackageName)')" />
+      <_NwnInput Include="workshop-app-id|$(WorkshopAppId)" />
+      <_NwnInput Include="workshop-published-file-id|$(WorkshopPublishedFileId)" Condition="'$(WorkshopPublishedFileId)' != ''" />
+      <_NwnInput Include="workshop-visibility|$(WorkshopVisibility)" />
+      <_NwnInput Include="workshop-description|$(WorkshopDescriptionFile)" />
+      <_NwnInput Include="workshop-preview|$(WorkshopPreviewFile)" />
+      <_NwnInput Include="workshop-change-note|$(WorkshopChangeNoteFile)" />
+      <_NwnWorkshopTag Include="$(WorkshopTags)" />
+      <_NwnInput Include="@(_NwnWorkshopTag->'workshop-tag|%(Identity)')" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(NwnInputsFile)" Lines="@(_NwnInput)" Overwrite="true" Encoding="UTF-8" />
+  </Target>
+
+  <Target Name="BuildNwnMod" DependsOnTargets="GenerateNwnModInputs" Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; build &quot;$(NwnInputsFile)&quot; --output &quot;$(BuildOutput)&quot; --layouts-output &quot;$(RepositoryRoot)artifacts\layouts\$(ModName)&quot;" />
+    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; verify &quot;$(BuildOutput)&quot;" Condition="Exists('$(BuildOutput)') and '$(VerifyScripts)' != 'false'" />
+  </Target>
+
+  <Target Name="CleanNwnMod" Condition="'$(DesignTimeBuild)' != 'true'">
+    <RemoveDir Directories="$(BuildOutput)" />
+    <RemoveDir Directories="$(RepositoryRoot)artifacts\publish\$(PackageId)" />
+    <RemoveDir Directories="$(RepositoryRoot)artifacts\layouts\$(ModName)" />
+    <Delete Files="$(NwnInputsFile)" />
+  </Target>
+
+  <Target Name="PublishNwnMod" DependsOnTargets="GenerateNwnModInputs" Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; publish &quot;$(NwnInputsFile)&quot; --id &quot;$(PackageId)&quot; --display-name &quot;$(PackageDisplayName)&quot; --build-directory &quot;$(BuildOutput)&quot; --version &quot;$(Version)&quot;" />
+  </Target>
+</Project>

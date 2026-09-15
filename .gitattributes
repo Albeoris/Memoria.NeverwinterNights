@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.dll binary
+*.exe binary
+*.ncs binary
+*.uti binary
+*.rtf binary
+

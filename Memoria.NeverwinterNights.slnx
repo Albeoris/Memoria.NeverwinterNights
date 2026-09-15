@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/Mods/">
+    <Project Path="Mods/Bootstrapper/Bootstrapper.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="Bootstrapper" />
+    <Project Path="Mods/CompanionAutoLockManager/CompanionAutoLockManager.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="CompanionAutoLockManager" />
+    <Project Path="Mods/EventScriptInjector/EventScriptInjector.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="EventScriptInjector" />
+    <Project Path="Mods/Framework/Framework.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="Framework" />
+    <Project Path="Mods/LootingSystemEnhanced/LootingSystemEnhanced.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="LootingSystemEnhanced" />
+    <Project Path="Mods/TacticsArchitect/TacticsArchitect.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="TacticsArchitect" />
+  </Folder>
+  <Folder Name="/Tools/">
+    <Project Path="Tools/Toolset/Memoria.NeverwinterNights.Toolset.csproj" />
+  </Folder>
+</Solution>

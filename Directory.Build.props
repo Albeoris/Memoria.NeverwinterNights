@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <RepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</RepositoryRoot>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <Version Condition="'$(Version)' == ''">0.0.0-local</Version>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <BaseOutputPath>$(RepositoryRoot)artifacts\msbuild\$(MSBuildProjectName)\bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(RepositoryRoot)artifacts\msbuild\$(MSBuildProjectName)\obj\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+    <WorkshopAppId>704450</WorkshopAppId>
+    <WorkshopVisibility Condition="'$(WorkshopVisibility)' == ''">0</WorkshopVisibility>
+    <WorkshopDescriptionFile Condition="'$(WorkshopDescriptionFile)' == ''">$(MSBuildProjectDirectory)\workshop\description.txt</WorkshopDescriptionFile>
+    <WorkshopPreviewFile Condition="'$(WorkshopPreviewFile)' == ''">$(MSBuildProjectDirectory)\workshop\preview.png</WorkshopPreviewFile>
+    <WorkshopChangeNoteFile Condition="'$(WorkshopChangeNoteFile)' == ''">$(MSBuildProjectDirectory)\workshop\changenote.txt</WorkshopChangeNoteFile>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,144 @@
+name: Release package
+
+on:
+  push:
+    tags:
+      - '*-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Parse package tag
+        id: package
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $tag = $env:RELEASE_TAG
+          if ($tag -notmatch '^(m_bootstrapper|esi|m_lse|m_calm|m_tact|memoria)-v([A-Za-z0-9._-]+)$') { throw "Invalid release tag: $tag" }
+          $projects = @{ m_bootstrapper = 'Bootstrapper'; esi = 'EventScriptInjector'; m_lse = 'LootingSystemEnhanced'; m_calm = 'CompanionAutoLockManager'; m_tact = 'TacticsArchitect'; memoria = 'Framework' }
+          "id=$($Matches[1])" >> $env:GITHUB_OUTPUT
+          "project=$($projects[$Matches[1]])" >> $env:GITHUB_OUTPUT
+          "version=$($Matches[2])" >> $env:GITHUB_OUTPUT
+
+      - name: Build and publish package
+        shell: pwsh
+        run: dotnet msbuild "Mods/${{ steps.package.outputs.project }}/${{ steps.package.outputs.project }}.proj" -restore -t:Publish -p:Configuration=Release -p:Version=${{ steps.package.outputs.version }}
+
+      - name: Validate Steam Workshop manifest
+        shell: pwsh
+        run: |
+          $manifest = 'artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.package.outputs.version }}/steam-workshop.vdf'
+          if (-not (Test-Path -LiteralPath $manifest -PathType Leaf)) { throw 'Steam Workshop upload is not configured. Set WorkshopPublishedFileId in the mod project.' }
+
+      - name: Restore clean SteamCMD
+        id: steamcmd-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: artifacts/steamcmd/cache
+          key: steamcmd-windows-v1
+
+      - name: Install clean SteamCMD
+        if: steps.steamcmd-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $archive = 'artifacts/steamcmd/steamcmd.zip'
+          New-Item -ItemType Directory -Force 'artifacts/steamcmd/cache' | Out-Null
+          Invoke-WebRequest 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip' -OutFile $archive
+          Expand-Archive -LiteralPath $archive -DestinationPath 'artifacts/steamcmd/cache'
+          $bootstrapSignature = Get-AuthenticodeSignature -LiteralPath 'artifacts/steamcmd/cache/steamcmd.exe'
+          if ($bootstrapSignature.Status -ne 'Valid' -or $bootstrapSignature.SignerCertificate.Subject -notmatch '(^|, )O=Valve Corp\.(, |$)') { throw "SteamCMD bootstrap does not have a valid Valve signature: $($bootstrapSignature.Status); $($bootstrapSignature.SignerCertificate.Subject)" }
+          Push-Location 'artifacts/steamcmd/cache'
+          try {
+            & .\steamcmd.exe +quit
+            $updateExitCode = $LASTEXITCODE
+            & .\steamcmd.exe +quit
+            if ($LASTEXITCODE -ne 0) { throw "SteamCMD verification failed with exit code $LASTEXITCODE after the updater returned $updateExitCode." }
+          }
+          finally {
+            Pop-Location
+          }
+
+      - name: Verify SteamCMD signature
+        shell: pwsh
+        run: |
+          $signature = Get-AuthenticodeSignature -LiteralPath 'artifacts/steamcmd/cache/steamcmd.exe'
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch '(^|, )O=Valve Corp\.(, |$)') { throw "SteamCMD does not have a valid Valve signature: $($signature.Status); $($signature.SignerCertificate.Subject)" }
+
+      # Save only the unauthenticated installation. SteamCMD login state must never enter Actions Cache.
+      - name: Save clean SteamCMD
+        if: steps.steamcmd-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: artifacts/steamcmd/cache
+          key: steamcmd-windows-v1
+
+      - name: Stage SteamCMD runtime copy
+        shell: pwsh
+        run: |
+          Copy-Item -LiteralPath 'artifacts/steamcmd/cache' -Destination 'artifacts/steamcmd/runtime' -Recurse
+          Push-Location 'artifacts/steamcmd/runtime'
+          try {
+            & .\steamcmd.exe +quit
+            $updateExitCode = $LASTEXITCODE
+            & .\steamcmd.exe +quit
+            if ($LASTEXITCODE -ne 0) { throw "SteamCMD runtime verification failed with exit code $LASTEXITCODE after the updater returned $updateExitCode." }
+          }
+          finally {
+            Pop-Location
+          }
+          $signature = Get-AuthenticodeSignature -LiteralPath 'artifacts/steamcmd/runtime/steamcmd.exe'
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch '(^|, )O=Valve Corp\.(, |$)') { throw "Updated SteamCMD does not have a valid Valve signature: $($signature.Status); $($signature.SignerCertificate.Subject)" }
+
+      - name: Upload Steam Workshop item
+        shell: pwsh
+        env:
+          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+          STEAM_PASSWORD: ${{ secrets.STEAM_PASSWORD }}
+          STEAM_SHARED_SECRET: ${{ secrets.STEAM_SHARED_SECRET }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:STEAM_USERNAME)) { throw 'STEAM_USERNAME is not configured.' }
+          if ([string]::IsNullOrWhiteSpace($env:STEAM_PASSWORD)) { throw 'STEAM_PASSWORD is not configured.' }
+          if ([string]::IsNullOrWhiteSpace($env:STEAM_SHARED_SECRET)) { throw 'STEAM_SHARED_SECRET is not configured. It is required for unattended Steam Guard authentication.' }
+          $manifest = (Resolve-Path -LiteralPath 'artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.package.outputs.version }}/steam-workshop.vdf').Path
+          $guardCode = & '.github/scripts/Get-SteamGuardCode.ps1' -SharedSecret $env:STEAM_SHARED_SECRET
+          Write-Output "::add-mask::$guardCode"
+          Push-Location 'artifacts/steamcmd/runtime'
+          try {
+            & .\steamcmd.exe '+@ShutdownOnFailedCommand' 1 '+@NoPromptForPassword' 1 +login $env:STEAM_USERNAME $env:STEAM_PASSWORD $guardCode +workshop_build_item $manifest +quit
+            if ($LASTEXITCODE -ne 0) { throw "Steam Workshop upload failed with exit code $LASTEXITCODE." }
+          }
+          finally {
+            Pop-Location
+          }
+
+      - name: Remove authenticated SteamCMD runtime
+        if: always()
+        shell: pwsh
+        run: if (Test-Path -LiteralPath 'artifacts/steamcmd/runtime') { Remove-Item -LiteralPath 'artifacts/steamcmd/runtime' -Recurse -Force }
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.id }}-${{ steps.package.outputs.version }}
+          path: artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.package.outputs.version }}
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.package.outputs.version }}/nexus/*.zip
