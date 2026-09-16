@@ -156,7 +156,7 @@ int ESI_EnsureRuntime(object oPlayer)
     if (GetIsObjectValid(ESI_GetRuntimeOwner())) return TRUE;
     if (!GetIsPC(oPlayer) || GetIsDM(oPlayer) || GetIsObjectValid(GetMaster(oPlayer))) return FALSE;
     int nToken = NuiFindWindow(oPlayer, ESI_RUNTIME_WINDOW);
-    if (nToken == 0) nToken = NuiCreate(oPlayer, ESI_BuildRuntimeWindow(), ESI_RUNTIME_WINDOW, "meboot_noop");
+    if (nToken == 0) nToken = NuiCreate(oPlayer, ESI_BuildRuntimeWindow(), ESI_RUNTIME_WINDOW, "memoria_noop");
     if (nToken == 0) return FALSE;
     NuiSetUserData(oPlayer, nToken, ESI_NewRuntimeRegistry());
     return TRUE;
@@ -272,24 +272,30 @@ int ESI_RegisterRuntimeHook(object oObject, string sKey, int nHandler, string sS
     if (!GetIsObjectValid(oObject) || sKey == STRING_EMPTY || sScript == STRING_EMPTY || ESI_GetEventNumberAlias(nHandler) == STRING_EMPTY || (nPlacement != ESI_INJECTION_PLACEMENT_FIRST && nPlacement != ESI_INJECTION_PLACEMENT_LAST)) return FALSE;
     json jRegistry = ESI_GetRuntimeRegistry();
     if (!ESI_IsRuntimeRegistry(jRegistry)) return FALSE;
-    if (!ESI_EnsureTrampoline(oObject, nHandler)) return FALSE;
     json jSlots = JsonObjectGet(jRegistry, ESI_RUNTIME_FIELD_SLOTS);
     string sSlot = ESI_GetRuntimeSlot(oObject, nHandler, nPlacement);
     json jHooks = ESI_GetRuntimeHooks(jRegistry, oObject, nHandler, nPlacement);
-    json jHook = JsonObject();
-    jHook = JsonObjectSet(jHook, ESI_RUNTIME_HOOK_KEY, JsonString(sKey));
-    jHook = JsonObjectSet(jHook, ESI_RUNTIME_HOOK_SCRIPT, JsonString(sScript));
+    json jHook;
     int nIndex;
     for (nIndex = 0; nIndex < JsonGetLength(jHooks); nIndex++)
     {
         if (JsonGetString(JsonObjectGet(JsonArrayGet(jHooks, nIndex), ESI_RUNTIME_HOOK_KEY)) == sKey)
         {
+            if (JsonGetString(JsonObjectGet(JsonArrayGet(jHooks, nIndex), ESI_RUNTIME_HOOK_SCRIPT)) == sScript) return TRUE;
+            if (!ESI_EnsureTrampoline(oObject, nHandler)) return FALSE;
+            jHook = JsonObject();
+            jHook = JsonObjectSet(jHook, ESI_RUNTIME_HOOK_KEY, JsonString(sKey));
+            jHook = JsonObjectSet(jHook, ESI_RUNTIME_HOOK_SCRIPT, JsonString(sScript));
             jHooks = JsonArraySet(jHooks, nIndex, jHook);
             jSlots = JsonObjectSet(jSlots, sSlot, jHooks);
             jRegistry = JsonObjectSet(jRegistry, ESI_RUNTIME_FIELD_SLOTS, jSlots);
             return ESI_SetRuntimeRegistry(jRegistry);
         }
     }
+    if (!ESI_EnsureTrampoline(oObject, nHandler)) return FALSE;
+    jHook = JsonObject();
+    jHook = JsonObjectSet(jHook, ESI_RUNTIME_HOOK_KEY, JsonString(sKey));
+    jHook = JsonObjectSet(jHook, ESI_RUNTIME_HOOK_SCRIPT, JsonString(sScript));
     jHooks = JsonArrayInsert(jHooks, jHook);
     jSlots = JsonObjectSet(jSlots, sSlot, jHooks);
     jRegistry = JsonObjectSet(jRegistry, ESI_RUNTIME_FIELD_SLOTS, jSlots);
@@ -299,7 +305,6 @@ int ESI_RegisterRuntimeHook(object oObject, string sKey, int nHandler, string sS
 // Compatibility facade: the original API now installs a persistent trampoline and registers a transient runtime hook.
 int ESI_InjectToObject(object oObject, string sKey, int nHandler, string sScript, int nPlacement)
 {
-    if (ESI_IsRegistered(oObject, sKey, nHandler, sScript, nPlacement)) return TRUE;
     return ESI_RegisterRuntimeHook(oObject, sKey, nHandler, sScript, nPlacement);
 }
 
@@ -311,7 +316,7 @@ void ESI_InjectToModuleObjects(object oModule, string sKey, int nObjectType, int
     {
         if (nObjectType == ESI_OBJECT_TYPE_AREA)
         {
-            if (!ESI_IsRegistered(oArea, sKey, nHandler, sScript, nPlacement)) ESI_InjectToObject(oArea, sKey, nHandler, sScript, nPlacement);
+            ESI_InjectToObject(oArea, sKey, nHandler, sScript, nPlacement);
         }
         else
         {
@@ -345,7 +350,7 @@ void ESI_InjectToAreaObjects(object oArea, string sKey, int nObjectType, int nHa
     object oObject = GetFirstObjectInArea(oArea);
     while (GetIsObjectValid(oObject))
     {
-        if (GetObjectType(oObject) == nObjectType && !GetIsPC(oObject) && !ESI_IsRegistered(oObject, sKey, nHandler, sScript, nPlacement)) ESI_InjectToObject(oObject, sKey, nHandler, sScript, nPlacement);
+        if (GetObjectType(oObject) == nObjectType && !GetIsPC(oObject)) ESI_InjectToObject(oObject, sKey, nHandler, sScript, nPlacement);
         oObject = GetNextObjectInArea(oArea);
     }
 }

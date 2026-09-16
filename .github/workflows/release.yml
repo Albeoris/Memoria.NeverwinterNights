@@ -28,11 +28,11 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           $tag = $env:RELEASE_TAG
-          if ($tag -notmatch '^(mebootstrapper|esi|melse|mecalm|metact|memoria)-v([A-Za-z0-9._-]+)$') { throw "Invalid release tag: $tag" }
-          $projects = @{ mebootstrapper = 'Bootstrapper'; esi = 'EventScriptInjector'; melse = 'LootingSystemEnhanced'; mecalm = 'CompanionAutoLockManager'; metact = 'TacticsArchitect'; memoria = 'Framework' }
-          "id=$($Matches[1])" >> $env:GITHUB_OUTPUT
-          "project=$($projects[$Matches[1]])" >> $env:GITHUB_OUTPUT
-          "version=$($Matches[2])" >> $env:GITHUB_OUTPUT
+          if ($tag -notmatch '^(?<id>esi|melse|mecalm|metact|memoria)-v(?<version>(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))$') { throw "Invalid release tag: $tag" }
+          $projects = @{ esi = 'EventScriptInjector'; melse = 'LootingSystemEnhanced'; mecalm = 'CompanionAutoLockManager'; metact = 'TacticsArchitect'; memoria = 'Memoria' }
+          "id=$($Matches['id'])" >> $env:GITHUB_OUTPUT
+          "project=$($projects[$Matches['id']])" >> $env:GITHUB_OUTPUT
+          "version=$($Matches['version'])" >> $env:GITHUB_OUTPUT
 
       - name: Build and publish package
         shell: pwsh

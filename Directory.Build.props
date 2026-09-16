@@ -2,7 +2,7 @@
   <PropertyGroup>
     <RepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</RepositoryRoot>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
-    <Version Condition="'$(Version)' == ''">0.0.0-local</Version>
+    <Version Condition="'$(Version)' == ''">0.0.0</Version>
     <CommonOutput Condition="'$(CommonOutput)' == ''">false</CommonOutput>
     <CommonOutputPath>$(RepositoryRoot)artifacts\common_output</CommonOutputPath>
     <CommonOutputManifestPath>$(RepositoryRoot)artifacts\common_output.manifests</CommonOutputManifestPath>

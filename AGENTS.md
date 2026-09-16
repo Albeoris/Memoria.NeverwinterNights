@@ -20,15 +20,15 @@
 
 Runtime loading order is:
 
-1. MEBOOTSTRAPPER
+1. MEMORIA
 2. ESI
 3. MELSE, MECALM, and METACT
 
-MEBOOTSTRAPPER is the only package allowed to provide `default.ncs`. It discovers the installed `memoria_*.txt` registrations and dispatches heartbeats by priority. ESI must always run before consumers of injected events.
+MEMORIA combines the bootstrapper and shared Framework. It is the only package allowed to provide `default.ncs`; it validates installed `*_memoria.txt` package versions and dependencies before dispatching compatible heartbeats by priority. ESI must always run before consumers of injected events.
 
-Framework is a compile-time NWScript dependency shared by MECALM and METACT. It is independently packaged for source distribution but does not own a runtime heartbeat.
+The `memoria_*.nss` helpers are compile-time NWScript dependencies shipped by MEMORIA for source distribution. MEMORIA has no runtime heartbeat of its own beyond initializing other compatible packages.
 
-Memoria-owned mod identifiers use `ME<PACKAGE>_`; corresponding NWN resource files use lowercase `me<package>_` names and must respect NWN resref length limits. Framework and Bootstrapper registration manifests instead use `MEMORIA_*` identifiers and `memoria_*` resources. ESI is the explicit compatibility exception: preserve its original `ESI_*`, `esi_*`, and `rav_*` names and behavior. The Memoria-owned ESI registration wrapper remains separate as `meesi_hb` and `memoria_esi`.
+Memoria-owned mod identifiers use `ME<PACKAGE>_`; corresponding NWN resource files use lowercase `me<package>_` names and must respect NWN resref length limits. Package manifests use the mod-owned `<package>_memoria` resref form. MEMORIA uses `MEMORIA_*` identifiers and `memoria_*` resources. ESI is the explicit compatibility exception: preserve its original `ESI_*`, `esi_*`, and `rav_*` names and behavior. The Memoria-owned ESI registration wrapper remains separate as `esi_hb` and `esi_memoria`.
 
 ## Project inputs
 
@@ -39,8 +39,9 @@ Use wildcard project items:
 - `NwnSource` for `source/**/*.nss`.
 - `NwnResource` for files copied or converted into the override package.
 - `NwnLayout` for NUI layout-emulator inputs.
-- `NwnPackageFile` for source files intentionally shipped as package content, such as Framework includes.
-- `NwnIncludeDirectory` only for cross-project NWScript include directories.
+- `NwnPackageFile` for source files intentionally shipped as package content, such as MEMORIA includes.
+- `NwnRequiredPackage` for cross-project NWScript includes and runtime dependencies. It must declare `ModId`, `MinimumVersion` in X.Y.Z form, and `PackageName`; dependency sources are compiler inputs only and never enter the dependent package output.
+- `NwnIncludeDirectory` only for compiler include directories that are not mod-package dependencies.
 - `PackageDocument` and `NwnRequiredPackage` items for publishing metadata. Each `NwnRequiredPackage` points to an existing mod project and supplies its published name through `PackageName` metadata.
 - Steam Workshop metadata belongs in a separate `PropertyGroup` labeled `Steam Workshop`. `WorkshopTags` is a semicolon-separated property rather than an item because tags are labels, not file dependencies.
 
@@ -80,7 +81,7 @@ To validate publishing for all packages, run:
 dotnet msbuild Memoria.NeverwinterNights.slnx -restore -t:Publish -p:Configuration=Release -p:Version=0.0.0-validation -m:1
 ```
 
-Confirm that every package contains its README, MELSE/MECALM/METACT contain their changelogs, no package contains obsolete RTF documentation, and only MEBOOTSTRAPPER contains `override/default.ncs`.
+Confirm that every package contains its README, MELSE/MECALM/METACT contain their changelogs, no package contains obsolete RTF documentation, and only MEMORIA contains `override/default.ncs`.
 
 Build or publish one mod through its project:
 

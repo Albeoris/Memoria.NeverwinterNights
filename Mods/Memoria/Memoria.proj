@@ -1,9 +1,10 @@
 <Project DefaultTargets="Build">
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
-        <ModName>MEBOOTSTRAPPER</ModName>
-        <PackageId>mebootstrapper</PackageId>
-        <PackageDisplayName>Memoria Bootstrapper</PackageDisplayName>
+        <ModId>MEMORIA</ModId>
+        <Version>1.0.0</Version>
+        <PackageId>memoria</PackageId>
+        <PackageDisplayName>Memoria</PackageDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
         <!-- Set this to the ID of the existing Workshop item. Leaving it empty prevents accidental item creation. -->
@@ -14,6 +15,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Tools\Toolset\Memoria.NeverwinterNights.Toolset.csproj" />
         <NwnSource Include="source\**\*.nss" />
+        <NwnPackageFile Include="source\memoria_*.nss" Exclude="source\memoria_boot.nss;source\memoria_is_ru.nss;source\memoria_noop.nss" />
         <NwnResource Include="resources\**\*" Exclude="resources\**\.gitkeep" />
         <PackageDocument Include="*.md" />
     </ItemGroup>

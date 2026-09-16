@@ -2,13 +2,16 @@ namespace Memoria.NeverwinterNights.Toolset;
 
 internal sealed class ModProjectInputs
 {
+    public string? ProjectDirectory { get; private set; }
+    public string? ModId { get; private set; }
+    public string? PackageVersion { get; private set; }
     public List<string> Sources { get; } = [];
     public List<string> Resources { get; } = [];
     public List<string> Layouts { get; } = [];
     public List<string> PackageFiles { get; } = [];
     public List<string> IncludeDirectories { get; } = [];
     public List<string> Documents { get; } = [];
-    public List<string> Dependencies { get; } = [];
+    public List<PackageDependency> Dependencies { get; } = [];
     public List<string> WorkshopTags { get; } = [];
     public string? WorkshopAppId { get; private set; }
     public string? WorkshopPublishedFileId { get; private set; }
@@ -30,13 +33,16 @@ internal sealed class ModProjectInputs
             string value = rawLine[(separator + 1)..].Trim();
             switch (kind)
             {
+                case "project-directory": inputs.ProjectDirectory = SetOnce(inputs.ProjectDirectory, Path.GetFullPath(value), kind); break;
+                case "mod-id": inputs.ModId = SetOnce(inputs.ModId, value, kind); break;
+                case "package-version": inputs.PackageVersion = SetOnce(inputs.PackageVersion, value, kind); break;
                 case "source": inputs.Sources.Add(Path.GetFullPath(value)); break;
                 case "resource": inputs.Resources.Add(Path.GetFullPath(value)); break;
                 case "layout": inputs.Layouts.Add(Path.GetFullPath(value)); break;
                 case "package": inputs.PackageFiles.Add(Path.GetFullPath(value)); break;
                 case "include": inputs.IncludeDirectories.Add(Path.GetFullPath(value)); break;
                 case "document": inputs.Documents.Add(Path.GetFullPath(value)); break;
-                case "dependency": inputs.Dependencies.Add(value); break;
+                case "dependency": inputs.Dependencies.Add(PackageDependency.Parse(value)); break;
                 case "workshop-app-id": inputs.WorkshopAppId = SetOnce(inputs.WorkshopAppId, value, kind); break;
                 case "workshop-published-file-id": inputs.WorkshopPublishedFileId = SetOnce(inputs.WorkshopPublishedFileId, value, kind); break;
                 case "workshop-visibility": inputs.WorkshopVisibility = SetOnce(inputs.WorkshopVisibility, value, kind); break;
@@ -48,6 +54,12 @@ internal sealed class ModProjectInputs
             }
         }
 
+        if (inputs.ProjectDirectory is null) throw new InvalidDataException("Missing project-directory mod input.");
+        if (string.IsNullOrWhiteSpace(inputs.ModId)) throw new InvalidDataException("Missing mod-id mod input.");
+        if (inputs.PackageVersion is null || !SemanticVersion.IsValid(inputs.PackageVersion)) throw new InvalidDataException($"Package version must be SemVer: {inputs.PackageVersion}");
+        string? duplicateDependency = inputs.Dependencies.GroupBy(dependency => dependency.ModId, StringComparer.OrdinalIgnoreCase).FirstOrDefault(group => group.Count() > 1)?.Key;
+        if (duplicateDependency is not null) throw new InvalidDataException($"Duplicate runtime dependency: {duplicateDependency}");
+
         return inputs;
     }
 
@@ -55,5 +67,18 @@ internal sealed class ModProjectInputs
     {
         if (current is not null) throw new InvalidDataException($"Duplicate mod input kind: {kind}");
         return value;
+    }
+}
+
+internal sealed record PackageDependency(string ModId, string MinimumVersion, string DisplayName, string ProjectPath)
+{
+    public static PackageDependency Parse(string value)
+    {
+        string[] fields = value.Split('|', 4);
+        if (fields.Length != 4 || fields.Any(string.IsNullOrWhiteSpace)) throw new InvalidDataException($"Invalid dependency mod input: {value}");
+        if (!SemanticVersion.IsRelease(fields[1])) throw new InvalidDataException($"Dependency minimum version must use X.Y.Z SemVer notation: {fields[1]}");
+        string projectPath = Path.GetFullPath(fields[3]);
+        if (!File.Exists(projectPath)) throw new FileNotFoundException("Dependency project was not found.", projectPath);
+        return new PackageDependency(fields[0], fields[1], fields[2], projectPath);
     }
 }

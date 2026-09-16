@@ -11,8 +11,7 @@
   </PropertyGroup>
   <Target Name="CleanRepositoryArtifacts" AfterTargets="Clean" Condition="Exists('$(RepositoryRoot)artifacts')">
     <ItemGroup>
-      <_ArtifactDirectory Include="$([System.IO.Directory]::GetDirectories('$(RepositoryRoot)artifacts'))" />
-      <_ArtifactDirectory Remove="$(RepositoryRoot)artifacts\msbuild" />
+      <_ArtifactDirectory Include="$(CommonOutputPath);$(CommonOutputManifestPath);$(RepositoryRoot)artifacts\nwn-user" />
       <_ArtifactFile Include="$(RepositoryRoot)artifacts\*" />
       <_ConfigurationIntermediateDirectory Include="$([System.IO.Directory]::GetDirectories('$(BaseIntermediateOutputPath)'))" Condition="Exists('$(BaseIntermediateOutputPath)')" />
     </ItemGroup>

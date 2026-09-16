@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
 namespace Memoria.NeverwinterNights.Toolset;
@@ -25,6 +26,7 @@ internal static partial class ModBuilder
         if (layoutsOutputDirectory is not null) RecreateDirectory(layoutsOutputDirectory);
 
         ModProjectInputs inputs = await ModProjectInputs.LoadAsync(inputsPath);
+        ValidateOwnedInputs(inputs);
         string[] includeDirectories = inputs.IncludeDirectories.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         HashSet<string> outputNames = new(StringComparer.OrdinalIgnoreCase);
         int compiled = 0;
@@ -49,6 +51,7 @@ internal static partial class ModBuilder
         int gffConverted = 0;
         int resJsonConverted = 0;
         int jsonTextConverted = 0;
+        int manifests = 0;
         int copied = 0;
         foreach (string resource in inputs.Resources.Distinct(StringComparer.OrdinalIgnoreCase).Order())
         {
@@ -69,7 +72,7 @@ internal static partial class ModBuilder
             else if (IsJsonTextResource(resource))
             {
                 string output = ReserveOutput(outputDirectory, Path.GetFileNameWithoutExtension(resource) + ".txt", outputNames);
-                await ConvertJsonTextResourceAsync(resource, output);
+                if (await ConvertJsonTextResourceAsync(resource, output, inputs)) manifests++;
                 jsonTextConverted++;
             }
             else
@@ -78,6 +81,8 @@ internal static partial class ModBuilder
                 copied++;
             }
         }
+
+        if (manifests != 1) throw new InvalidDataException($"Each mod project must own exactly one *_memoria.json runtime manifest; found {manifests}.");
 
         foreach (string packageFile in inputs.PackageFiles.Distinct(StringComparer.OrdinalIgnoreCase).Order())
         {
@@ -161,20 +166,50 @@ internal static partial class ModBuilder
         }
     }
 
-    private static async Task ConvertJsonTextResourceAsync(string source, string output)
+    private static async Task<bool> ConvertJsonTextResourceAsync(string source, string output, ModProjectInputs inputs)
     {
         try
         {
             string text = await File.ReadAllTextAsync(source, new UTF8Encoding(false, true));
-            using JsonDocument document = JsonDocument.Parse(text);
             if (text.Any(character => character > 127)) throw new InvalidDataException($"JSON text resources must contain English ASCII text only: {source}");
+            JsonNode? node = JsonNode.Parse(text);
+            if (node is not JsonObject root) throw new InvalidDataException($"JSON text resources must contain an object: {source}");
+            bool isManifest = Path.GetFileNameWithoutExtension(source).EndsWith("_memoria", StringComparison.OrdinalIgnoreCase);
+            if (isManifest)
+            {
+                if (root["schema"]?.GetValue<int>() != 1) throw new InvalidDataException($"Runtime manifest schema must be 1: {source}");
+                string? id = root["id"]?.GetValue<string>();
+                if (!string.Equals(id, inputs.ModId, StringComparison.Ordinal)) throw new InvalidDataException($"Runtime manifest id '{id}' does not match project ModId '{inputs.ModId}': {source}");
+                root["version"] = inputs.PackageVersion;
+                JsonArray dependencies = [];
+                foreach (PackageDependency dependency in inputs.Dependencies) dependencies.Add(new JsonObject { ["id"] = dependency.ModId, ["version"] = dependency.MinimumVersion });
+                root["dependencies"] = dependencies;
+                text = root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine;
+            }
             await File.WriteAllTextAsync(output, text, new UTF8Encoding(false));
             Console.WriteLine($"Converted JSON text resource: {source} -> {output}");
+            return isManifest;
         }
         catch (JsonException exception)
         {
             throw new InvalidDataException($"Invalid JSON text resource: {source}", exception);
         }
+    }
+
+    private static void ValidateOwnedInputs(ModProjectInputs inputs)
+    {
+        foreach (string path in inputs.Sources) EnsureOwnedInput(inputs, path, "NwnSource");
+        foreach (string path in inputs.Resources) EnsureOwnedInput(inputs, path, "NwnResource");
+        foreach (string path in inputs.Layouts) EnsureOwnedInput(inputs, path, "NwnLayout");
+        foreach (string path in inputs.PackageFiles) EnsureOwnedInput(inputs, path, "NwnPackageFile");
+        foreach (string path in inputs.Documents) EnsureOwnedInput(inputs, path, "PackageDocument");
+    }
+
+    private static void EnsureOwnedInput(ModProjectInputs inputs, string path, string itemType)
+    {
+        string projectRoot = Path.GetFullPath(inputs.ProjectDirectory!).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        string candidate = Path.GetFullPath(path);
+        if (!candidate.StartsWith(projectRoot, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException($"{itemType} must belong to the current mod project. Use NwnRequiredPackage for cross-project compilation dependencies: {path}");
     }
 
     private static string ReserveOutput(string outputDirectory, string fileName, HashSet<string> outputNames)

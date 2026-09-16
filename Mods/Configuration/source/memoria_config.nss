@@ -1,9 +1,8 @@
 #include "esi_lib"
+#include "memoria_loader"
 #include "memoria_locale"
 #include "memoria_i18n"
-#include "nw_inc_nui"
 
-const string MEMORIA_CONFIG_MANIFEST_PREFIX = "memoria_";
 const string MEMORIA_CONFIG_ITEM_RESREF = "memoria_config";
 const string MEMORIA_CONFIG_ITEM_TAG = "MEMORIA_CONFIGURATION_ITEM";
 const string MEMORIA_CONFIG_ACTIVATE_HANDLER = "meconfig_evact";
@@ -16,8 +15,6 @@ const string MEMORIA_CONFIG_LOCAL_DIAGNOSTIC_TARGET = "MEMORIA_CONFIG_DIAGNOSTIC
 const string MEMORIA_CONFIG_LOCAL_LANGUAGE = "MEMORIA_CONFIG_LANGUAGE";
 const string MEMORIA_CONFIG_LOCAL_ITEM_LANGUAGE = "MEMORIA_CONFIG_ITEM_LANGUAGE";
 const string MEMORIA_CONFIG_LOCAL_ITEM_OBJECT = "MEMORIA_CONFIG_ITEM_OBJECT";
-const string MEMORIA_CONFIG_CACHE_OWNER_LOCAL = "MEMORIA_CONFIG_CACHE_OWNER";
-const string MEMORIA_CONFIG_CACHE_WINDOW = "meconfig_cache";
 const int MEMORIA_CONFIG_ITEM_SCHEMA = 1;
 
 const string MEMORIA_CONFIG_TEXT_ITEM_NAME = "item_name";
@@ -27,24 +24,6 @@ const string MEMORIA_CONFIG_TEXT_NO_MODULES = "no_modules";
 const string MEMORIA_CONFIG_TEXT_SAVE = "save";
 const string MEMORIA_CONFIG_TEXT_CLOSE = "close";
 const string MEMORIA_CONFIG_TEXT_RANGE_ERROR = "range_error";
-
-void MEMORIA_CONFIG_ReportError(object oPC, string sManifest, string sError)
-{
-    string sLocal = "MEMORIA_CONFIG_ERR_" + sManifest;
-    if (GetLocalString(oPC, sLocal) == sError) return;
-    SetLocalString(oPC, sLocal, sError);
-    SendMessageToPC(oPC, "Memoria Configuration Manager ignored " + sManifest + ".txt: " + sError);
-}
-
-int MEMORIA_CONFIG_HasId(json jModules, string sId)
-{
-    int nIndex;
-    for (nIndex = 0; nIndex < JsonGetLength(jModules); nIndex++)
-    {
-        if (JsonGetString(JsonObjectGet(JsonArrayGet(jModules, nIndex), "id")) == sId) return TRUE;
-    }
-    return FALSE;
-}
 
 string MEMORIA_CONFIG_GetLanguage(object oPC)
 {
@@ -121,61 +100,33 @@ json MEMORIA_CONFIG_LocalizeModules(object oPC, json jModules)
 json MEMORIA_CONFIG_LoadModules(object oPC)
 {
     json jModules = JsonArray();
-    int nNth = 1;
-    string sResource = ResManFindPrefix(MEMORIA_CONFIG_MANIFEST_PREFIX, RESTYPE_TXT, nNth, FALSE);
-    while (sResource != "")
+    json jPackages = MEMORIA_GetPackages(oPC);
+    int nPackage;
+    for (nPackage = 0; nPackage < JsonGetLength(jPackages); nPackage++)
     {
-        json jManifest = JsonParse(ResManGetFileContents(sResource, RESTYPE_TXT));
+        json jManifest = JsonArrayGet(jPackages, nPackage);
         json jModule = JsonObjectGet(jManifest, "configuration");
         string sId = JsonGetString(JsonObjectGet(jManifest, "id"));
-        int bValid = JsonGetError(jManifest) == "" && JsonGetType(jManifest) == JSON_TYPE_OBJECT && JsonGetInt(JsonObjectGet(jManifest, "schema")) == 1 && sId != "" && JsonGetType(jModule) == JSON_TYPE_OBJECT && JsonGetString(JsonObjectGet(jModule, "name")) != "";
-        if (bValid)
+        if (JsonGetType(jModule) == JSON_TYPE_OBJECT && JsonGetString(JsonObjectGet(jModule, "name")) != "")
         {
             jModule = JsonObjectSet(jModule, "id", JsonString(sId));
-            if (MEMORIA_CONFIG_HasId(jModules, sId)) MEMORIA_CONFIG_ReportError(oPC, sResource, "duplicate module id " + sId);
-            else
+            int nInsert = JsonGetLength(jModules);
+            string sName = JsonGetString(JsonObjectGet(jModule, "name"));
+            jModules = JsonArrayInsert(jModules, jModule);
+            while (nInsert > 0 && MEMORIA_CONFIG_CompareNames(sName, JsonGetString(JsonObjectGet(JsonArrayGet(jModules, nInsert - 1), "name"))) < 0)
             {
-                int nInsert = JsonGetLength(jModules);
-                string sName = JsonGetString(JsonObjectGet(jModule, "name"));
-                jModules = JsonArrayInsert(jModules, jModule);
-                while (nInsert > 0 && MEMORIA_CONFIG_CompareNames(sName, JsonGetString(JsonObjectGet(JsonArrayGet(jModules, nInsert - 1), "name"))) < 0)
-                {
-                    jModules = JsonArraySet(jModules, nInsert, JsonArrayGet(jModules, nInsert - 1));
-                    nInsert--;
-                }
-                jModules = JsonArraySet(jModules, nInsert, jModule);
+                jModules = JsonArraySet(jModules, nInsert, JsonArrayGet(jModules, nInsert - 1));
+                nInsert--;
             }
+            jModules = JsonArraySet(jModules, nInsert, jModule);
         }
-        nNth++;
-        sResource = ResManFindPrefix(MEMORIA_CONFIG_MANIFEST_PREFIX, RESTYPE_TXT, nNth, FALSE);
     }
     return jModules;
 }
 
-json MEMORIA_CONFIG_BuildCacheWindow()
-{
-    return NuiWindow(NuiVisible(NuiSpacer(), JsonBool(FALSE)), JsonString(""), NuiRect(-100.0f, -100.0f, 1.0f, 1.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(FALSE));
-}
-
 json MEMORIA_CONFIG_GetModules(object oPC)
 {
-    object oModule = GetModule();
-    object oCacheOwner = GetLocalObject(oModule, MEMORIA_CONFIG_CACHE_OWNER_LOCAL);
-    int nToken = GetIsObjectValid(oCacheOwner) ? NuiFindWindow(oCacheOwner, MEMORIA_CONFIG_CACHE_WINDOW) : 0;
-    json jModules = NuiGetUserData(oCacheOwner, nToken);
-    if (nToken == 0 || JsonGetType(jModules) != JSON_TYPE_ARRAY)
-    {
-        jModules = MEMORIA_CONFIG_LoadModules(oPC);
-        oCacheOwner = oPC;
-        nToken = NuiFindWindow(oCacheOwner, MEMORIA_CONFIG_CACHE_WINDOW);
-        if (nToken == 0) nToken = NuiCreate(oCacheOwner, MEMORIA_CONFIG_BuildCacheWindow(), MEMORIA_CONFIG_CACHE_WINDOW, "meconfig_noop");
-        if (nToken > 0)
-        {
-            NuiSetUserData(oCacheOwner, nToken, jModules);
-            SetLocalObject(oModule, MEMORIA_CONFIG_CACHE_OWNER_LOCAL, oCacheOwner);
-        }
-    }
-    return MEMORIA_CONFIG_LocalizeModules(oPC, jModules);
+    return MEMORIA_CONFIG_LocalizeModules(oPC, MEMORIA_CONFIG_LoadModules(oPC));
 }
 
 json MEMORIA_CONFIG_GetSelectedModule(object oPC, json jModules)
@@ -411,7 +362,7 @@ void MEMORIA_CONFIG_EnsureItem(object oPC)
 void MEMORIA_CONFIG_InstallHook()
 {
     object oModule = GetModule();
-    if (!ESI_IsRegistered(oModule, MEMORIA_CONFIG_ESI_KEY, EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, MEMORIA_CONFIG_ACTIVATE_HANDLER, ESI_INJECTION_PLACEMENT_FIRST)) ESI_InjectToObject(oModule, MEMORIA_CONFIG_ESI_KEY, EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, MEMORIA_CONFIG_ACTIVATE_HANDLER, ESI_INJECTION_PLACEMENT_FIRST);
+    ESI_InjectToObject(oModule, MEMORIA_CONFIG_ESI_KEY, EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, MEMORIA_CONFIG_ACTIVATE_HANDLER, ESI_INJECTION_PLACEMENT_FIRST);
 }
 
 void MEMORIA_CONFIG_Heartbeat(object oPC)

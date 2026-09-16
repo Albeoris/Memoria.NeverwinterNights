@@ -12,7 +12,7 @@ MECALM lets companions, henchmen, familiars, animal companions, summons, and dom
 
 ## Installation
 
-Install MEBOOTSTRAPPER, ESI, MEMORIA_CONFIG, and then MECALM by copying each package's `override` contents into the NWN user `override` directory.
+Install Memoria, ESI, MEMORIA_CONFIG, and then MECALM by copying each package's `override` contents into the NWN user `override` directory.
 
 ## Use
 

@@ -1,3 +1,0 @@
-TODO: Replace this text with the Steam Workshop description for Memoria Framework.
-
-Include installation instructions, dependencies, compatibility notes, and links as appropriate. Steam Workshop descriptions support Steam BBCode.

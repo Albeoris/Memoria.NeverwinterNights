@@ -25,6 +25,6 @@ void main()
     string sRuntime = GetLocalString(oModule, "MELSE_RUNTIME");
     DeleteLocalString(oModule, "MELSE_RUNTIME");
     if (sRuntime != "1.1-memoria.1") SendMessageToPC(OBJECT_SELF, "MELSE conflict: legacy and Memoria MELSE resources are mixed. Remove or disable the legacy MELSE installation.");
-    nToken = NuiCreate(OBJECT_SELF, MELSE_BuildCheckWindow(), MELSE_CHECK_WINDOW, "meboot_noop");
+    nToken = NuiCreate(OBJECT_SELF, MELSE_BuildCheckWindow(), MELSE_CHECK_WINDOW, "memoria_noop");
     if (nToken > 0) NuiSetUserData(OBJECT_SELF, nToken, JsonInt(TRUE));
 }

@@ -1,7 +1,8 @@
 <Project DefaultTargets="Build">
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
-        <ModName>MECALM</ModName>
+        <ModId>MECALM</ModId>
+        <Version>1.2.7</Version>
         <PackageId>mecalm</PackageId>
         <PackageDisplayName>Memoria Companion Auto-Lock Manager (MECALM)</PackageDisplayName>
     </PropertyGroup>
@@ -15,11 +16,10 @@
         <ProjectReference Include="..\..\Tools\Toolset\Memoria.NeverwinterNights.Toolset.csproj" />
         <NwnSource Include="source\**\*.nss" />
         <NwnResource Include="resources\**\*" Exclude="resources\**\.gitkeep" />
-        <NwnIncludeDirectory Include="..\Framework\source" />
         <PackageDocument Include="*.md" />
-        <NwnRequiredPackage Include="..\Bootstrapper\Bootstrapper.proj" PackageName="Memoria Bootstrapper" />
-        <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" PackageName="Event Script Injector (Memoria Edition)" />
-        <NwnRequiredPackage Include="..\Configuration\Configuration.proj" PackageName="Memoria Configuration Manager" />
+        <NwnRequiredPackage Include="..\Memoria\Memoria.proj" ModId="MEMORIA" MinimumVersion="1.0.0" PackageName="Memoria" />
+        <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" ModId="esi" MinimumVersion="1.0.0" PackageName="Event Script Injector (Memoria Edition)" />
+        <NwnRequiredPackage Include="..\Configuration\Configuration.proj" ModId="MEMORIA_CONFIG" MinimumVersion="1.0.0" PackageName="Memoria Configuration Manager" />
     </ItemGroup>
     <Import Project="..\..\Build\NwnModProject.targets" />
 </Project>

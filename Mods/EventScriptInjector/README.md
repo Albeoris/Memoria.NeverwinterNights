@@ -8,16 +8,16 @@ Injection keys are exact, namespaced strings. Legacy numeric-key locals are disc
 
 ## Installation
 
-Install MEBOOTSTRAPPER first, then copy ESI's `override` contents into the NWN user `override` directory.
+Install Memoria first, then copy ESI's `override` contents into the NWN user `override` directory.
 
 ## Minimal event mod
 
 This example registers an `OnActivateItem` handler without replacing the module's original event script or handlers installed by other mods.
 
-`override/memoria_acme_evt.txt`:
+`override/acme_evt_memoria.txt`:
 
 ```json
-{"schema":1,"id":"ACME_TINY_EVT","bootstrapper":{"heartbeat":"acme_evt_hb","priority":200}}
+{"schema":1,"id":"ACME_TINY_EVT","version":"1.0.0","dependencies":[{"id":"MEMORIA","version":"1.0.0"},{"id":"esi","version":"1.0.0"}],"bootstrapper":{"heartbeat":"acme_evt_hb","priority":200}}
 ```
 
 `acme_evt_hb.nss`, compiled as `override/acme_evt_hb.ncs`:
@@ -28,7 +28,7 @@ This example registers an `OnActivateItem` handler without replacing the module'
 void main()
 {
     object oModule = GetModule();
-    if (!ESI_IsRegistered(oModule, "acme.module.activate", EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, "acme_evt_act", ESI_INJECTION_PLACEMENT_LAST)) ESI_InjectToObject(oModule, "acme.module.activate", EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, "acme_evt_act", ESI_INJECTION_PLACEMENT_LAST);
+    ESI_InjectToObject(oModule, "acme.module.activate", EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, "acme_evt_act", ESI_INJECTION_PLACEMENT_LAST);
 }
 ```
 
@@ -47,12 +47,12 @@ The finished mod contains:
 
 ```text
 override/
-├── memoria_acme_evt.txt
+├── acme_evt_memoria.txt
 ├── acme_evt_act.ncs
 └── acme_evt_hb.ncs
 ```
 
-`ACME` stands for the mod author's own unique prefix. The `memoria_` filename prefix identifies the shared package manifest; Bootstrapper reads its `bootstrapper` section. Use a namespaced injection key such as `acme.module.activate`. `ESI_IsRegistered` checks the current runtime registry, so repeated heartbeats are cheap while a newly loaded game registers the hook again automatically.
+`ACME` stands for the mod author's own unique prefix. The `_memoria` filename suffix identifies the shared package manifest; Memoria reads its dependency and `bootstrapper` data. Use a namespaced injection key such as `acme.module.activate`. `ESI_InjectToObject` checks the current runtime registry internally, so repeated heartbeats are cheap while a newly loaded game registers the hook again automatically. Use `ESI_IsRegistered` directly only when its result lets the caller skip additional work beyond the registration call itself.
 
 ## Compatibility
 

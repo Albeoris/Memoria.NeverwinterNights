@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "esi",
   "bootstrapper": {
-    "heartbeat": "meesi_hb",
+    "heartbeat": "esi_hb",
     "priority": 0
   }
 }

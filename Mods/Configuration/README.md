@@ -1,15 +1,21 @@
 # Memoria Configuration Manager
 
-MEMORIA_CONFIG provides one persistent configuration item and a NUI menu for installed Memoria mods. Configuration metadata lives in the optional `configuration` section of each package's `resources/memoria_*.json` manifest; the build emits that single manifest as a `.txt` resource for NWN.
+MEMORIA_CONFIG provides one persistent configuration item and a NUI menu for installed Memoria mods. Configuration metadata lives in the optional `configuration` section of each package's `resources/*_memoria.json` manifest; the build emits that single manifest as a `.txt` resource for NWN.
 
 ## Registration
 
-A shared manifest has package-wide `schema` and `id` fields. Bootstrapper and Configuration Manager independently read their own optional sections:
+A shared schema-1 manifest has package-wide `id`, `version`, and `dependencies` fields. Memoria validates these once; the heartbeat dispatcher and Configuration Manager consume the same filtered package list. `version` and `dependencies` are generated from the mod project's `Version` and `NwnRequiredPackage` metadata:
 
 ```json
 {
   "schema": 1,
   "id": "ACME_PACKAGE",
+  "version": "1.4.0",
+  "dependencies": [
+    { "id": "MEMORIA", "version": "1.0.0" },
+    { "id": "esi", "version": "1.0.0" },
+    { "id": "MEMORIA_CONFIG", "version": "1.0.0" }
+  ],
   "bootstrapper": {
     "heartbeat": "acme_hb",
     "priority": 200
@@ -30,15 +36,15 @@ A shared manifest has package-wide `schema` and `id` fields. Bootstrapper and Co
 
 `scope` is `player` or `module`; `int` and `float` options must also declare inclusive `minimum` and `maximum` values. `apply` runs after settings are saved, and `diagnostic` runs when the shared item targets an object. `localization`, `name_key`, and `label_key` are optional; when present, `name_key` and `label_key` name keys in the mod's own `<prefix>_loc_<language>.txt` table, falling back to the manifest's plain `name` or `label` text when the key or table is missing.
 
-Both consumers discover `memoria_*.txt` resources once per loaded game or module and cache only their own extracted data. A missing section is valid and is ignored by the consumer that does not use it.
+Memoria discovers `*_memoria.txt` resources once per loaded game or module. A missing subsystem section is valid and is ignored by the consumer that does not use it.
 
-Package `id` values must be unique. Configuration Manager reports and ignores a later manifest whose `id` duplicates an already loaded package, matching Bootstrapper's behavior.
+Package `id` values must be unique. Duplicate IDs disable that identity rather than selecting an arbitrary copy.
 
 ## Minimal configurable mod
 
 This example adds player boolean and integer settings, a module float setting, an action button, and localized labels using the shared `memoria_i18n` loader.
 
-`resources/memoria_acme.json`:
+`resources/acme_memoria.json`:
 
 ```json
 {
@@ -87,7 +93,7 @@ The finished mod contains one shared registration manifest:
 
 ```text
 override/
-|-- memoria_acme.txt
+|-- acme_memoria.txt
 |-- acme_cfg_apply.ncs
 |-- acme_cfg_ping.ncs
 `-- acme_cfg_loc_en.txt
@@ -97,4 +103,4 @@ override/
 
 ## Installation
 
-Install MEBOOTSTRAPPER, ESI, Framework, and MEMORIA_CONFIG before any Memoria mod that declares them as dependencies. The manager automatically grants the configuration item to each player.
+Install Memoria, ESI, and MEMORIA_CONFIG before any mod that declares them as dependencies. The manager automatically grants the configuration item to each player.

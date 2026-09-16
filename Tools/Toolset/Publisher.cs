@@ -21,13 +21,16 @@ internal static partial class Publisher
         if (id is null || !SafeSegmentRegex().IsMatch(id)) return Fail("publish: --id must contain only letters, digits, dots, underscores, or hyphens.");
         if (string.IsNullOrWhiteSpace(displayName)) return Fail("publish: --display-name is required.");
         if (buildDirectoryOption is null) return Fail("publish: --build-directory is required.");
-        if (version is null || !SafeSegmentRegex().IsMatch(version)) return Fail("publish: --version must contain only letters, digits, dots, underscores, or hyphens.");
+        if (version is null || !SemanticVersion.IsValid(version)) return Fail("publish: --version must be a valid SemVer version.");
 
         ModProjectInputs inputs = await ModProjectInputs.LoadAsync(inputsPath);
         string buildDirectory = Path.GetFullPath(buildDirectoryOption);
         if (!Directory.Exists(buildDirectory)) return Fail($"Build directory not found: {buildDirectory}");
 
-        string packageRoot = Path.Combine(outputRoot, id, version);
+        string packageRoot = Path.GetFullPath(Path.Combine(outputRoot, id, version));
+        string normalizedOutputRoot = outputRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        if (!packageRoot.StartsWith(normalizedOutputRoot, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException($"Unsafe publish package path: {packageRoot}");
+        if (Directory.Exists(packageRoot)) Directory.Delete(packageRoot, true);
         string workshopRoot = Path.Combine(packageRoot, "workshop", displayName);
         string workshopOverride = Path.Combine(workshopRoot, "override");
         string nexusRoot = Path.Combine(packageRoot, "nexus-stage", displayName);
@@ -53,7 +56,7 @@ internal static partial class Publisher
 
         if (inputs.Dependencies.Count > 0)
         {
-            string[] dependencyLines = ["Required packages, installed first:", .. inputs.Dependencies.Distinct(StringComparer.OrdinalIgnoreCase).Select((dependency, index) => $"{index + 1}. {dependency}")];
+            string[] dependencyLines = ["Required packages, installed first:", .. inputs.Dependencies.Select((dependency, index) => $"{index + 1}. {dependency.DisplayName} {dependency.MinimumVersion} or newer within major version {dependency.MinimumVersion.Split('.')[0]}")];
             await File.WriteAllLinesAsync(Path.Combine(workshopRoot, "dependencies.txt"), dependencyLines, new UTF8Encoding(false));
             await File.WriteAllLinesAsync(Path.Combine(nexusRoot, "dependencies.txt"), dependencyLines, new UTF8Encoding(false));
         }

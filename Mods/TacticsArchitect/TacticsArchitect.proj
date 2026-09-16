@@ -1,7 +1,8 @@
 <Project DefaultTargets="Build">
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
-        <ModName>METACT</ModName>
+        <ModId>METACT</ModId>
+        <Version>0.7.0</Version>
         <PackageId>metact</PackageId>
         <PackageDisplayName>Memoria Tactics Architect (METACT)</PackageDisplayName>
     </PropertyGroup>
@@ -16,11 +17,10 @@
         <NwnSource Include="source\**\*.nss" />
         <NwnResource Include="resources\**\*" Exclude="resources\layouts\**\*;resources\**\.gitkeep" />
         <NwnLayout Include="resources\layouts\**\*.json" />
-        <NwnIncludeDirectory Include="..\EventScriptInjector\source;..\Framework\source" />
         <PackageDocument Include="*.md" />
-        <NwnRequiredPackage Include="..\Bootstrapper\Bootstrapper.proj" PackageName="Memoria Bootstrapper" />
-        <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" PackageName="Event Script Injector (Memoria Edition)" />
-        <NwnRequiredPackage Include="..\Configuration\Configuration.proj" PackageName="Memoria Configuration Manager" />
+        <NwnRequiredPackage Include="..\Memoria\Memoria.proj" ModId="MEMORIA" MinimumVersion="1.0.0" PackageName="Memoria" />
+        <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" ModId="esi" MinimumVersion="1.0.0" PackageName="Event Script Injector (Memoria Edition)" />
+        <NwnRequiredPackage Include="..\Configuration\Configuration.proj" ModId="MEMORIA_CONFIG" MinimumVersion="1.0.0" PackageName="Memoria Configuration Manager" />
     </ItemGroup>
     <Import Project="..\..\Build\NwnModProject.targets" />
 </Project>
