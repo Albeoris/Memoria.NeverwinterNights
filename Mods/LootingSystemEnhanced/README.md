@@ -9,7 +9,7 @@ MELSE automates looting and adds configurable lootable corpses, container handli
 - Lootable corpses with configurable decay time.
 - Treasure notifications and container tracking.
 - Item descriptions with acquisition details.
-- Event injection is performed once per module and each area's static objects are registered in one pass.
+- Event hooks are restored from the transient ESI registry on the first heartbeat of each loaded game, and each area's static objects are registered once per runtime session.
 
 ## Installation
 

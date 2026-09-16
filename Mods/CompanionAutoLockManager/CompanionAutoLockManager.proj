@@ -15,7 +15,7 @@
         <ProjectReference Include="..\..\Tools\Toolset\Memoria.NeverwinterNights.Toolset.csproj" />
         <NwnSource Include="source\**\*.nss" />
         <NwnResource Include="resources\**\*" Exclude="resources\**\.gitkeep" />
-        <NwnIncludeDirectory Include="..\EventScriptInjector\source;..\Framework\source" />
+        <NwnIncludeDirectory Include="..\Framework\source" />
         <PackageDocument Include="*.md" />
         <NwnRequiredPackage Include="..\Bootstrapper\Bootstrapper.proj" PackageName="Memoria Bootstrapper" />
         <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" PackageName="Event Script Injector (Memoria Edition)" />

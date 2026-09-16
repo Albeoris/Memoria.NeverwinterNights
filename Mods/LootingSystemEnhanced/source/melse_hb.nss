@@ -12,16 +12,19 @@ json MELSE_BuildCheckWindow()
 
 void main()
 {
+    object oModule = GetModule();
     int nToken = NuiFindWindow(OBJECT_SELF, MELSE_CHECK_WINDOW);
     if (nToken > 0 && JsonGetInt(NuiGetUserData(OBJECT_SELF, nToken)))
     {
         ExecuteScript("melse_crthrtbt", OBJECT_SELF);
+        DeleteLocalString(oModule, "MELSE_RUNTIME");
         return;
     }
-    object oModule = GetModule();
     DeleteLocalString(oModule, "MELSE_RUNTIME");
     ExecuteScript("melse_crthrtbt", OBJECT_SELF);
-    if (GetLocalString(oModule, "MELSE_RUNTIME") != "1.1-memoria.1") SendMessageToPC(OBJECT_SELF, "MELSE conflict: legacy and Memoria MELSE resources are mixed. Remove or disable the legacy MELSE installation.");
+    string sRuntime = GetLocalString(oModule, "MELSE_RUNTIME");
+    DeleteLocalString(oModule, "MELSE_RUNTIME");
+    if (sRuntime != "1.1-memoria.1") SendMessageToPC(OBJECT_SELF, "MELSE conflict: legacy and Memoria MELSE resources are mixed. Remove or disable the legacy MELSE installation.");
     nToken = NuiCreate(OBJECT_SELF, MELSE_BuildCheckWindow(), MELSE_CHECK_WINDOW, "meboot_noop");
     if (nToken > 0) NuiSetUserData(OBJECT_SELF, nToken, JsonInt(TRUE));
 }

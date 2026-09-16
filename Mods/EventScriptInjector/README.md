@@ -1,8 +1,10 @@
 # Event Script Injector — Memoria Edition
 
-ESI lets override mods add behavior to module, area, creature, and placeable events without replacing the module's original scripts. This package preserves Ravick's original ESI API and resource names.
+ESI lets override mods add behavior to module, area, creature, and placeable events without replacing the module's original scripts. This package preserves Ravick's original `ESI_InjectToObject` API and resource names.
 
-Injection keys are compared and stored as exact strings. Existing numeric-key locals and saved games remain readable, while non-numeric keys no longer collide through `StringToInt` conversion.
+The union script and the remembered original event script remain on the object and can be serialized by a saved game. Active hooks live only in a server-side NUI user-data registry. ESI creates a new empty registry for every loaded runtime, and consumer mods register their hooks again on their first heartbeat. Until that happens, a saved union script executes only the remembered original script.
+
+Injection keys are exact, namespaced strings. Legacy numeric-key locals are discarded lazily when an event is registered under the new storage schema. Existing saved games keep their original event handlers because the `esi_uni_*` resource names and original-script local names have not changed.
 
 ## Installation
 
@@ -23,12 +25,10 @@ This example registers an `OnActivateItem` handler without replacing the module'
 ```c
 #include "esi_lib"
 
-const string ACME_TINY_EVT_INSTALLED = "ACME_TINY_EVT_INSTALLED";
-
 void main()
 {
     object oModule = GetModule();
-    if (!GetLocalInt(oModule, ACME_TINY_EVT_INSTALLED) && ESI_InjectToObject(oModule, "acme_evt", EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, "acme_evt_act", ESI_INJECTION_PLACEMENT_LAST)) SetLocalInt(oModule, ACME_TINY_EVT_INSTALLED, TRUE);
+    if (!ESI_IsRegistered(oModule, "acme.module.activate", EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, "acme_evt_act", ESI_INJECTION_PLACEMENT_LAST)) ESI_InjectToObject(oModule, "acme.module.activate", EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, "acme_evt_act", ESI_INJECTION_PLACEMENT_LAST);
 }
 ```
 
@@ -52,10 +52,10 @@ override/
 └── acme_evt_hb.ncs
 ```
 
-`ACME` stands for the mod author's own unique prefix. The `memoria_` filename prefix identifies the shared package manifest; Bootstrapper reads its `bootstrapper` section. The injection key `acme_evt` must be unique within this event and placement. The module local and the ESI registration are saved with the module, so subsequent heartbeats are cheap.
+`ACME` stands for the mod author's own unique prefix. The `memoria_` filename prefix identifies the shared package manifest; Bootstrapper reads its `bootstrapper` section. Use a namespaced injection key such as `acme.module.activate`. `ESI_IsRegistered` checks the current runtime registry, so repeated heartbeats are cheap while a newly loaded game registers the hook again automatically.
 
 ## Compatibility
 
-Do not install this package alongside another ESI distribution or a legacy LSE package that contains ESI files. Mods that replace module event handlers at runtime instead of using ESI may bypass registered injections.
+Do not install this package alongside another ESI distribution or a legacy LSE package that contains ESI files. Mods that replace module event handlers at runtime instead of using ESI may bypass registered injections. Runtime hooks require at least one player because the transient registry belongs to a hidden player NUI window; if its owner leaves, ESI recreates the registry and consumers register again on the next heartbeat.
 
 Original ESI scripts are by Ravick. See the repository's third-party notices for licensing details.

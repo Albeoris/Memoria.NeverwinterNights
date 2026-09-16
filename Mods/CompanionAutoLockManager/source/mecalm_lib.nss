@@ -1,7 +1,6 @@
 // Companion Auto-Lock Manager (MECALM)
 // Shared implementation. All resource names use the uncommon "mecalm_" prefix.
 
-#include "esi_lib"
 #include "memoria_core"
 #include "memoria_group"
 #include "memoria_locale"
@@ -9,7 +8,6 @@
 
 const string MECALM_VERSION = "1.2.7";
 const string MECALM_I18N_PREFIX = "mecalm";
-const string MECALM_ESI_INJECTION_KEY = "9317";
 const string MECALM_LOCAL_INSTALLED = "MECALM_INSTALLED";
 const string MECALM_LOCAL_ENABLED = "MECALM_MODE_ENABLED";
 const string MECALM_LOCAL_PAUSED = "MECALM_MODE_PAUSED";
@@ -36,7 +34,6 @@ const string MECALM_LOCAL_LOCK_MEMBER = "MECALM_LOCK_MEMBER_";
 const string MECALM_LOCAL_LOCKSMITH_COUNT = "MECALM_LOCKSMITH_COUNT";
 const string MECALM_LOCAL_LOCKSMITH_MEMBER = "MECALM_LOCKSMITH_MEMBER_";
 const string MECALM_LOCAL_REPORT_PENDING = "MECALM_REPORT_PENDING";
-const string MECALM_LOCAL_ESI_INSTALLED = "MECALM_ESI_INSTALLED";
 const string MECALM_LOCAL_SETTINGS_INITIALIZED = "MECALM_SETTINGS_INITIALIZED";
 const string MECALM_LOCAL_SEARCH_RADIUS = "MECALM_CFG_SEARCH_RADIUS";
 const string MECALM_LOCAL_LOCK_INTERVAL = "MECALM_CFG_LOCK_INTERVAL";

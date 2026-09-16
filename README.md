@@ -9,7 +9,7 @@ ATTENTION: The mods are ready but are currently being debugged. I will release t
 | Package | Runtime dependency | Purpose |
 | --- | --- | --- |
 | MEBOOTSTRAPPER | None | Owns `default.ncs`, caches discovered module manifests for the current session and module, and dispatches player heartbeats in priority order. |
-| ESI | MEBOOTSTRAPPER | Event Script Injector with its original `ESI_*`, `esi_*`, and `rav_*` compatibility surface. Always dispatched first. |
+| ESI | MEBOOTSTRAPPER | Event Script Injector with persistent compatible `esi_uni_*` trampolines and a transient runtime hook registry. Always dispatched first. |
 | MEMORIA_CONFIG | MEBOOTSTRAPPER, ESI, Memoria Framework | Shared inventory tool and NUI Mod Configuration Manager. It reads each package's optional `configuration` section from the shared `memoria_*.txt` manifest. |
 | MELSE | MEBOOTSTRAPPER, ESI, MEMORIA_CONFIG | Memoria edition of Looting System Enhanced, namespaced as `MELSE_*` and `melse_*`. |
 | MECALM | MEBOOTSTRAPPER, ESI, MEMORIA_CONFIG | Companion Auto-Lock Manager. |

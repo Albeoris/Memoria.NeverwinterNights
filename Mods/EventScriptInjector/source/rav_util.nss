@@ -18,35 +18,6 @@ const string RAV_TYPE_INT = "int";
 const string RAV_TYPE_FLOAT = "float";
 const string RAV_TYPE_STRING = "string";
 
-//::///////////////////////////////////////////////////////////////////////////
-//:: Methods copied from nw_o0_itemmaker.nss
-
-string GetLocalArrayString(object oObject, string sVarName, int nVarNum)
-{
-    string sFullVarName = sVarName + IntToString(nVarNum) ;
-    return GetLocalString(oObject, sFullVarName);
-}
-
-void SetLocalArrayString(object oObject, string sVarName, int nVarNum, string sValue)
-{
-    string sFullVarName = sVarName + IntToString(nVarNum) ;
-    SetLocalString(oObject, sFullVarName, sValue);
-}
-
-int GetLocalArrayInt(object oObject, string sVarName, int nVarNum)
-{
-    string sFullVarName = sVarName + IntToString(nVarNum) ;
-    return GetLocalInt(oObject, sFullVarName);
-}
-
-void SetLocalArrayInt(object oObject, string sVarName, int nVarNum, int nValue)
-{
-    string sFullVarName = sVarName + IntToString(nVarNum) ;
-    SetLocalInt(oObject, sFullVarName, nValue);
-}
-
-//::///////////////////////////////////////////////////////////////////////////
-
 void RAV_SetLocalInt(object oObject, string sVarName, int nValue) 
 {
     SetLocalInt(oObject, sVarName, nValue);
@@ -63,12 +34,6 @@ void RAV_SetLocalFloat(object oObject, string sVarName, float fValue)
 {
     SetLocalFloat(oObject, sVarName, fValue);
     RAV_PrintVariableString("SetLocalFloat->" + sVarName, FloatToString(fValue), oObject);
-}
-
-void RAV_SetLocalArrayString(object oObject, string sVarName, int nVarNum, string sValue) 
-{
-    SetLocalArrayString(oObject, sVarName, nVarNum, sValue);
-    RAV_PrintVariableString("SetLocalArrayString->" + sVarName + "[" + IntToString(nVarNum) + "]", sValue, oObject);
 }
 
 void RAV_SetLocalObject(object oObject, string sVarName, object oValue) 
@@ -107,13 +72,6 @@ string RAV_GetLocalString(object oObject, string sVarName)
 {
     string sValue = GetLocalString(oObject, sVarName);
     //RAV_PrintVariableString("RAV_GetLocalString->" + sVarName, sValue, oObject);
-    return sValue;
-}
-
-string RAV_GetLocalArrayString(object oObject, string sVarName, int nVarNum) 
-{
-    string sValue = GetLocalArrayString(oObject, sVarName, nVarNum);
-    // RAV_PrintVariableString("RAV_GetLocalArrayString->" + sVarName + "[" + IntToString(nVarNum) + "]", sValue, oObject);
     return sValue;
 }
 

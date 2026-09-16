@@ -9,11 +9,9 @@
 
   Allows dynamic assignment of multiple scripts for a single event.
   Scripts can be injected to be executed before or after an original script.
-  If no original script is set for an event, only injected scripts are executed. 
-  This is done by remembering the original script in a local variable on object
-  and replacing the event script by a so called "union script". Any injected 
-  scripts will be saved as local variables too. The union script will determine
-  all the scripts to run at runtime using the local variables. 
+  The union script and the remembered original event script are persistent.
+  Active injected scripts are kept in a transient NUI user-data registry and
+  must be registered again when a runtime session starts.
  */
 //::///////////////////////////////////////////////////////////////////////////
 //:: Created By: Mischa Dutzik (aka Ravick)
@@ -22,6 +20,7 @@
 
 #include "rav_util"
 #include "x0_i0_stringlib"
+#include "nw_inc_nui"
 
 const int ESI_INJECTION_PLACEMENT_FIRST = 1;
 const int ESI_INJECTION_PLACEMENT_LAST = 2;
@@ -36,61 +35,52 @@ const string ESI_PARAM_PLACEMENT = "nPlacement";
 
 const string ESI_SCRIPT_AREA_INJECT = "esi_are_inject";
 
-const string ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DEATH = "crtdeath" ;
-const string ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_SPAWN_IN  = "crtspawn" ;
-const string ESI_EVENT_NUMBER_ALIAS_ENCOUNTER_ON_OBJECT_ENTER = "encenter" ;
-const string ESI_EVENT_NUMBER_ALIAS_MODULE_ON_ACQUIRE_ITEM = "modacqit" ;
-const string ESI_EVENT_NUMBER_ALIAS_MODULE_ON_ACTIVATE_ITEM = "modact" ;
-const string ESI_EVENT_NUMBER_ALIAS_MODULE_ON_PLAYER_GUIEVENT = "guievt" ;
-const string ESI_EVENT_NUMBER_ALIAS_MODULE_ON_PLAYER_TARGET = "modtarg" ;
-const string ESI_EVENT_NUMBER_ALIAS_PLACEABLE_ON_CLOSED = "plcclose" ;
-const string ESI_EVENT_NUMBER_ALIAS_PLACEABLE_ON_OPEN = "plcopen" ;
-const string ESI_EVENT_NUMBER_ALIAS_PLACEABLE_ON_UNLOCK = "plcunlck" ;
-const string ESI_EVENT_NUMBER_ALIAS_AREA_ON_ENTER = "areenter" ;            
+const string ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DEATH = "crtdeath";
+const string ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_SPAWN_IN = "crtspawn";
+const string ESI_EVENT_NUMBER_ALIAS_ENCOUNTER_ON_OBJECT_ENTER = "encenter";
+const string ESI_EVENT_NUMBER_ALIAS_MODULE_ON_ACQUIRE_ITEM = "modacqit";
+const string ESI_EVENT_NUMBER_ALIAS_MODULE_ON_ACTIVATE_ITEM = "modact";
+const string ESI_EVENT_NUMBER_ALIAS_MODULE_ON_PLAYER_GUIEVENT = "guievt";
+const string ESI_EVENT_NUMBER_ALIAS_MODULE_ON_PLAYER_TARGET = "modtarg";
+const string ESI_EVENT_NUMBER_ALIAS_PLACEABLE_ON_CLOSED = "plcclose";
+const string ESI_EVENT_NUMBER_ALIAS_PLACEABLE_ON_OPEN = "plcopen";
+const string ESI_EVENT_NUMBER_ALIAS_PLACEABLE_ON_UNLOCK = "plcunlck";
+const string ESI_EVENT_NUMBER_ALIAS_AREA_ON_ENTER = "areenter";
 
-/* 
-    Example: Local variables for two injections assigned to OnDeath event of a creature 
-    Names are constructed as follows:
-        [PREFIX="ESI_SCRIPT_"]
-        [EVENT_NUMBER=EVENT_SCRIPT_CREATURE_ON_DEATH]
-        [INJECTION_PLACEMENT=ESI_LOCAL_SUFFIX_INJECTION_FIRST/ESI_LOCAL_SUFFIX_INJECTION_LAST]
-        (KEY=100/200)
-            ESI_INJECTION_5010_FIRST and ESI_INJECTION_5010_LAST are fake arrays acessed via GetLocalArrayString 
-            ESI_INJECTION_5010_FIRST(100) = "ev_crtdeath_dothis"
-            ESI_INJECTION_5010_FIRST(200) = "ev_crtdeath_dothat"
-            ESI_INJECTION_5010_LAST(100) = "ev_crtdeath_doafter"
-*/
 const string ESI_LOCAL_PREFIX_INJECTION = "ESI_SCRIPT_";
 const string ESI_LOCAL_SUFFIX_INJECTION_FIRST = "_FIRST";
 const string ESI_LOCAL_SUFFIX_INJECTION_LAST = "_LAST";
 const string ESI_LOCAL_SUFFIX_INJECTION_COUNT = "_COUNT";
-const string ESI_LOCAL_SUFFIX_INJECTION_DONE = "_DONE";
 const string ESI_LOCAL_SUFFIX_INJECTION_KEYS = "_KEYS";
 const string ESI_LOCAL_SUFFIX_INJECTION_MAP = "_MAP";
 const string ESI_LOCAL_SUFFIX_SCRIPT_ORIGINAL = "_ORIGINAL";
+const string ESI_LOCAL_SUFFIX_STORAGE_SCHEMA = "_SCHEMA";
+const int ESI_STORAGE_SCHEMA = 2;
 
-/* 
-    Example: two scripts, one for OnDeath and one for OnSpawn of a creature
-        [PREFIX="esi_uni_"][EVENT_NUMBER_ALIAS=ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DEATH/ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_SPAWN_IN]
-            esi_uni_crtdeath - assigned to OnDeath event of a creature
-            esi_uni_crtspawn - assigned to OnSpawn event of a creature
-    Check ESI_NUMBER_ALIAS_* constants for valid values and probably add further constants for events not already taken into account.
-    Note that a new constant also requires a corresponding entry for the condition in method ESI_GetEventNumberAlias.
-*/
 const string ESI_SCRIPT_PREFIX_UNION = "esi_uni_";
+
+const string ESI_RUNTIME_WINDOW = "meesi_runtime";
+const string ESI_RUNTIME_FIELD_SCHEMA = "schema";
+const string ESI_RUNTIME_FIELD_MODULE = "module";
+const string ESI_RUNTIME_FIELD_SLOTS = "slots";
+const string ESI_RUNTIME_FIELD_MARKERS = "markers";
+const string ESI_RUNTIME_HOOK_KEY = "key";
+const string ESI_RUNTIME_HOOK_SCRIPT = "script";
+const int ESI_RUNTIME_SCHEMA = 1;
+
+string ESI_GetLocalNameInjection(int nHandler, int nPlacement)
+{
+    return ESI_LOCAL_PREFIX_INJECTION + IntToString(nHandler) + (nPlacement == ESI_INJECTION_PLACEMENT_FIRST ? ESI_LOCAL_SUFFIX_INJECTION_FIRST : nPlacement == ESI_INJECTION_PLACEMENT_LAST ? ESI_LOCAL_SUFFIX_INJECTION_LAST : STRING_EMPTY);
+}
 
 string ESI_GetLocalNameInjectionCount(int nHandler, int nPlacement)
 {
-    return ESI_LOCAL_PREFIX_INJECTION + IntToString(nHandler) 
-        + ( nPlacement == ESI_INJECTION_PLACEMENT_FIRST ? ESI_LOCAL_SUFFIX_INJECTION_FIRST :
-            nPlacement == ESI_INJECTION_PLACEMENT_LAST  ? ESI_LOCAL_SUFFIX_INJECTION_LAST  : STRING_EMPTY ) 
-        + ESI_LOCAL_SUFFIX_INJECTION_COUNT;
+    return ESI_GetLocalNameInjection(nHandler, nPlacement) + ESI_LOCAL_SUFFIX_INJECTION_COUNT;
 }
-string ESI_GetLocalNameInjection(int nHandler, int nPlacement)
+
+string ESI_GetLocalNameInjectionKeys(int nHandler, int nPlacement)
 {
-    return ESI_LOCAL_PREFIX_INJECTION + IntToString(nHandler)
-        + ( nPlacement == ESI_INJECTION_PLACEMENT_FIRST ? ESI_LOCAL_SUFFIX_INJECTION_FIRST :
-            nPlacement == ESI_INJECTION_PLACEMENT_LAST  ? ESI_LOCAL_SUFFIX_INJECTION_LAST  : STRING_EMPTY );
+    return ESI_GetLocalNameInjection(nHandler, nPlacement) + ESI_LOCAL_SUFFIX_INJECTION_KEYS;
 }
 
 string ESI_GetLocalNameInjectionMap(int nHandler, int nPlacement)
@@ -98,102 +88,233 @@ string ESI_GetLocalNameInjectionMap(int nHandler, int nPlacement)
     return ESI_GetLocalNameInjection(nHandler, nPlacement) + ESI_LOCAL_SUFFIX_INJECTION_MAP;
 }
 
+string ESI_GetLocalNameOriginalScript(int nHandler)
+{
+    return ESI_LOCAL_PREFIX_INJECTION + IntToString(nHandler) + ESI_LOCAL_SUFFIX_SCRIPT_ORIGINAL;
+}
+
+string ESI_GetLocalNameStorageSchema(int nHandler)
+{
+    return ESI_LOCAL_PREFIX_INJECTION + IntToString(nHandler) + ESI_LOCAL_SUFFIX_STORAGE_SCHEMA;
+}
+
 string ESI_GetEventNumberAlias(int nHandler)
 {
-    return nHandler == EVENT_SCRIPT_CREATURE_ON_DEATH           ? ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DEATH
-         : nHandler == EVENT_SCRIPT_CREATURE_ON_SPAWN_IN        ? ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_SPAWN_IN
-         : nHandler == EVENT_SCRIPT_ENCOUNTER_ON_OBJECT_ENTER   ? ESI_EVENT_NUMBER_ALIAS_ENCOUNTER_ON_OBJECT_ENTER
-         : nHandler == EVENT_SCRIPT_MODULE_ON_ACQUIRE_ITEM      ? ESI_EVENT_NUMBER_ALIAS_MODULE_ON_ACQUIRE_ITEM
-         : nHandler == EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM     ? ESI_EVENT_NUMBER_ALIAS_MODULE_ON_ACTIVATE_ITEM
-         : nHandler == EVENT_SCRIPT_MODULE_ON_PLAYER_GUIEVENT   ? ESI_EVENT_NUMBER_ALIAS_MODULE_ON_PLAYER_GUIEVENT
-         : nHandler == EVENT_SCRIPT_MODULE_ON_PLAYER_TARGET     ? ESI_EVENT_NUMBER_ALIAS_MODULE_ON_PLAYER_TARGET
-         : nHandler == EVENT_SCRIPT_PLACEABLE_ON_CLOSED         ? ESI_EVENT_NUMBER_ALIAS_PLACEABLE_ON_CLOSED
-         : nHandler == EVENT_SCRIPT_PLACEABLE_ON_OPEN           ? ESI_EVENT_NUMBER_ALIAS_PLACEABLE_ON_OPEN
-         : nHandler == EVENT_SCRIPT_PLACEABLE_ON_UNLOCK         ? ESI_EVENT_NUMBER_ALIAS_PLACEABLE_ON_UNLOCK
-         : nHandler == EVENT_SCRIPT_AREA_ON_ENTER               ? ESI_EVENT_NUMBER_ALIAS_AREA_ON_ENTER
-         :                                                        STRING_EMPTY;
+    return nHandler == EVENT_SCRIPT_CREATURE_ON_DEATH ? ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DEATH
+         : nHandler == EVENT_SCRIPT_CREATURE_ON_SPAWN_IN ? ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_SPAWN_IN
+         : nHandler == EVENT_SCRIPT_ENCOUNTER_ON_OBJECT_ENTER ? ESI_EVENT_NUMBER_ALIAS_ENCOUNTER_ON_OBJECT_ENTER
+         : nHandler == EVENT_SCRIPT_MODULE_ON_ACQUIRE_ITEM ? ESI_EVENT_NUMBER_ALIAS_MODULE_ON_ACQUIRE_ITEM
+         : nHandler == EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM ? ESI_EVENT_NUMBER_ALIAS_MODULE_ON_ACTIVATE_ITEM
+         : nHandler == EVENT_SCRIPT_MODULE_ON_PLAYER_GUIEVENT ? ESI_EVENT_NUMBER_ALIAS_MODULE_ON_PLAYER_GUIEVENT
+         : nHandler == EVENT_SCRIPT_MODULE_ON_PLAYER_TARGET ? ESI_EVENT_NUMBER_ALIAS_MODULE_ON_PLAYER_TARGET
+         : nHandler == EVENT_SCRIPT_PLACEABLE_ON_CLOSED ? ESI_EVENT_NUMBER_ALIAS_PLACEABLE_ON_CLOSED
+         : nHandler == EVENT_SCRIPT_PLACEABLE_ON_OPEN ? ESI_EVENT_NUMBER_ALIAS_PLACEABLE_ON_OPEN
+         : nHandler == EVENT_SCRIPT_PLACEABLE_ON_UNLOCK ? ESI_EVENT_NUMBER_ALIAS_PLACEABLE_ON_UNLOCK
+         : nHandler == EVENT_SCRIPT_AREA_ON_ENTER ? ESI_EVENT_NUMBER_ALIAS_AREA_ON_ENTER
+         : STRING_EMPTY;
 }
 
 string ESI_GetUnionScript(int nHandler)
 {
-    string sResult = ESI_SCRIPT_PREFIX_UNION + ESI_GetEventNumberAlias(nHandler);
-    return sResult;
+    return ESI_SCRIPT_PREFIX_UNION + ESI_GetEventNumberAlias(nHandler);
 }
 
-string ESI_GetLocalNameInjectionDone(int nHandler, string sScript, int nPlacement)
+json ESI_BuildRuntimeWindow()
 {
-    return ESI_GetLocalNameInjection(nHandler, nPlacement) + STRING_UNDERSCORE + sScript + ESI_LOCAL_SUFFIX_INJECTION_DONE;
+    return NuiWindow(NuiVisible(NuiSpacer(), JsonBool(FALSE)), JsonString(""), NuiRect(-100.0f, -100.0f, 1.0f, 1.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(FALSE));
 }
 
-string ESI_GetLocalNameAreaInjectionDone(int nObjectType, int nHandler, string sScript, int nPlacement)
+json ESI_NewRuntimeRegistry()
 {
-    return ESI_GetLocalNameInjection(nHandler, nPlacement) + STRING_UNDERSCORE + IntToString(nObjectType) + STRING_UNDERSCORE + sScript + ESI_LOCAL_SUFFIX_INJECTION_DONE;
+    json jRegistry = JsonObject();
+    jRegistry = JsonObjectSet(jRegistry, ESI_RUNTIME_FIELD_SCHEMA, JsonInt(ESI_RUNTIME_SCHEMA));
+    jRegistry = JsonObjectSet(jRegistry, ESI_RUNTIME_FIELD_MODULE, JsonString(GetModuleName() + ":" + ObjectToString(GetModule())));
+    jRegistry = JsonObjectSet(jRegistry, ESI_RUNTIME_FIELD_SLOTS, JsonObject());
+    jRegistry = JsonObjectSet(jRegistry, ESI_RUNTIME_FIELD_MARKERS, JsonObject());
+    return jRegistry;
 }
 
-string RAV_GetLocalNameInjectionKeys(int nHandler, int nPlacement)
+int ESI_IsRuntimeRegistry(json jRegistry)
 {
-    return ESI_LOCAL_PREFIX_INJECTION + IntToString(nHandler) 
-        + ( nPlacement == ESI_INJECTION_PLACEMENT_FIRST ? ESI_LOCAL_SUFFIX_INJECTION_FIRST :
-            nPlacement == ESI_INJECTION_PLACEMENT_LAST  ? ESI_LOCAL_SUFFIX_INJECTION_LAST  : STRING_EMPTY ) 
-        + ESI_LOCAL_SUFFIX_INJECTION_KEYS;
+    return JsonGetType(jRegistry) == JSON_TYPE_OBJECT && JsonGetInt(JsonObjectGet(jRegistry, ESI_RUNTIME_FIELD_SCHEMA)) == ESI_RUNTIME_SCHEMA && JsonGetString(JsonObjectGet(jRegistry, ESI_RUNTIME_FIELD_MODULE)) == GetModuleName() + ":" + ObjectToString(GetModule()) && JsonGetType(JsonObjectGet(jRegistry, ESI_RUNTIME_FIELD_SLOTS)) == JSON_TYPE_OBJECT && JsonGetType(JsonObjectGet(jRegistry, ESI_RUNTIME_FIELD_MARKERS)) == JSON_TYPE_OBJECT;
 }
 
-string ESI_GetLocalNameOriginalScript(int nHandler)
+object ESI_GetRuntimeOwner()
 {
-    return ESI_LOCAL_PREFIX_INJECTION + IntToString(nHandler) + ESI_LOCAL_SUFFIX_SCRIPT_ORIGINAL ;
-}
-
-void ESI_SetInjectionsKey(object oObject, int nHandler, int nPlacement, string sKey)
-{
-    string sLocalKeys = RAV_GetLocalNameInjectionKeys(nHandler, nPlacement);
-    string sKeyList = RAV_GetLocalString(oObject, sLocalKeys);
-    if (FindSubString("|" + sKeyList + "|", "|" + sKey + "|") == -1)
+    object oPlayer = GetFirstPC();
+    while (GetIsObjectValid(oPlayer))
     {
-        if (sKeyList == STRING_EMPTY)
-            RAV_SetLocalString(oObject, sLocalKeys, sKey);
-        else
-            RAV_SetLocalString(oObject, sLocalKeys, sKeyList + "|" + sKey);
+        int nToken = NuiFindWindow(oPlayer, ESI_RUNTIME_WINDOW);
+        if (nToken > 0 && ESI_IsRuntimeRegistry(NuiGetUserData(oPlayer, nToken))) return oPlayer;
+        oPlayer = GetNextPC();
     }
+    return OBJECT_INVALID;
 }
 
-int ESI_InjectToObject(object oObject, string sKey, int nHandler, string sScript, int nPlacement)
+int ESI_EnsureRuntime(object oPlayer)
+{
+    if (GetIsObjectValid(ESI_GetRuntimeOwner())) return TRUE;
+    if (!GetIsPC(oPlayer) || GetIsDM(oPlayer) || GetIsObjectValid(GetMaster(oPlayer))) return FALSE;
+    int nToken = NuiFindWindow(oPlayer, ESI_RUNTIME_WINDOW);
+    if (nToken == 0) nToken = NuiCreate(oPlayer, ESI_BuildRuntimeWindow(), ESI_RUNTIME_WINDOW, "meboot_noop");
+    if (nToken == 0) return FALSE;
+    NuiSetUserData(oPlayer, nToken, ESI_NewRuntimeRegistry());
+    return TRUE;
+}
+
+json ESI_GetRuntimeRegistry()
+{
+    object oOwner = ESI_GetRuntimeOwner();
+    if (!GetIsObjectValid(oOwner)) return JsonNull();
+    int nToken = NuiFindWindow(oOwner, ESI_RUNTIME_WINDOW);
+    return nToken > 0 ? NuiGetUserData(oOwner, nToken) : JsonNull();
+}
+
+int ESI_SetRuntimeRegistry(json jRegistry)
+{
+    object oOwner = ESI_GetRuntimeOwner();
+    if (!GetIsObjectValid(oOwner) || !ESI_IsRuntimeRegistry(jRegistry)) return FALSE;
+    int nToken = NuiFindWindow(oOwner, ESI_RUNTIME_WINDOW);
+    if (nToken == 0) return FALSE;
+    NuiSetUserData(oOwner, nToken, jRegistry);
+    return TRUE;
+}
+
+string ESI_GetRuntimeSlot(object oObject, int nHandler, int nPlacement)
+{
+    return ObjectToString(oObject) + ":" + IntToString(nHandler) + ":" + IntToString(nPlacement);
+}
+
+json ESI_GetRuntimeHooks(json jRegistry, object oObject, int nHandler, int nPlacement)
+{
+    json jSlots = JsonObjectGet(jRegistry, ESI_RUNTIME_FIELD_SLOTS);
+    json jHooks = JsonObjectGet(jSlots, ESI_GetRuntimeSlot(oObject, nHandler, nPlacement));
+    return JsonGetType(jHooks) == JSON_TYPE_ARRAY ? jHooks : JsonArray();
+}
+
+int ESI_IsRegistered(object oObject, string sKey, int nHandler, string sScript, int nPlacement)
 {
     if (!GetIsObjectValid(oObject) || sKey == STRING_EMPTY || sScript == STRING_EMPTY || ESI_GetEventNumberAlias(nHandler) == STRING_EMPTY || (nPlacement != ESI_INJECTION_PLACEMENT_FIRST && nPlacement != ESI_INJECTION_PLACEMENT_LAST)) return FALSE;
+    json jRegistry = ESI_GetRuntimeRegistry();
+    if (!ESI_IsRuntimeRegistry(jRegistry)) return FALSE;
+    json jHooks = ESI_GetRuntimeHooks(jRegistry, oObject, nHandler, nPlacement);
+    int nIndex;
+    for (nIndex = 0; nIndex < JsonGetLength(jHooks); nIndex++)
+    {
+        json jHook = JsonArrayGet(jHooks, nIndex);
+        if (JsonGetString(JsonObjectGet(jHook, ESI_RUNTIME_HOOK_KEY)) == sKey && JsonGetString(JsonObjectGet(jHook, ESI_RUNTIME_HOOK_SCRIPT)) == sScript) return TRUE;
+    }
+    return FALSE;
+}
 
+string ESI_GetRuntimeMarkerKey(object oObject, string sKey)
+{
+    return ObjectToString(oObject) + ":" + sKey;
+}
+
+int ESI_IsRuntimeMarkerSet(object oObject, string sKey)
+{
+    if (!GetIsObjectValid(oObject) || sKey == STRING_EMPTY) return FALSE;
+    json jRegistry = ESI_GetRuntimeRegistry();
+    if (!ESI_IsRuntimeRegistry(jRegistry)) return FALSE;
+    json jMarkers = JsonObjectGet(jRegistry, ESI_RUNTIME_FIELD_MARKERS);
+    return JsonGetInt(JsonObjectGet(jMarkers, ESI_GetRuntimeMarkerKey(oObject, sKey)));
+}
+
+int ESI_SetRuntimeMarker(object oObject, string sKey)
+{
+    if (!GetIsObjectValid(oObject) || sKey == STRING_EMPTY) return FALSE;
+    json jRegistry = ESI_GetRuntimeRegistry();
+    if (!ESI_IsRuntimeRegistry(jRegistry)) return FALSE;
+    json jMarkers = JsonObjectGet(jRegistry, ESI_RUNTIME_FIELD_MARKERS);
+    jMarkers = JsonObjectSet(jMarkers, ESI_GetRuntimeMarkerKey(oObject, sKey), JsonInt(TRUE));
+    jRegistry = JsonObjectSet(jRegistry, ESI_RUNTIME_FIELD_MARKERS, jMarkers);
+    return ESI_SetRuntimeRegistry(jRegistry);
+}
+
+void ESI_DeleteLegacyPlacement(object oObject, int nHandler, int nPlacement)
+{
+    string sKeyList = RAV_GetLocalString(oObject, ESI_GetLocalNameInjectionKeys(nHandler, nPlacement));
+    struct sStringTokenizer stKeys = GetStringTokenizer(sKeyList, "|");
+    while (HasMoreTokens(stKeys))
+    {
+        stKeys = AdvanceToNextToken(stKeys);
+        string sKey = GetNextToken(stKeys);
+        DeleteLocalString(oObject, ESI_GetLocalNameInjection(nHandler, nPlacement) + IntToString(StringToInt(sKey)));
+    }
+    DeleteLocalString(oObject, ESI_GetLocalNameInjectionKeys(nHandler, nPlacement));
+    DeleteLocalInt(oObject, ESI_GetLocalNameInjectionCount(nHandler, nPlacement));
+    DeleteLocalJson(oObject, ESI_GetLocalNameInjectionMap(nHandler, nPlacement));
+}
+
+int ESI_EnsureTrampoline(object oObject, int nHandler)
+{
+    string sEventAlias = ESI_GetEventNumberAlias(nHandler);
+    if (!GetIsObjectValid(oObject) || sEventAlias == STRING_EMPTY) return FALSE;
     string sEventScript = GetEventScript(oObject, nHandler);
-    string sUnionScript = ESI_GetUnionScript(nHandler);
+    string sUnionScript = ESI_SCRIPT_PREFIX_UNION + sEventAlias;
     if (sEventScript != sUnionScript)
     {
-        string sOriginalScriptLocal = ESI_GetLocalNameOriginalScript(nHandler);
-        RAV_SetLocalString(oObject, sOriginalScriptLocal, sEventScript);
+        RAV_SetLocalString(oObject, ESI_GetLocalNameOriginalScript(nHandler), sEventScript);
+        if (!SetEventScript(oObject, nHandler, sUnionScript)) return FALSE;
     }
-
-    string sLocalMap = ESI_GetLocalNameInjectionMap(nHandler, nPlacement);
-    json jScripts = GetLocalJson(oObject, sLocalMap);
-    if (JsonGetType(jScripts) != JSON_TYPE_OBJECT) jScripts = JsonObject();
-    string sLocalScript = JsonGetString(JsonObjectGet(jScripts, sKey));
-    if (sLocalScript != sScript)
+    if (GetLocalInt(oObject, ESI_GetLocalNameStorageSchema(nHandler)) != ESI_STORAGE_SCHEMA)
     {
-        ESI_SetInjectionsKey(oObject, nHandler, nPlacement, sKey);
-        SetLocalJson(oObject, sLocalMap, JsonObjectSet(jScripts, sKey, JsonString(sScript)));
-        if (JsonGetLength(RegExpMatch("^[0-9]+$", sKey)) > 0) RAV_SetLocalArrayString(oObject, ESI_GetLocalNameInjection(nHandler, nPlacement), StringToInt(sKey), sScript);
+        ESI_DeleteLegacyPlacement(oObject, nHandler, ESI_INJECTION_PLACEMENT_FIRST);
+        ESI_DeleteLegacyPlacement(oObject, nHandler, ESI_INJECTION_PLACEMENT_LAST);
+        SetLocalInt(oObject, ESI_GetLocalNameStorageSchema(nHandler), ESI_STORAGE_SCHEMA);
     }
+    return TRUE;
+}
 
-    return SetEventScript(oObject, nHandler, sUnionScript);
+int ESI_RegisterRuntimeHook(object oObject, string sKey, int nHandler, string sScript, int nPlacement)
+{
+    if (!GetIsObjectValid(oObject) || sKey == STRING_EMPTY || sScript == STRING_EMPTY || ESI_GetEventNumberAlias(nHandler) == STRING_EMPTY || (nPlacement != ESI_INJECTION_PLACEMENT_FIRST && nPlacement != ESI_INJECTION_PLACEMENT_LAST)) return FALSE;
+    json jRegistry = ESI_GetRuntimeRegistry();
+    if (!ESI_IsRuntimeRegistry(jRegistry)) return FALSE;
+    if (!ESI_EnsureTrampoline(oObject, nHandler)) return FALSE;
+    json jSlots = JsonObjectGet(jRegistry, ESI_RUNTIME_FIELD_SLOTS);
+    string sSlot = ESI_GetRuntimeSlot(oObject, nHandler, nPlacement);
+    json jHooks = ESI_GetRuntimeHooks(jRegistry, oObject, nHandler, nPlacement);
+    json jHook = JsonObject();
+    jHook = JsonObjectSet(jHook, ESI_RUNTIME_HOOK_KEY, JsonString(sKey));
+    jHook = JsonObjectSet(jHook, ESI_RUNTIME_HOOK_SCRIPT, JsonString(sScript));
+    int nIndex;
+    for (nIndex = 0; nIndex < JsonGetLength(jHooks); nIndex++)
+    {
+        if (JsonGetString(JsonObjectGet(JsonArrayGet(jHooks, nIndex), ESI_RUNTIME_HOOK_KEY)) == sKey)
+        {
+            jHooks = JsonArraySet(jHooks, nIndex, jHook);
+            jSlots = JsonObjectSet(jSlots, sSlot, jHooks);
+            jRegistry = JsonObjectSet(jRegistry, ESI_RUNTIME_FIELD_SLOTS, jSlots);
+            return ESI_SetRuntimeRegistry(jRegistry);
+        }
+    }
+    jHooks = JsonArrayInsert(jHooks, jHook);
+    jSlots = JsonObjectSet(jSlots, sSlot, jHooks);
+    jRegistry = JsonObjectSet(jRegistry, ESI_RUNTIME_FIELD_SLOTS, jSlots);
+    return ESI_SetRuntimeRegistry(jRegistry);
+}
+
+// Compatibility facade: the original API now installs a persistent trampoline and registers a transient runtime hook.
+int ESI_InjectToObject(object oObject, string sKey, int nHandler, string sScript, int nPlacement)
+{
+    if (ESI_IsRegistered(oObject, sKey, nHandler, sScript, nPlacement)) return TRUE;
+    return ESI_RegisterRuntimeHook(oObject, sKey, nHandler, sScript, nPlacement);
 }
 
 void ESI_InjectToModuleObjects(object oModule, string sKey, int nObjectType, int nHandler, string sScript, int nPlacement)
-{ 
+{
+    if (!GetIsObjectValid(oModule)) return;
     object oArea = GetFirstArea();
     while (GetIsObjectValid(oArea))
     {
         if (nObjectType == ESI_OBJECT_TYPE_AREA)
         {
-            ESI_InjectToObject(oArea, sKey, nHandler, sScript, nPlacement);
+            if (!ESI_IsRegistered(oArea, sKey, nHandler, sScript, nPlacement)) ESI_InjectToObject(oArea, sKey, nHandler, sScript, nPlacement);
         }
         else
         {
-            // Single script execution per area to circumvent too many instructions error
             SetScriptParam(ESI_PARAM_OBJECT_TYPE, IntToString(nObjectType));
             SetScriptParam(ESI_PARAM_KEY, sKey);
             SetScriptParam(ESI_PARAM_HANDLER, IntToString(nHandler));
@@ -203,16 +324,20 @@ void ESI_InjectToModuleObjects(object oModule, string sKey, int nObjectType, int
         }
         oArea = GetNextArea();
     }
-
-    string sLocalNameAreaInjectionDone = ESI_GetLocalNameAreaInjectionDone(nObjectType, nHandler, sScript, nPlacement);
-    RAV_SetLocalInt(oModule, sLocalNameAreaInjectionDone, TRUE);
 }
 
 string ESI_GetInjectedScript(object oObject, int nHandler, int nPlacement, string sKey)
 {
-    json jScript = JsonObjectGet(GetLocalJson(oObject, ESI_GetLocalNameInjectionMap(nHandler, nPlacement)), sKey);
-    if (JsonGetType(jScript) == JSON_TYPE_STRING) return JsonGetString(jScript);
-    return RAV_GetLocalArrayString(oObject, ESI_GetLocalNameInjection(nHandler, nPlacement), StringToInt(sKey));
+    json jRegistry = ESI_GetRuntimeRegistry();
+    if (!ESI_IsRuntimeRegistry(jRegistry)) return STRING_EMPTY;
+    json jHooks = ESI_GetRuntimeHooks(jRegistry, oObject, nHandler, nPlacement);
+    int nIndex;
+    for (nIndex = 0; nIndex < JsonGetLength(jHooks); nIndex++)
+    {
+        json jHook = JsonArrayGet(jHooks, nIndex);
+        if (JsonGetString(JsonObjectGet(jHook, ESI_RUNTIME_HOOK_KEY)) == sKey) return JsonGetString(JsonObjectGet(jHook, ESI_RUNTIME_HOOK_SCRIPT));
+    }
+    return STRING_EMPTY;
 }
 
 void ESI_InjectToAreaObjects(object oArea, string sKey, int nObjectType, int nHandler, string sScript, int nPlacement)
@@ -220,56 +345,28 @@ void ESI_InjectToAreaObjects(object oArea, string sKey, int nObjectType, int nHa
     object oObject = GetFirstObjectInArea(oArea);
     while (GetIsObjectValid(oObject))
     {
-        if (GetObjectType(oObject) == nObjectType && !GetIsPC(oObject))
-            ESI_InjectToObject(oObject, sKey, nHandler, sScript, nPlacement);
-
+        if (GetObjectType(oObject) == nObjectType && !GetIsPC(oObject) && !ESI_IsRegistered(oObject, sKey, nHandler, sScript, nPlacement)) ESI_InjectToObject(oObject, sKey, nHandler, sScript, nPlacement);
         oObject = GetNextObjectInArea(oArea);
     }
+}
 
-    string sLocalNameAreaInjectionDone = ESI_GetLocalNameAreaInjectionDone(nObjectType, nHandler, sScript, nPlacement);
-    RAV_SetLocalInt(oArea, sLocalNameAreaInjectionDone, TRUE);
+void ESI_ExecuteRuntimeHooks(json jRegistry, object oObject, int nHandler, int nPlacement)
+{
+    json jHooks = ESI_GetRuntimeHooks(jRegistry, oObject, nHandler, nPlacement);
+    int nIndex;
+    for (nIndex = 0; nIndex < JsonGetLength(jHooks); nIndex++)
+    {
+        string sScript = JsonGetString(JsonObjectGet(JsonArrayGet(jHooks, nIndex), ESI_RUNTIME_HOOK_SCRIPT));
+        if (sScript != STRING_EMPTY) RAV_ExecuteScript(sScript, oObject);
+    }
 }
 
 void ESI_ExecuteEventScripts(object oObject, int nHandler)
 {
     RAV_PrintFunctionStrings("ESI_ExecuteEventScripts", oObject, ESI_GetEventNumberAlias(nHandler));
-
-    // Execute injected scripts placed before original script
-
-    string sFirstKeysLocal = RAV_GetLocalNameInjectionKeys(nHandler, ESI_INJECTION_PLACEMENT_FIRST);
-    string sFirstKeys = RAV_GetLocalString(oObject, sFirstKeysLocal);
-    string sFirstKey;
-    string sFirstScript;
-    struct sStringTokenizer stFirstTokenizer = GetStringTokenizer(sFirstKeys, "|");
-    while (HasMoreTokens(stFirstTokenizer))
-    {
-        stFirstTokenizer = AdvanceToNextToken(stFirstTokenizer);
-        sFirstKey = GetNextToken(stFirstTokenizer);
-        sFirstScript = ESI_GetInjectedScript(oObject, nHandler, ESI_INJECTION_PLACEMENT_FIRST, sFirstKey);
-        if (sFirstScript != STRING_EMPTY)
-            RAV_ExecuteScript(sFirstScript, oObject);
-    }
-
-    // Execute original script
-
-    string sOriginalScriptLocal = ESI_GetLocalNameOriginalScript(nHandler); 
-    string sOriginalScript = RAV_GetLocalString(oObject, sOriginalScriptLocal);
-    if (sOriginalScript != STRING_EMPTY)
-        RAV_ExecuteScript(sOriginalScript, oObject);
-
-    // Execute injected scripts placed after original script
-
-    string sLastKeysLocal = RAV_GetLocalNameInjectionKeys(nHandler, ESI_INJECTION_PLACEMENT_LAST);
-    string sLastKeys = RAV_GetLocalString(oObject, sLastKeysLocal);
-    string sLastKey;
-    string sLastScript;
-    struct sStringTokenizer stLastTokenizer = GetStringTokenizer(sLastKeys, "|");
-    while (HasMoreTokens(stLastTokenizer))
-    {
-        stLastTokenizer = AdvanceToNextToken(stLastTokenizer);
-        sLastKey = GetNextToken(stLastTokenizer);
-        sLastScript = ESI_GetInjectedScript(oObject, nHandler, ESI_INJECTION_PLACEMENT_LAST, sLastKey);
-        if (sLastScript != STRING_EMPTY)
-            RAV_ExecuteScript(sLastScript, oObject);
-    }
+    json jRegistry = ESI_GetRuntimeRegistry();
+    if (ESI_IsRuntimeRegistry(jRegistry)) ESI_ExecuteRuntimeHooks(jRegistry, oObject, nHandler, ESI_INJECTION_PLACEMENT_FIRST);
+    string sOriginalScript = RAV_GetLocalString(oObject, ESI_GetLocalNameOriginalScript(nHandler));
+    if (sOriginalScript != STRING_EMPTY) RAV_ExecuteScript(sOriginalScript, oObject);
+    if (ESI_IsRuntimeRegistry(jRegistry)) ESI_ExecuteRuntimeHooks(jRegistry, oObject, nHandler, ESI_INJECTION_PLACEMENT_LAST);
 }

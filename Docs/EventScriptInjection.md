@@ -1,0 +1,7 @@
+# Runtime event injection
+
+ESI separates the engine event slot from the set of currently active consumer hooks. `SetEventScript` still installs the original `esi_uni_*` trampoline and the object's `ESI_SCRIPT_<handler>_ORIGINAL` local still remembers the module's original handler; both are intentionally persistent because NWN serializes event-script changes. Hook keys, script names, placement, and per-session scan markers are stored only in server-side user data on the hidden `meesi_runtime` NUI window.
+
+The ESI heartbeat runs before its consumers and creates an empty runtime registry when a game or module is loaded. The registry records the current runtime module object so a window left across a module transition cannot be reused. Each consumer uses `ESI_IsRegistered` before calling the compatible `ESI_InjectToObject` facade on its first heartbeat. A trampoline with no available registry runs only its remembered original handler. If the window owner leaves, the next ESI heartbeat creates a new registry and the same consumer checks repopulate it.
+
+Runtime slots use `ObjectToString` because object identity is needed only for the current loaded runtime. Keys are namespaced strings and preserve registration order separately for `FIRST` and `LAST`. Old saved `esi_uni_*` references resolve to the new scripts without rewriting event slots. When a consumer first touches an old handler, ESI preserves its original-handler local and lazily deletes the legacy key list, JSON map, and numeric pseudo-array entries before recording storage schema 2.
