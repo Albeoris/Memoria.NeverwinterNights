@@ -14,6 +14,15 @@ int METACT_GetSpellRole(int iSpell)
     return METACT_ROLE_GENERIC;
 }
 
+int METACT_GetSpellAssociateType(int iSpell)
+{
+    string sLabel = Get2DAString("spells", "Label", iSpell);
+    if (sLabel == "Summon_Familiar") return ASSOCIATE_TYPE_FAMILIAR;
+    if (sLabel == "Summon_Animal_Companion") return ASSOCIATE_TYPE_ANIMALCOMPANION;
+    if (METACT_GetSpellRole(iSpell) == METACT_ROLE_SUMMON) return ASSOCIATE_TYPE_SUMMONED;
+    return -1;
+}
+
 int METACT_IsSpellHostile(int iSpell)
 {
     return Get2DAString("spells", "HostileSetting", iSpell) == "1";

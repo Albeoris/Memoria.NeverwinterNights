@@ -292,7 +292,11 @@ void METACT_SelectCandidate(object oPC, int iToken, int iSlot)
     json jCandidate = JsonArrayGet(jFiltered, iIndex);
     json jAction = GetLocalJson(oPC, METACT_LOCAL_ACTION_TEMP);
     string sCandidateType = JsonGetString(JsonObjectGet(jCandidate, "type"));
-    jAction = JsonObjectSet(jAction, "kind", JsonString(sCandidateType == "equip" ? "equip" : "spell"));
+    jAction = JsonObjectSet(jAction, "kind", JsonString(sCandidateType == "equip" ? "equip" : sCandidateType == "feat" ? "feat" : "spell"));
+    jAction = JsonObjectSet(jAction, "feat", sCandidateType == "feat" ? JsonObjectGet(jCandidate, "feat") : JsonInt(-1));
+    jAction = JsonObjectSet(jAction, "feat_name", sCandidateType == "feat" ? JsonObjectGet(jCandidate, "name") : JsonString(""));
+    jAction = JsonObjectSet(jAction, "feat_icon", sCandidateType == "feat" ? JsonObjectGet(jCandidate, "icon") : JsonString(""));
+    jAction = JsonObjectSet(jAction, "feat_target_self", sCandidateType == "feat" ? JsonObjectGet(jCandidate, "target_self") : JsonBool(FALSE));
     jAction = JsonObjectSet(jAction, "spell", JsonObjectGet(jCandidate, "spell"));
     jAction = JsonObjectSet(jAction, "class", JsonObjectGet(jCandidate, "class"));
     jAction = JsonObjectSet(jAction, "level", JsonObjectGet(jCandidate, "level"));
@@ -304,14 +308,13 @@ void METACT_SelectCandidate(object oPC, int iToken, int iSlot)
     jAction = JsonObjectSet(jAction, "item_icon", sCandidateType == "equip" ? JsonObjectGet(jCandidate, "icon") : JsonString(""));
     jAction = JsonObjectSet(jAction, "item_property", JsonObjectGet(jCandidate, "item_property"));
     jAction = JsonObjectSet(jAction, "source", JsonString(sCandidateType == "item" || sCandidateType == "equip" ? "item" : "spell"));
-    if (sCandidateType == "equip") jAction = JsonObjectSet(jAction, "target", JsonString("self"));
+    if (sCandidateType == "equip" || (sCandidateType == "feat" && JsonGetInt(JsonObjectGet(jCandidate, "target_self")))) jAction = JsonObjectSet(jAction, "target", JsonString("self"));
     SetLocalJson(oPC, METACT_LOCAL_ACTION_TEMP, jAction);
     DeleteLocalJson(oPC, METACT_LOCAL_PICKER);
     DeleteLocalJson(oPC, METACT_LOCAL_PICKER_FILTERED);
     DeleteLocalString(oPC, METACT_LOCAL_PICKER_MODE);
     NuiDestroy(oPC, iToken);
-    int iActionWindow = NuiFindWindow(oPC, METACT_WINDOW_ACTION);
-    if (iActionWindow > 0) METACT_RefreshActionEditor(oPC, iActionWindow);
+    METACT_ShowActionEditor(oPC);
 }
 
 void METACT_SelectRule(object oPC, int iToken, int iRule)
@@ -351,10 +354,10 @@ void METACT_DeleteEditedAction(object oPC, int iToken)
 
 void METACT_StartNewAction(object oPC, string sKind)
 {
-    if (JsonGetType(METACT_GetSelectedRule(oPC)) != JSON_TYPE_OBJECT) { SendMessageToPC(oPC, METACT_GetText(METACT_TEXT_INVALID, oPC)); return; }
+    if (JsonGetType(METACT_GetSelectedRule(oPC)) != JSON_TYPE_OBJECT) return;
     METACT_OpenActionEditor(oPC, -1);
     int iActionWindow = NuiFindWindow(oPC, METACT_WINDOW_ACTION);
-    if (sKind == "spell" || sKind == "item" || sKind == "equip") METACT_OpenPicker(oPC, sKind);
+    if (sKind == "spell" || sKind == "item" || sKind == "equip" || sKind == "feat") METACT_OpenPicker(oPC, sKind);
     else if (iActionWindow > 0) METACT_SelectSpecialAction(oPC, iActionWindow, sKind);
 }
 
@@ -401,7 +404,7 @@ void METACT_HandleClick(object oPC, int iToken, string sWindow, string sElement)
         else if (sElement == "action_add_spell") METACT_StartNewAction(oPC, "spell");
         else if (sElement == "action_add_item") METACT_StartNewAction(oPC, "item");
         else if (sElement == "action_add_equip") METACT_StartNewAction(oPC, "equip");
-        else if (sElement == "action_add_familiar") METACT_StartNewAction(oPC, "familiar");
+        else if (sElement == "action_add_feat") METACT_StartNewAction(oPC, "feat");
         else if (sElement == "action_add_attack") METACT_StartNewAction(oPC, "attack");
         else if (sElement == "priority_add") METACT_OpenScopedPriorityEditor(oPC, METACT_PRIORITY_SCOPE_GLOBAL, -1);
         else if (sElement == "priority_edit") METACT_OpenScopedPriorityEditor(oPC, METACT_PRIORITY_SCOPE_GLOBAL, METACT_GetClickedPriority());
@@ -441,7 +444,7 @@ void METACT_HandleClick(object oPC, int iToken, string sWindow, string sElement)
         else if (sElement == "choose_spell") METACT_OpenPicker(oPC, "spell");
         else if (sElement == "choose_item") METACT_OpenPicker(oPC, "item");
         else if (sElement == "choose_equip") METACT_OpenPicker(oPC, "equip");
-        else if (sElement == "choose_familiar") METACT_SelectSpecialAction(oPC, iToken, "familiar");
+        else if (sElement == "choose_feat") METACT_OpenPicker(oPC, "feat");
         else if (sElement == "choose_attack") METACT_SelectSpecialAction(oPC, iToken, "attack");
         else if (sElement == "priority_add") METACT_OpenScopedPriorityEditor(oPC, METACT_PRIORITY_SCOPE_ACTION, -1);
         else if (sElement == "priority_edit") METACT_OpenScopedPriorityEditor(oPC, METACT_PRIORITY_SCOPE_ACTION, METACT_GetClickedPriority());
@@ -453,6 +456,7 @@ void METACT_HandleClick(object oPC, int iToken, string sWindow, string sElement)
         if (sElement == "pick_spells") { SetLocalString(oPC, METACT_LOCAL_PICKER_MODE, "spell"); SetLocalInt(oPC, METACT_LOCAL_PICKER_PAGE, 0); METACT_RecreatePicker(oPC, iToken); }
         else if (sElement == "pick_items") { SetLocalString(oPC, METACT_LOCAL_PICKER_MODE, "item"); SetLocalInt(oPC, METACT_LOCAL_PICKER_PAGE, 0); METACT_RecreatePicker(oPC, iToken); }
         else if (sElement == "pick_equip") { SetLocalString(oPC, METACT_LOCAL_PICKER_MODE, "equip"); SetLocalInt(oPC, METACT_LOCAL_PICKER_PAGE, 0); METACT_RecreatePicker(oPC, iToken); }
+        else if (sElement == "pick_feats") { SetLocalString(oPC, METACT_LOCAL_PICKER_MODE, "feat"); SetLocalInt(oPC, METACT_LOCAL_PICKER_PAGE, 0); METACT_RecreatePicker(oPC, iToken); }
         else if (sElement == "pick_prev") { SetLocalInt(oPC, METACT_LOCAL_PICKER_PAGE, GetLocalInt(oPC, METACT_LOCAL_PICKER_PAGE) - 1); METACT_RecreatePicker(oPC, iToken); }
         else if (sElement == "pick_next") { SetLocalInt(oPC, METACT_LOCAL_PICKER_PAGE, GetLocalInt(oPC, METACT_LOCAL_PICKER_PAGE) + 1); METACT_RecreatePicker(oPC, iToken); }
         else if (GetSubString(sElement, 0, 10) == "pick_slot_") METACT_SelectCandidate(oPC, iToken, StringToInt(GetSubString(sElement, 10, GetStringLength(sElement) - 10)));
@@ -468,8 +472,8 @@ void main()
     string sElement = NuiGetEventElement();
     if (sEvent == "watch") METACT_HandleWatch(oPC, iToken, sWindow, sElement);
     else if (sEvent == "click") METACT_HandleClick(oPC, iToken, sWindow, sElement);
-    else if (sEvent == "close" && sWindow == METACT_WINDOW_PICKER) { DeleteLocalJson(oPC, METACT_LOCAL_PICKER); DeleteLocalJson(oPC, METACT_LOCAL_PICKER_FILTERED); DeleteLocalString(oPC, METACT_LOCAL_PICKER_MODE); }
+    else if (sEvent == "close" && sWindow == METACT_WINDOW_PICKER) { DeleteLocalJson(oPC, METACT_LOCAL_PICKER); DeleteLocalJson(oPC, METACT_LOCAL_PICKER_FILTERED); DeleteLocalString(oPC, METACT_LOCAL_PICKER_MODE); METACT_ShowActionEditor(oPC); }
     else if (sEvent == "close" && sWindow == METACT_WINDOW_RULE) DeleteLocalJson(oPC, METACT_LOCAL_RULE_TEMP);
-    else if (sEvent == "close" && sWindow == METACT_WINDOW_ACTION) DeleteLocalJson(oPC, METACT_LOCAL_ACTION_TEMP);
+    else if (sEvent == "close" && sWindow == METACT_WINDOW_ACTION) { if (GetLocalInt(oPC, METACT_LOCAL_ACTION_HIDDEN)) DeleteLocalInt(oPC, METACT_LOCAL_ACTION_HIDDEN); else DeleteLocalJson(oPC, METACT_LOCAL_ACTION_TEMP); }
     else if (sEvent == "close" && sWindow == METACT_WINDOW_PRIORITY) DeleteLocalJson(oPC, METACT_LOCAL_PRIORITY_TEMP);
 }

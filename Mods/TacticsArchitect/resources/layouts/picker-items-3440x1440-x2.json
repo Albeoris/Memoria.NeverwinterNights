@@ -30,6 +30,11 @@
             "width": 40
           },
           {
+            "id": "abilities",
+            "type": "control",
+            "width": 40
+          },
+          {
             "id": "cast-items",
             "type": "control",
             "width": 40

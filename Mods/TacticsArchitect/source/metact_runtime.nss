@@ -535,9 +535,10 @@ int METACT_ResolveTarget(object oActor, object oPC, json jAction, int iSpell, in
     int bArea = iSpell >= 0 && METACT_IsSpellArea(iSpell);
     int bCanHitAllies = bHostile && bArea && METACT_CanSpellHitAllies(iSpell);
     if (bCanHitAllies && !JsonGetInt(JsonObjectGet(jAction, "friendly_fire")) && METACT_GetAoeSafetyMode(jAction) == METACT_AOE_SAFETY_STATIONARY && !METACT_AreRelevantAlliesStationary(oPC, oActor)) return METACT_Fail(oActor, "allies_moving");
-    if (iSpell >= 0 && METACT_GetSpellRole(iSpell) == METACT_ROLE_SUMMON)
+    int iAssociateType = iSpell >= 0 ? METACT_GetSpellAssociateType(iSpell) : -1;
+    if (iAssociateType >= 0)
     {
-        if (GetIsObjectValid(GetAssociate(ASSOCIATE_TYPE_SUMMONED, oActor))) return METACT_Fail(oActor, "summon_already_present");
+        if (GetIsObjectValid(GetAssociate(iAssociateType, oActor))) return METACT_Fail(oActor, iAssociateType == ASSOCIATE_TYPE_FAMILIAR ? "familiar_already_present" : "summon_already_present");
         SetLocalLocation(oActor, METACT_LOCAL_EVAL_LOCATION, GetLocation(oActor));
         SetLocalInt(oActor, METACT_LOCAL_EVAL_IS_LOCATION, TRUE);
         return TRUE;
@@ -990,7 +991,7 @@ int METACT_ExecuteAction(object oActor, object oPC, json jAction, json jConditio
 {
     DeleteLocalString(oActor, METACT_LOCAL_FAILURE);
     string sKind = JsonGetString(JsonObjectGet(jAction, "kind"));
-    if (JsonGetString(JsonObjectGet(jCondition, "kind")) == "cluster" && sKind != "spell") return METACT_Fail(oActor, "condition_incompatible");
+    if (JsonGetString(JsonObjectGet(jCondition, "kind")) == "cluster" && sKind != "spell" && (sKind != "feat" || !METACT_IsSpellHostile(JsonGetInt(JsonObjectGet(jAction, "spell"))) || !METACT_IsSpellArea(JsonGetInt(JsonObjectGet(jAction, "spell"))))) return METACT_Fail(oActor, "condition_incompatible");
     if (sKind == "spell") return METACT_ExecuteSpellAction(oActor, oPC, jAction, jCondition, jPriorities);
     if (sKind == "equip")
     {
@@ -1009,6 +1010,24 @@ int METACT_ExecuteAction(object oActor, object oPC, json jAction, json jConditio
         if (GetIsObjectValid(GetAssociate(ASSOCIATE_TYPE_FAMILIAR, oActor))) return METACT_Fail(oActor, "familiar_already_present");
         METACT_BeginOwnedAction(oActor, oPC, ACTION_USEOBJECT);
         AssignCommand(oActor, ActionUseFeat(FEAT_SUMMON_FAMILIAR, oActor));
+        AssignCommand(oActor, ActionDoCommand(ExecuteScript("metact_done", oActor)));
+        return TRUE;
+    }
+    if (sKind == "feat")
+    {
+        int iFeat = JsonGetInt(JsonObjectGet(jAction, "feat"));
+        int iSpell = JsonGetInt(JsonObjectGet(jAction, "spell"));
+        if (iFeat < 0 || !GetHasFeat(iFeat, oActor)) return METACT_Fail(oActor, "feat_unavailable");
+        int iAssociateType = iSpell >= 0 ? METACT_GetSpellAssociateType(iSpell) : -1;
+        if (iAssociateType >= 0 && GetIsObjectValid(GetAssociate(iAssociateType, oActor))) return METACT_Fail(oActor, iAssociateType == ASSOCIATE_TYPE_FAMILIAR ? "familiar_already_present" : "summon_already_present");
+        DeleteLocalObject(oActor, METACT_LOCAL_EVAL_TARGET);
+        DeleteLocalLocation(oActor, METACT_LOCAL_EVAL_LOCATION);
+        DeleteLocalInt(oActor, METACT_LOCAL_EVAL_IS_LOCATION);
+        if (JsonGetInt(JsonObjectGet(jAction, "feat_target_self"))) SetLocalObject(oActor, METACT_LOCAL_EVAL_TARGET, oActor);
+        else if (!METACT_ResolveTarget(oActor, oPC, jAction, iSpell, METACT_GetActionSpellLevel(jAction, iSpell), METAMAGIC_NONE, 1, jPriorities, jCondition)) return FALSE;
+        METACT_BeginOwnedAction(oActor, oPC, ACTION_USEOBJECT);
+        if (GetLocalInt(oActor, METACT_LOCAL_EVAL_IS_LOCATION)) AssignCommand(oActor, ActionUseFeat(iFeat, OBJECT_INVALID, 0, GetLocalLocation(oActor, METACT_LOCAL_EVAL_LOCATION)));
+        else AssignCommand(oActor, ActionUseFeat(iFeat, GetLocalObject(oActor, METACT_LOCAL_EVAL_TARGET)));
         AssignCommand(oActor, ActionDoCommand(ExecuteScript("metact_done", oActor)));
         return TRUE;
     }

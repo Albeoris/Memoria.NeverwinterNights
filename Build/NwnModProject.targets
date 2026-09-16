@@ -1,6 +1,7 @@
 <Project>
   <ItemGroup>
     <None Include="$(MSBuildProjectFullPath)" Link="$(MSBuildProjectFile)" />
+    <None Include="$(MSBuildProjectDirectory)\workshop\**\*" Exclude="$(MSBuildProjectDirectory)\workshop\**\.gitkeep" Link="workshop\%(RecursiveDir)%(Filename)%(Extension)" />
     <NwnRequiredPackage Update="@(NwnRequiredPackage)" Visible="false" />
   </ItemGroup>
 

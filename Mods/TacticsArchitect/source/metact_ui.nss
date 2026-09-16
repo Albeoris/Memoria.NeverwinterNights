@@ -9,6 +9,7 @@ const string METACT_WINDOW_PRIORITY = "metact_priority_74c2";
 const string METACT_WINDOW_ACTION = "metact_action_74c2";
 const string METACT_LOCAL_RULE_TEMP = "METACT_UI_RULE_TEMP";
 const string METACT_LOCAL_PICKER_FILTERED = "METACT_UI_PICK_FILTER";
+const string METACT_LOCAL_ACTION_HIDDEN = "METACT_UI_ACTION_HIDDEN";
 const int METACT_RULE_PAGE_SIZE = 20;
 const int METACT_TARGET_AUTO = 0;
 const int METACT_TARGET_SELF = 1;
@@ -103,6 +104,10 @@ json METACT_NewAction()
     jAction = JsonObjectSet(jAction, "enabled", JsonBool(TRUE));
     jAction = JsonObjectSet(jAction, "kind", JsonString(""));
     jAction = JsonObjectSet(jAction, "spell", JsonInt(-1));
+    jAction = JsonObjectSet(jAction, "feat", JsonInt(-1));
+    jAction = JsonObjectSet(jAction, "feat_name", JsonString(""));
+    jAction = JsonObjectSet(jAction, "feat_icon", JsonString(""));
+    jAction = JsonObjectSet(jAction, "feat_target_self", JsonBool(FALSE));
     jAction = JsonObjectSet(jAction, "class", JsonInt(CLASS_TYPE_INVALID));
     jAction = JsonObjectSet(jAction, "level", JsonInt(-1));
     jAction = JsonObjectSet(jAction, "metamagic", JsonInt(METAMAGIC_NONE));
@@ -248,6 +253,7 @@ string METACT_ActionLabel(object oPC, json jAction)
 {
     string sKind = JsonGetString(JsonObjectGet(jAction, "kind"));
     if (sKind == "spell") return MEMORIA_GetSpellName(JsonGetInt(JsonObjectGet(jAction, "spell")));
+    if (sKind == "feat") return JsonGetString(JsonObjectGet(jAction, "feat_name"));
     if (sKind == "equip") return METACT_GetText(METACT_TEXT_EQUIP_ITEM, oPC) + ": " + JsonGetString(JsonObjectGet(jAction, "item_name"));
     if (sKind == "familiar") return METACT_GetText(METACT_TEXT_SUMMON_FAMILIAR, oPC);
     if (sKind == "attack") return METACT_GetText(METACT_TEXT_BASIC_ATTACK, oPC);
@@ -258,6 +264,7 @@ string METACT_ActionIcon(json jAction)
 {
     string sKind = JsonGetString(JsonObjectGet(jAction, "kind"));
     if (sKind == "spell") return METACT_GetSpellIcon(JsonGetInt(JsonObjectGet(jAction, "spell")));
+    if (sKind == "feat") return JsonGetString(JsonObjectGet(jAction, "feat_icon"));
     if (sKind == "equip")
     {
         string sIcon = JsonGetString(JsonObjectGet(jAction, "item_icon"));
@@ -310,13 +317,13 @@ json METACT_BuildActionsPanel(object oPC, float fHeight)
     jPanel = JsonArrayInsert(jPanel, NuiHeight(NuiList(jActionTemplate, NuiBind("action_count"), 32.0f, TRUE, NUI_SCROLLBARS_Y), fHeight - 54.0f));
     json jBottom = JsonArray();
     jBottom = JsonArrayInsert(jBottom, NuiWidth(METACT_IconButton("ir_splbook", "action_add_spell", METACT_GetText(METACT_TEXT_SOURCE_SPELL, oPC)), 30.0f));
+    jBottom = JsonArrayInsert(jBottom, NuiWidth(METACT_IconButton("ife_alertness", "action_add_feat", METACT_GetText(METACT_TEXT_ABILITIES, oPC)), 30.0f));
     jBottom = JsonArrayInsert(jBottom, NuiWidth(METACT_IconButton("ir_inventory", "action_add_item", METACT_GetText(METACT_TEXT_SOURCE_ITEM, oPC)), 30.0f));
     jBottom = JsonArrayInsert(jBottom, NuiWidth(METACT_IconButton("ir_equip_r", "action_add_equip", METACT_GetText(METACT_TEXT_EQUIP_ITEM, oPC)), 30.0f));
-    jBottom = JsonArrayInsert(jBottom, NuiWidth(METACT_IconButton("ife_familiar", "action_add_familiar", METACT_GetText(METACT_TEXT_SUMMON_FAMILIAR, oPC)), 30.0f));
     jBottom = JsonArrayInsert(jBottom, NuiWidth(METACT_IconButton("ir_attack", "action_add_attack", METACT_GetText(METACT_TEXT_BASIC_ATTACK, oPC)), 30.0f));
     jBottom = JsonArrayInsert(jBottom, NuiSpacer());
     jPanel = JsonArrayInsert(jPanel, NuiHeight(NuiRow(jBottom), 30.0f));
-    return NuiCol(jPanel);
+    return NuiEnabled(NuiCol(jPanel), NuiBind("actions_enabled"));
 }
 
 json METACT_BuildPrioritiesPanel(object oPC, float fHeight)
@@ -477,6 +484,7 @@ void METACT_RefreshMain(object oPC, int iToken)
     if (JsonGetLength(jRules) == 0) iRule = -1;
     else if (iRule < 0 || iRule >= JsonGetLength(jRules)) iRule = 0;
     SetLocalInt(oPC, METACT_LOCAL_RULE, iRule);
+    NuiSetBind(oPC, iToken, "actions_enabled", JsonBool(iRule >= 0));
     json jSummaries = JsonArray();
     json jSelected = JsonArray();
     json jTooltips = JsonArray();
@@ -591,9 +599,9 @@ json METACT_BuildActionPanel(object oPC, float fPanelWidth)
     jAction = JsonArrayInsert(jAction, NuiHeight(NuiRow(jActionRow), 40.0f));
     json jSourceButtons = JsonArray();
     jSourceButtons = JsonArrayInsert(jSourceButtons, NuiWidth(METACT_IconButton("ir_splbook", "choose_spell", METACT_GetText(METACT_TEXT_SOURCE_SPELL, oPC)), 36.0f));
+    jSourceButtons = JsonArrayInsert(jSourceButtons, NuiWidth(METACT_IconButton("ife_alertness", "choose_feat", METACT_GetText(METACT_TEXT_ABILITIES, oPC)), 36.0f));
     jSourceButtons = JsonArrayInsert(jSourceButtons, NuiWidth(METACT_IconButton("ir_inventory", "choose_item", METACT_GetText(METACT_TEXT_SOURCE_ITEM, oPC)), 36.0f));
     jSourceButtons = JsonArrayInsert(jSourceButtons, NuiWidth(METACT_IconButton("ir_equip_r", "choose_equip", METACT_GetText(METACT_TEXT_EQUIP_ITEM, oPC)), 36.0f));
-    jSourceButtons = JsonArrayInsert(jSourceButtons, NuiWidth(METACT_IconButton("ife_familiar", "choose_familiar", METACT_GetText(METACT_TEXT_SUMMON_FAMILIAR, oPC)), 36.0f));
     jSourceButtons = JsonArrayInsert(jSourceButtons, NuiWidth(METACT_IconButton("ir_attack", "choose_attack", METACT_GetText(METACT_TEXT_BASIC_ATTACK, oPC)), 36.0f));
     jSourceButtons = JsonArrayInsert(jSourceButtons, NuiSpacer());
     jAction = JsonArrayInsert(jAction, NuiHeight(NuiRow(jSourceButtons), 36.0f));
@@ -709,7 +717,7 @@ json METACT_TargetEntries(object oPC, json jAction, json jRule)
     json jEntries = JsonArray();
     string sKind = JsonGetString(JsonObjectGet(jAction, "kind"));
     if (sKind == "") return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_AUTO, oPC), METACT_TARGET_AUTO));
-    if (sKind == "familiar" || sKind == "equip") return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_SELF, oPC), METACT_TARGET_SELF));
+    if (sKind == "familiar" || sKind == "equip" || (sKind == "feat" && JsonGetInt(JsonObjectGet(jAction, "feat_target_self")))) return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_SELF, oPC), METACT_TARGET_SELF));
     if (sKind == "attack") return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_BY_PRIORITIES, oPC), METACT_TARGET_AUTO));
     int iSpell = JsonGetInt(JsonObjectGet(jAction, "spell"));
     if (METACT_GetSpellRole(iSpell) == METACT_ROLE_SUMMON || Get2DAString("spells", "Range", iSpell) == "P") return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_SELF, oPC), METACT_TARGET_SELF));
@@ -803,6 +811,22 @@ void METACT_RefreshActionEditor(object oPC, int iToken)
     METACT_RefreshPrioritiesPanel(oPC, iToken, METACT_PRIORITY_SCOPE_ACTION);
 }
 
+void METACT_StoreActionEditorState(object oPC, int iToken)
+{
+    json jAction = GetLocalJson(oPC, METACT_LOCAL_ACTION_TEMP);
+    if (iToken <= 0 || JsonGetType(jAction) != JSON_TYPE_OBJECT) return;
+    jAction = JsonObjectSet(jAction, "enabled", JsonBool(JsonGetInt(NuiGetBind(oPC, iToken, "action_enabled"))));
+    jAction = JsonObjectSet(jAction, "target", JsonString(METACT_IndexToTarget(JsonGetInt(NuiGetBind(oPC, iToken, "target_sel")))));
+    int iSource = JsonGetInt(NuiGetBind(oPC, iToken, "source_sel"));
+    jAction = JsonObjectSet(jAction, "source", JsonString(iSource == 1 ? "spell" : iSource == 2 ? "item" : "any"));
+    jAction = JsonObjectSet(jAction, "move", JsonBool(JsonGetInt(NuiGetBind(oPC, iToken, "allow_move"))));
+    int iFriendlyFirePolicy = JsonGetInt(NuiGetBind(oPC, iToken, "friendly_fire_policy"));
+    if (iFriendlyFirePolicy < 0 || iFriendlyFirePolicy > 3) iFriendlyFirePolicy = 1;
+    jAction = JsonObjectSet(jAction, "friendly_fire", JsonBool(iFriendlyFirePolicy == 0));
+    jAction = JsonObjectSet(jAction, "aoe_safety", JsonInt(iFriendlyFirePolicy == 0 ? METACT_AOE_SAFETY_SAFE : iFriendlyFirePolicy));
+    SetLocalJson(oPC, METACT_LOCAL_ACTION_TEMP, jAction);
+}
+
 void METACT_OpenRuleEditor(object oPC, int iRule)
 {
     json jRules = JsonObjectGet(METACT_GetSelectedTactic(oPC), "rules");
@@ -820,13 +844,10 @@ void METACT_OpenRuleEditor(object oPC, int iRule)
     }
 }
 
-void METACT_OpenActionEditor(object oPC, int iAction)
+void METACT_ShowActionEditor(object oPC)
 {
-    json jActions = JsonObjectGet(METACT_GetSelectedRule(oPC), "actions");
-    json jAction = iAction >= 0 && iAction < JsonGetLength(jActions) ? JsonArrayGet(jActions, iAction) : METACT_NewAction();
-    SetLocalInt(oPC, METACT_LOCAL_ACTION, iAction);
-    SetLocalJson(oPC, METACT_LOCAL_ACTION_TEMP, jAction);
-    SetLocalInt(oPC, METACT_LOCAL_PRIORITY_SCOPE, METACT_PRIORITY_SCOPE_ACTION);
+    if (JsonGetType(GetLocalJson(oPC, METACT_LOCAL_ACTION_TEMP)) != JSON_TYPE_OBJECT) return;
+    DeleteLocalInt(oPC, METACT_LOCAL_ACTION_HIDDEN);
     int iOld = NuiFindWindow(oPC, METACT_WINDOW_ACTION);
     if (iOld > 0) NuiDestroy(oPC, iOld);
     int iToken = NuiCreate(oPC, METACT_BuildActionWindow(oPC), METACT_WINDOW_ACTION, "metact_nuievt");
@@ -835,6 +856,16 @@ void METACT_OpenActionEditor(object oPC, int iAction)
         METACT_RefreshActionEditor(oPC, iToken);
         NuiSetBindWatch(oPC, iToken, "friendly_fire_policy", TRUE);
     }
+}
+
+void METACT_OpenActionEditor(object oPC, int iAction)
+{
+    json jActions = JsonObjectGet(METACT_GetSelectedRule(oPC), "actions");
+    json jAction = iAction >= 0 && iAction < JsonGetLength(jActions) ? JsonArrayGet(jActions, iAction) : METACT_NewAction();
+    SetLocalInt(oPC, METACT_LOCAL_ACTION, iAction);
+    SetLocalJson(oPC, METACT_LOCAL_ACTION_TEMP, jAction);
+    SetLocalInt(oPC, METACT_LOCAL_PRIORITY_SCOPE, METACT_PRIORITY_SCOPE_ACTION);
+    METACT_ShowActionEditor(oPC);
 }
 
 json METACT_PickerSlot(int iSlot, float fWidth)
@@ -900,10 +931,11 @@ json METACT_BuildPickerWindow(object oPC)
     jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiRow(jSearch), 30.0f));
     json jModes = JsonArray();
     jModes = JsonArrayInsert(jModes, NuiWidth(METACT_IconButton("ir_splbook", "pick_spells", METACT_GetText(METACT_TEXT_SOURCE_SPELL, oPC)), 40.0f));
+    jModes = JsonArrayInsert(jModes, NuiWidth(METACT_IconButton("ife_alertness", "pick_feats", METACT_GetText(METACT_TEXT_ABILITIES, oPC)), 40.0f));
     jModes = JsonArrayInsert(jModes, NuiWidth(METACT_IconButton("ir_inventory", "pick_items", METACT_GetText(METACT_TEXT_SOURCE_ITEM, oPC)), 40.0f));
     jModes = JsonArrayInsert(jModes, NuiWidth(METACT_IconButton("ir_equip_r", "pick_equip", METACT_GetText(METACT_TEXT_EQUIP_ITEM, oPC)), 40.0f));
     jModes = JsonArrayInsert(jModes, NuiWidth(METACT_Label(""), 8.0f));
-    jModes = JsonArrayInsert(jModes, NuiWidth(NuiLabel(NuiBind("picker_mode_label"), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), fWidth - 155.0f));
+    jModes = JsonArrayInsert(jModes, NuiWidth(NuiLabel(NuiBind("picker_mode_label"), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), fWidth - 195.0f));
     jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiRow(jModes), 40.0f));
     string sPickerMode = GetLocalString(oPC, METACT_LOCAL_PICKER_MODE);
     json jGrid = sPickerMode == "item" || sPickerMode == "equip" ? METACT_BuildItemGrid(oPC, fWidth - 32.0f) : METACT_BuildSpellGrid();
@@ -921,7 +953,7 @@ json METACT_BuildPickerWindow(object oPC)
 void METACT_RefreshPicker(object oPC, int iToken)
 {
     string sMode = GetLocalString(oPC, METACT_LOCAL_PICKER_MODE);
-    if (sMode != "item" && sMode != "equip") sMode = "spell";
+    if (sMode != "item" && sMode != "equip" && sMode != "feat") sMode = "spell";
     json jFiltered = METACT_FilterCandidates(GetLocalJson(oPC, METACT_LOCAL_PICKER), NuiGetBind(oPC, iToken, "picker_search"), sMode);
     SetLocalJson(oPC, METACT_LOCAL_PICKER_FILTERED, jFiltered);
     int iPage = GetLocalInt(oPC, METACT_LOCAL_PICKER_PAGE);
@@ -944,7 +976,9 @@ void METACT_RefreshPicker(object oPC, int iToken)
         {
             json jCandidate = JsonArrayGet(jFiltered, iIndex);
             NuiSetBind(oPC, iToken, "pick_icon_" + sSlot, JsonObjectGet(jCandidate, "icon"));
-            NuiSetBind(oPC, iToken, "pick_tip_" + sSlot, JsonString(JsonGetString(JsonObjectGet(jCandidate, "name")) + "\n" + JsonGetString(JsonObjectGet(jCandidate, "detail"))));
+            string sName = JsonGetString(JsonObjectGet(jCandidate, "name"));
+            string sDetail = JsonGetString(JsonObjectGet(jCandidate, "detail"));
+            NuiSetBind(oPC, iToken, "pick_tip_" + sSlot, JsonString(sDetail == "" || sDetail == sName ? sName : sName + ": " + sDetail));
         }
         else
         {
@@ -952,7 +986,7 @@ void METACT_RefreshPicker(object oPC, int iToken)
             NuiSetBind(oPC, iToken, "pick_tip_" + sSlot, JsonString(""));
         }
     }
-    NuiSetBind(oPC, iToken, "picker_mode_label", JsonString(METACT_GetText(sMode == "equip" ? METACT_TEXT_EQUIPPABLE_ITEMS : sMode == "item" ? METACT_TEXT_SOURCE_ITEM : METACT_TEXT_SOURCE_SPELL, oPC)));
+    NuiSetBind(oPC, iToken, "picker_mode_label", JsonString(METACT_GetText(sMode == "equip" ? METACT_TEXT_EQUIPPABLE_ITEMS : sMode == "item" ? METACT_TEXT_SOURCE_ITEM : sMode == "feat" ? METACT_TEXT_ABILITIES : METACT_TEXT_SOURCE_SPELL, oPC)));
     NuiSetBind(oPC, iToken, "picker_page", JsonString(IntToString(iPage + 1) + " / " + IntToString(iPages)));
 }
 
@@ -960,14 +994,28 @@ void METACT_OpenPicker(object oPC, string sMode)
 {
     object oActor = GetLocalObject(oPC, METACT_LOCAL_ACTOR);
     if (!GetIsObjectValid(oActor)) return;
+    int iActionWindow = NuiFindWindow(oPC, METACT_WINDOW_ACTION);
+    if (iActionWindow > 0)
+    {
+        METACT_StoreActionEditorState(oPC, iActionWindow);
+        SetLocalInt(oPC, METACT_LOCAL_ACTION_HIDDEN, TRUE);
+        NuiDestroy(oPC, iActionWindow);
+    }
     SetLocalJson(oPC, METACT_LOCAL_PICKER, METACT_EnumerateCandidates(oActor));
-    SetLocalString(oPC, METACT_LOCAL_PICKER_MODE, sMode == "equip" ? "equip" : sMode == "item" ? "item" : "spell");
+    SetLocalString(oPC, METACT_LOCAL_PICKER_MODE, sMode == "equip" ? "equip" : sMode == "item" ? "item" : sMode == "feat" ? "feat" : "spell");
     SetLocalInt(oPC, METACT_LOCAL_PICKER_PAGE, 0);
     SetLocalJson(oPC, METACT_LOCAL_PICKER_FILTERED, METACT_FilterCandidates(GetLocalJson(oPC, METACT_LOCAL_PICKER), JsonString(""), GetLocalString(oPC, METACT_LOCAL_PICKER_MODE)));
     int iOld = NuiFindWindow(oPC, METACT_WINDOW_PICKER);
     if (iOld > 0) NuiDestroy(oPC, iOld);
     int iToken = NuiCreate(oPC, METACT_BuildPickerWindow(oPC), METACT_WINDOW_PICKER, "metact_nuievt");
-    if (iToken <= 0) return;
+    if (iToken <= 0)
+    {
+        DeleteLocalJson(oPC, METACT_LOCAL_PICKER);
+        DeleteLocalJson(oPC, METACT_LOCAL_PICKER_FILTERED);
+        DeleteLocalString(oPC, METACT_LOCAL_PICKER_MODE);
+        METACT_ShowActionEditor(oPC);
+        return;
+    }
     NuiSetBind(oPC, iToken, "picker_search", JsonString(""));
     METACT_RefreshPicker(oPC, iToken);
     NuiSetBindWatch(oPC, iToken, "picker_search", TRUE);

@@ -188,6 +188,7 @@ const string METACT_TEXT_FRIENDLY_FIRE_DURING_CAST_HELP = "friendly_fire_during_
 const string METACT_TEXT_FRIENDLY_FIRE_STATIONARY_HELP = "friendly_fire_stationary_help";
 const string METACT_TEXT_EQUIP_ITEM = "equip_item";
 const string METACT_TEXT_EQUIPPABLE_ITEMS = "equippable_items";
+const string METACT_TEXT_ABILITIES = "abilities";
 
 string METACT_GetLanguage(object oPC)
 {

@@ -5,7 +5,7 @@ METACT adds a persistent Dragon Age-style behavior editor for the player charact
 ## Features
 
 - Named tactics with ordered conditions and actions.
-- Spells, attacks, usable items, equipment changes, and familiar summoning.
+- Spells, character abilities, attacks, usable items, and equipment changes.
 - Target priorities at tactic, rule, and action level.
 - Health, enemy count, challenge rating, cluster, and summon conditions.
 - Predictive area targeting with configurable friendly-fire protection.

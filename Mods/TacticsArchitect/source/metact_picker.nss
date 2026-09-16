@@ -164,6 +164,51 @@ json METACT_AddEquipCandidate(json jCandidates, object oItem)
     return JsonArrayInsert(jCandidates, jCandidate);
 }
 
+int METACT_IsActionableFeat(object oActor, int iFeat)
+{
+    if (!GetHasFeat(iFeat, oActor, TRUE)) return FALSE;
+    string sCategory = Get2DAString("feat", "CATEGORY", iFeat);
+    if (sCategory != "" && sCategory != "****") return TRUE;
+    string sUsesPerDay = Get2DAString("feat", "USESPERDAY", iFeat);
+    if (sUsesPerDay != "" && sUsesPerDay != "****" && StringToInt(sUsesPerDay) > 0) return TRUE;
+    string sSpell = Get2DAString("feat", "SPELLID", iFeat);
+    return sSpell != "" && sSpell != "****" && StringToInt(sSpell) >= 0;
+}
+
+json METACT_AddFeatCandidates(json jCandidates, object oActor)
+{
+    int iFeat;
+    for (iFeat = 0; iFeat < Get2DARowCount("feat"); iFeat++)
+    {
+        if (!METACT_IsActionableFeat(oActor, iFeat)) continue;
+        string sNameStrRef = Get2DAString("feat", "FEAT", iFeat);
+        string sName = sNameStrRef == "" || sNameStrRef == "****" ? "" : GetStringByStrRef(StringToInt(sNameStrRef));
+        if (sName == "") continue;
+        string sIcon = Get2DAString("feat", "ICON", iFeat);
+        if (sIcon == "" || sIcon == "****") sIcon = "ife_alertness";
+        string sSpell = Get2DAString("feat", "SPELLID", iFeat);
+        int iSpell = sSpell == "" || sSpell == "****" ? -1 : StringToInt(sSpell);
+        json jCandidate = JsonObject();
+        jCandidate = JsonObjectSet(jCandidate, "type", JsonString("feat"));
+        jCandidate = JsonObjectSet(jCandidate, "feat", JsonInt(iFeat));
+        jCandidate = JsonObjectSet(jCandidate, "spell", JsonInt(iSpell));
+        jCandidate = JsonObjectSet(jCandidate, "class", JsonInt(CLASS_TYPE_INVALID));
+        jCandidate = JsonObjectSet(jCandidate, "level", JsonInt(-1));
+        jCandidate = JsonObjectSet(jCandidate, "metamagic", JsonInt(METAMAGIC_NONE));
+        jCandidate = JsonObjectSet(jCandidate, "domain", JsonInt(0));
+        jCandidate = JsonObjectSet(jCandidate, "name", JsonString(sName));
+        jCandidate = JsonObjectSet(jCandidate, "alias", JsonString(Get2DAString("feat", "LABEL", iFeat)));
+        jCandidate = JsonObjectSet(jCandidate, "icon", JsonString(sIcon));
+        jCandidate = JsonObjectSet(jCandidate, "detail", JsonString(sName));
+        jCandidate = JsonObjectSet(jCandidate, "search", JsonString(METACT_JsonSearchText(JsonString(sName + " " + Get2DAString("feat", "LABEL", iFeat)))));
+        jCandidate = JsonObjectSet(jCandidate, "target_self", JsonBool(Get2DAString("feat", "TARGETSELF", iFeat) == "1"));
+        jCandidate = JsonObjectSet(jCandidate, "item_resref", JsonString(""));
+        jCandidate = JsonObjectSet(jCandidate, "item_property", JsonInt(-1));
+        jCandidates = JsonArrayInsert(jCandidates, jCandidate);
+    }
+    return jCandidates;
+}
+
 json METACT_AddItemCandidates(json jCandidates, object oItem)
 {
     jCandidates = METACT_AddEquipCandidate(jCandidates, oItem);
@@ -178,7 +223,7 @@ json METACT_AddItemCandidates(json jCandidates, object oItem)
 
 json METACT_EnumerateCandidates(object oActor)
 {
-    json jCandidates = JsonArray();
+    json jCandidates = METACT_AddFeatCandidates(JsonArray(), oActor);
     int iPosition;
     for (iPosition = 1; iPosition <= 8; iPosition++)
     {
