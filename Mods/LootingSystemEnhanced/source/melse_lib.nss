@@ -951,22 +951,6 @@ void MELSE_OnHeartbeat(object oObject)
         if (MELSE_GetConfigInt(MELSE_LOCAL_FEATURE_TREASURE_SCANNING))
             MELSE_ScanTreasure(oPC, oArea);
     }
-    else if (GetObjectType(oObject) == OBJECT_TYPE_CREATURE)
-    {
-        MELSE_InitializeCreature(oObject);
-    }
-}
-
-void MELSE_OnPhysicalAttacked(object oObject, object oAttacker, object oWeaponUsed, int iAttackType, int iAttackMode)
-{
-    if (GetObjectType(oObject) == OBJECT_TYPE_CREATURE)
-        MELSE_InitializeCreature(oObject);
-}
-
-void MELSE_OnSpellCastAt(object oObject, int bSpellHarmful, object oSpellCaster, int iSpell)
-{
-    if (GetObjectType(oObject) == OBJECT_TYPE_CREATURE)
-        MELSE_InitializeCreature(oObject);
 }
 
 void MELSE_OnDeath(object oObject, object oKiller)
@@ -1048,8 +1032,9 @@ void MELSE_OnOpen(object oObject, object oBy)
 
 void MELSE_OnEnter(object oObject, object oEntering)
 {
-    if (GetIsPC(oEntering) && oObject == GetArea(oEntering))
-        MELSE_InjectAreaObjects(oObject);
+    if (oObject != GetArea(oEntering)) return;
+    if (GetIsPC(oEntering)) MELSE_InjectAreaObjects(oObject);
+    else if (GetObjectType(oEntering) == OBJECT_TYPE_CREATURE) MELSE_InitializeCreature(oEntering);
 }
 
 void MELSE_OnUnlock(object oPlaceable, object oBy)

@@ -1,5 +1,7 @@
 # Memoria Mods
 
+[Support development on Patreon](https://www.patreon.com/Albeoris/join)
+
 This monorepo contains independently versioned Neverwinter Nights: Enhanced Edition override mods and their shared development toolchain.
 
 ATTENTION: The mods are ready but are currently being debugged. I will release them once testing is complete.

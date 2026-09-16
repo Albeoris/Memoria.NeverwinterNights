@@ -19,7 +19,7 @@ Open **Memoria Configuration** from the inventory and select Looting System Enha
 
 ## Compatibility
 
-Do not combine MELSE with legacy LSE or another mod that supplies `nw_c2_default1.ncs`, `nw_c2_default5.ncs`, or `nw_c2_defaultb.ncs`. Logical conflicts are possible with other mods that automate looting, preserve corpses, or change container behavior.
+Do not combine MELSE with legacy LSE. Logical conflicts are possible with other mods that automate looting, preserve corpses, or change container behavior.
 
 ## Credits
 
