@@ -14,7 +14,7 @@ ATTENTION: The mods are ready but are currently being debugged. I will release t
 | ESI | MEMORIA 1.0.0+ within major 1 | Event Script Injector with persistent compatible `esi_uni_*` trampolines and a transient runtime hook registry. Always dispatched first. |
 | MEMORIA_CONFIG | MEMORIA 1.0.0+, ESI 1.0.0+ | Shared inventory tool and NUI Mod Configuration Manager. It uses Memoria's compatible manifest list. |
 | MELSE | MEMORIA 1.0.0+, ESI 1.0.0+, MEMORIA_CONFIG 1.0.0+ | Memoria edition of Looting System Enhanced, namespaced as `MELSE_*` and `melse_*`. |
-| MECALM | MEMORIA 1.0.0+, ESI 1.0.0+, MEMORIA_CONFIG 1.0.0+ | Companion Auto-Lock Manager. |
+| MECM | MEMORIA 1.0.0+, ESI 1.0.0+, MEMORIA_CONFIG 1.0.0+ | Companion Manager. |
 | METACT | MEMORIA 1.0.0+, ESI 1.0.0+, MEMORIA_CONFIG 1.0.0+ | Tactics Architect. |
 | Toolset | .NET 10 | Builds, validates, and packages all projects. |
 

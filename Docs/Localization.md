@@ -2,10 +2,10 @@
 
 **Entry point:** `Mods/Memoria/source/memoria_i18n.nss` — `MEMORIA_I18N_GetText(sPrefix, sLang, sKey)`.
 
-Each mod authors one UTF-8 JSON resource per supported language, named `<prefix>_loc_<language>.resjson`, e.g. `mecalm_loc_en.resjson`, `mecalm_loc_ru.resjson`. Every file is a flat object mapping short, self-documenting keys to that language's text:
+Each mod authors one UTF-8 JSON resource per supported language, named `<prefix>_loc_<language>.resjson`, e.g. `mecm_loc_en.resjson`, `mecm_loc_ru.resjson`. Every file is a flat object mapping short, self-documenting keys to that language's text:
 
 ```json
-{ "mod_display_name": "Companion Auto-Lock Manager", "search_radius_label": "Search radius (1-100 m)" }
+{ "mod_display_name": "Companion Manager", "search_radius_label": "Search radius (1-100 m)" }
 ```
 
 The Toolset validates each `.resjson` source and emits `<prefix>_loc_<language>.txt` in the game-local encoding expected by NWN:EE's `JsonParse`: Windows-1251 when the table contains Cyrillic, or Windows-1252 otherwise. The checked-in translation remains readable UTF-8; only the disposable build output is transcoded.

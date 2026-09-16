@@ -1,8 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Renamed the package and all owned identifiers and resources to Companion Manager (MECM).
+
 ## Experimental heartbeat discovery
 
-- Added manifest-based heartbeat registration through Memoria Bootstrapper using `mecalm_hb.ncs`.
+- Added manifest-based heartbeat registration through Memoria Bootstrapper using `mecm_hb.ncs`.
 
 ## 1.2.7
 
@@ -41,22 +45,22 @@
 
 ## 1.2.1
 
-- Changed targeted-power use on an object from opening settings to printing raw object state, every MECALM filter result, and per-group-member unlock diagnostics to chat.
+- Changed targeted-power use on an object from opening settings to printing raw object state, every MECM filter result, and per-group-member unlock diagnostics to chat.
 - Kept targeted-power use on the ground as the settings shortcut.
 
 ## 1.2.0
 
-- Removed automatic Detect because NWScript cannot suppress the engine's overhead feedback when `SetActionMode` toggles Detect; old MECALM-owned Detect state is cleared once when a save is upgraded.
+- Removed automatic Detect because NWScript cannot suppress the engine's overhead feedback when `SetActionMode` toggles Detect; old MECM-owned Detect state is cleared once when a save is upgraded.
 - Removed the stock door-action prefilter and the door usable-flag requirement so every closed pickable door, including plot doors, is eligible.
 - Prioritizes the globally nearest available associate-to-lock pair before locksmith skill distribution.
 - Rejects direct routes containing a closed door or another detected active trap, observes the engine's blocking-door result, and retains bounded stall retries for paths that cannot be queried ahead of time.
-- Releases a MECALM task when its action is manually cancelled or replaced, preventing the dispatcher from fighting direct familiar control.
+- Releases a MECM task when its action is manually cancelled or replaced, preventing the dispatcher from fighting direct familiar control.
 - Labels the line-of-sight setting with the `LOS` abbreviation in every language.
 
 ## 1.1.3
 
 - Expanded automatic Detect from one directly controlled creature to the bounded registry of the player and all controlled associates with trained Search.
-- Tracks movement, stationary time and MECALM-owned Detect mode independently for every eligible creature.
+- Tracks movement, stationary time and MECM-owned Detect mode independently for every eligible creature.
 - Preserves manually enabled Search/Detect and migrates the previous single-creature saved state safely.
 
 ## 1.1.2
@@ -84,7 +88,7 @@
 
 ## 1.0.4
 
-- Displays a localized floating claim above a companion whenever MECALM assigns a new lock.
+- Displays a localized floating claim above a companion whenever MECM assigns a new lock.
 - Keeps the claim out of the chat window to avoid log spam.
 
 ## 1.0.3
@@ -94,7 +98,7 @@
 
 ## 1.0.2
 
-- Restores an associate's normal follow behavior after a MECALM unlock task finishes or is cancelled.
+- Restores an associate's normal follow behavior after a MECM unlock task finishes or is cancelled.
 - Clears the completed unlock action so familiars do not remain frozen beside an unlocked object.
 - Preserves Stand Ground and the associate's existing combat behavior settings.
 
@@ -104,7 +108,7 @@
 - Added a single-pass cache for visible locked objects to stay below the NWScript instruction limit in large campaign areas.
 - Allowed lockpicking on trapped containers while continuing to preserve active trap-disarming actions.
 - Added a one-shot scan report after enabling the mode.
-- Replaced MECALM's private `OnActivateItem` dispatcher with an extension of MELSE's ESI.
+- Replaced MECM's private `OnActivateItem` dispatcher with an extension of MELSE's ESI.
 
 ## 1.0.0
 

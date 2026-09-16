@@ -1,14 +1,14 @@
-#include "mecalm_lib"
+#include "mecm_lib"
 
 void main()
 {
-    object oPC = MECALM_GetRootMaster(OBJECT_SELF);
+    object oPC = MECM_GetRootMaster(OBJECT_SELF);
     if (!GetIsPC(oPC) || GetIsPC(OBJECT_SELF))
         return;
 
     object oTarget = GetAttackTarget(OBJECT_SELF);
     if (!GetIsObjectValid(oTarget))
         oTarget = GetAttemptedAttackTarget();
-    if (MECALM_ShouldProtectTarget(oTarget, oPC))
+    if (MECM_ShouldProtectTarget(oTarget, oPC))
         ClearAllActions(TRUE);
 }

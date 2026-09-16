@@ -1,10 +1,10 @@
 <Project DefaultTargets="Build">
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
-        <ModId>MECALM</ModId>
+        <ModId>MECM</ModId>
         <Version>1.2.7</Version>
-        <PackageId>mecalm</PackageId>
-        <PackageDisplayName>Memoria Companion Auto-Lock Manager (MECALM)</PackageDisplayName>
+        <PackageId>mecm</PackageId>
+        <PackageDisplayName>Memoria Companion Manager (MECM)</PackageDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
         <!-- Set this to the ID of the existing Workshop item. Leaving it empty prevents accidental item creation. -->

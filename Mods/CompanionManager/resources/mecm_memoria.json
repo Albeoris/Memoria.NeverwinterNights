@@ -1,30 +1,30 @@
 {
   "schema": 1,
-  "id": "MECALM",
+  "id": "MECM",
   "bootstrapper": {
-    "heartbeat": "mecalm_hb",
+    "heartbeat": "mecm_hb",
     "priority": 200
   },
   "configuration": {
-    "name": "Companion Auto-Lock Manager",
+    "name": "Companion Manager",
     "name_key": "mod_display_name",
     "localization": {
-      "prefix": "mecalm"
+      "prefix": "mecm"
     },
-    "apply": "mecalm_cfgapply",
-    "diagnostic": "mecalm_cfgdiag",
+    "apply": "mecm_cfgapply",
+    "diagnostic": "mecm_cfgdiag",
     "options": [
       {
         "type": "bool",
         "scope": "player",
-        "local": "MECALM_MODE_ENABLED",
+        "local": "MECM_MODE_ENABLED",
         "label": "Automatic lockpicking",
         "label_key": "auto_lockpicking_option_label"
       },
       {
         "type": "float",
         "scope": "player",
-        "local": "MECALM_CFG_SEARCH_RADIUS",
+        "local": "MECM_CFG_SEARCH_RADIUS",
         "label": "Search radius",
         "label_key": "search_radius_label",
         "minimum": 1,
@@ -33,7 +33,7 @@
       {
         "type": "float",
         "scope": "player",
-        "local": "MECALM_CFG_LOCK_INTERVAL",
+        "local": "MECM_CFG_LOCK_INTERVAL",
         "label": "Lock interval",
         "label_key": "lock_interval_label",
         "minimum": 0.1,
@@ -42,35 +42,35 @@
       {
         "type": "bool",
         "scope": "player",
-        "local": "MECALM_CFG_REQUIRE_LOS",
+        "local": "MECM_CFG_REQUIRE_LOS",
         "label": "Require line of sight",
         "label_key": "require_los_label"
       },
       {
         "type": "bool",
         "scope": "player",
-        "local": "MECALM_CFG_ATTACK_SAFETY",
+        "local": "MECM_CFG_ATTACK_SAFETY",
         "label": "Prevent attacks on worked locks",
         "label_key": "attack_safety_label"
       },
       {
         "type": "bool",
         "scope": "player",
-        "local": "MECALM_CFG_HIGHLIGHT",
+        "local": "MECM_CFG_HIGHLIGHT",
         "label": "Highlight targets",
         "label_key": "highlight_label"
       },
       {
         "type": "bool",
         "scope": "player",
-        "local": "MECALM_CFG_OVERHEAD_MESSAGES",
+        "local": "MECM_CFG_OVERHEAD_MESSAGES",
         "label": "Show overhead messages",
         "label_key": "overhead_messages_label"
       },
       {
         "type": "bool",
         "scope": "player",
-        "local": "MECALM_CFG_DEBUG",
+        "local": "MECM_CFG_DEBUG",
         "label": "Enable diagnostics",
         "label_key": "debug_output_label"
       }

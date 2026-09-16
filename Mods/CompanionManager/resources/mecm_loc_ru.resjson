@@ -1,18 +1,18 @@
 {
-  "mod_display_name": "Companion Auto-Lock Manager",
+  "mod_display_name": "Companion Manager",
   "auto_lockpicking_name": "Автоматический взлом замков",
   "auto_lockpicking_description": "Активируйте этот предмет, чтобы включить или выключить автоматический взлом замков напарниками. Защитный менеджер, не позволяющий напарникам атаковать замки и ловушки, с которыми работает группа, активен всегда.",
   "auto_lockpicking_enabled_message": "Автоматический взлом замков включён.",
   "auto_lockpicking_disabled_message": "Автоматический взлом замков выключен.",
   "familiar_pause_message": "Автоматический взлом приостановлен, пока вы напрямую управляете фамильяром.",
   "task_released_message": "Никто из напарников не смог добраться до замка; задача отменена:",
-  "installed_message": "Менеджер автоматического взлома установлен, версия",
-  "scan_locks_message": "Диагностика MECALM: подходящих видимых замков = ",
+  "installed_message": "Менеджер спутников установлен, версия",
+  "scan_locks_message": "Диагностика MECM: подходящих видимых замков = ",
   "scan_locksmiths_message": ", доступных взломщиков = ",
   "state_on": "ВКЛ",
   "state_off": "ВЫКЛ",
   "lock_claim_message": "Я это взломаю!",
-  "settings_title": "Менеджер автоматического взлома",
+  "settings_title": "Менеджер спутников",
   "auto_lockpicking_option_label": "Автоматический взлом",
   "enabled_label": "Включено",
   "search_radius_label": "Радиус поиска (1-100 м)",
@@ -28,5 +28,5 @@
   "save_label": "Сохранить",
   "cancel_label": "Отмена",
   "invalid_value_message": "Некорректное значение. Используйте числа в указанных диапазонах.",
-  "settings_saved_message": "Настройки MECALM сохранены."
+  "settings_saved_message": "Настройки MECM сохранены."
 }

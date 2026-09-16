@@ -1,18 +1,18 @@
 {
-  "mod_display_name": "Companion Auto-Lock Manager",
+  "mod_display_name": "Companion Manager",
   "auto_lockpicking_name": "Automatic Lockpicking",
   "auto_lockpicking_description": "Activate this item to enable or disable automatic lockpicking by companions. The safety manager that stops companions from attacking locks and traps being worked on is always active.",
   "auto_lockpicking_enabled_message": "Automatic lockpicking: enabled.",
   "auto_lockpicking_disabled_message": "Automatic lockpicking: disabled.",
   "familiar_pause_message": "Automatic lockpicking is paused while you directly control your familiar.",
   "task_released_message": "No companion could reach the lock; task released:",
-  "installed_message": "Companion Auto-Lock Manager installed, version",
-  "scan_locks_message": "MECALM scan: eligible visible locks = ",
+  "installed_message": "Companion Manager installed, version",
+  "scan_locks_message": "MECM scan: eligible visible locks = ",
   "scan_locksmiths_message": ", available locksmiths = ",
   "state_on": "ON",
   "state_off": "OFF",
   "lock_claim_message": "I'll pick this lock!",
-  "settings_title": "Companion Auto-Lock Manager",
+  "settings_title": "Companion Manager",
   "auto_lockpicking_option_label": "Automatic lockpicking",
   "enabled_label": "Enabled",
   "search_radius_label": "Search radius (1-100 m)",
@@ -28,5 +28,5 @@
   "save_label": "Save",
   "cancel_label": "Cancel",
   "invalid_value_message": "Invalid value. Use numbers within the ranges shown.",
-  "settings_saved_message": "MECALM settings saved."
+  "settings_saved_message": "MECM settings saved."
 }

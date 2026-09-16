@@ -1,18 +1,18 @@
 {
-  "mod_display_name": "Companion Auto-Lock Manager",
+  "mod_display_name": "Companion Manager",
   "auto_lockpicking_name": "Scassinamento automatico",
   "auto_lockpicking_description": "Attiva questo oggetto per abilitare o disabilitare lo scassinamento automatico dei compagni. Il gestore di sicurezza che impedisce ai compagni di attaccare serrature e trappole su cui sta lavorando il gruppo è sempre attivo.",
   "auto_lockpicking_enabled_message": "Scassinamento automatico: attivato.",
   "auto_lockpicking_disabled_message": "Scassinamento automatico: disattivato.",
   "familiar_pause_message": "Lo scassinamento automatico è sospeso mentre controlli direttamente il famiglio.",
   "task_released_message": "Nessun compagno ha potuto raggiungere la serratura; incarico annullato:",
-  "installed_message": "Gestore dello scassinamento automatico installato, versione",
-  "scan_locks_message": "Diagnostica MECALM: serrature visibili idonee = ",
+  "installed_message": "Gestore dei compagni installato, versione",
+  "scan_locks_message": "Diagnostica MECM: serrature visibili idonee = ",
   "scan_locksmiths_message": ", scassinatori disponibili = ",
   "state_on": "ATTIVO",
   "state_off": "DISATTIVO",
   "lock_claim_message": "Questa serratura la scassino io!",
-  "settings_title": "Gestore dello scassinamento automatico",
+  "settings_title": "Gestore dei compagni",
   "auto_lockpicking_option_label": "Scassinamento automatico",
   "enabled_label": "Attivo",
   "search_radius_label": "Raggio di ricerca (1-100 m)",
@@ -28,5 +28,5 @@
   "save_label": "Salva",
   "cancel_label": "Annulla",
   "invalid_value_message": "Valore non valido. Usa gli intervalli indicati.",
-  "settings_saved_message": "Impostazioni MECALM salvate."
+  "settings_saved_message": "Impostazioni MECM salvate."
 }

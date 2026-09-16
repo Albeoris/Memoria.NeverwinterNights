@@ -1,18 +1,18 @@
 {
-  "mod_display_name": "Companion Auto-Lock Manager",
+  "mod_display_name": "Companion Manager",
   "auto_lockpicking_name": "Automatisches Schlösserknacken",
   "auto_lockpicking_description": "Aktiviert oder deaktiviert das automatische Schlösserknacken durch Gefährten. Der Sicherheitsmanager, der Angriffe von Gefährten auf gerade bearbeitete Schlösser und Fallen verhindert, ist immer aktiv.",
   "auto_lockpicking_enabled_message": "Automatisches Schlösserknacken: aktiviert.",
   "auto_lockpicking_disabled_message": "Automatisches Schlösserknacken: deaktiviert.",
   "familiar_pause_message": "Das automatische Schlösserknacken pausiert, während Ihr den Vertrauten direkt steuert.",
   "task_released_message": "Kein Gefährte konnte das Schloss erreichen; Auftrag abgebrochen:",
-  "installed_message": "Manager für automatisches Schlösserknacken installiert, Version",
-  "scan_locks_message": "MECALM-Diagnose: geeignete sichtbare Schlösser = ",
+  "installed_message": "Gefährten-Manager installiert, Version",
+  "scan_locks_message": "MECM-Diagnose: geeignete sichtbare Schlösser = ",
   "scan_locksmiths_message": ", verfügbare Schlossknacker = ",
   "state_on": "AN",
   "state_off": "AUS",
   "lock_claim_message": "Ich knacke dieses Schloss!",
-  "settings_title": "Manager für automatisches Schlösserknacken",
+  "settings_title": "Gefährten-Manager",
   "auto_lockpicking_option_label": "Automatisches Schlösserknacken",
   "enabled_label": "Aktiviert",
   "search_radius_label": "Suchradius (1-100 m)",
@@ -28,5 +28,5 @@
   "save_label": "Speichern",
   "cancel_label": "Abbrechen",
   "invalid_value_message": "Ungültiger Wert. Bitte die angezeigten Bereiche beachten.",
-  "settings_saved_message": "MECALM-Einstellungen gespeichert."
+  "settings_saved_message": "MECM-Einstellungen gespeichert."
 }

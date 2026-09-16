@@ -28,8 +28,8 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           $tag = $env:RELEASE_TAG
-          if ($tag -notmatch '^(?<id>esi|melse|mecalm|metact|memoria)-v(?<version>(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))$') { throw "Invalid release tag: $tag" }
-          $projects = @{ esi = 'EventScriptInjector'; melse = 'LootingSystemEnhanced'; mecalm = 'CompanionAutoLockManager'; metact = 'TacticsArchitect'; memoria = 'Memoria' }
+          if ($tag -notmatch '^(?<id>esi|melse|mecm|metact|memoria)-v(?<version>(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))$') { throw "Invalid release tag: $tag" }
+          $projects = @{ esi = 'EventScriptInjector'; melse = 'LootingSystemEnhanced'; mecm = 'CompanionManager'; metact = 'TacticsArchitect'; memoria = 'Memoria' }
           "id=$($Matches['id'])" >> $env:GITHUB_OUTPUT
           "project=$($projects[$Matches['id']])" >> $env:GITHUB_OUTPUT
           "version=$($Matches['version'])" >> $env:GITHUB_OUTPUT

@@ -22,7 +22,7 @@ Runtime loading order is:
 
 1. MEMORIA
 2. ESI
-3. MELSE, MECALM, and METACT
+3. MELSE, MECM, and METACT
 
 MEMORIA combines the bootstrapper and shared Framework. It is the only package allowed to provide `default.ncs`; it validates installed `*_memoria.txt` package versions and dependencies before dispatching compatible heartbeats by priority. ESI must always run before consumers of injected events.
 
@@ -81,7 +81,7 @@ To validate publishing for all packages, run:
 dotnet msbuild Memoria.NeverwinterNights.slnx -restore -t:Publish -p:Configuration=Release -p:Version=0.0.0-validation -m:1
 ```
 
-Confirm that every package contains its README, MELSE/MECALM/METACT contain their changelogs, no package contains obsolete RTF documentation, and only MEMORIA contains `override/default.ncs`.
+Confirm that every package contains its README, MELSE/MECM/METACT contain their changelogs, no package contains obsolete RTF documentation, and only MEMORIA contains `override/default.ncs`.
 
 Build or publish one mod through its project:
 

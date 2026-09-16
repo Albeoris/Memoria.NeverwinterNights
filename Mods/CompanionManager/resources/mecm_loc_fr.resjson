@@ -1,18 +1,18 @@
 {
-  "mod_display_name": "Companion Auto-Lock Manager",
+  "mod_display_name": "Companion Manager",
   "auto_lockpicking_name": "Crochetage automatique",
   "auto_lockpicking_description": "Activez cet objet pour activer ou désactiver le crochetage automatique par les compagnons. Le gestionnaire de sécurité qui empêche les compagnons d'attaquer les serrures et les pièges manipulés reste toujours actif.",
   "auto_lockpicking_enabled_message": "Crochetage automatique : activé.",
   "auto_lockpicking_disabled_message": "Crochetage automatique : désactivé.",
   "familiar_pause_message": "Le crochetage automatique est suspendu pendant que vous contrôlez directement votre familier.",
   "task_released_message": "Aucun compagnon n'a pu atteindre la serrure ; tâche abandonnée :",
-  "installed_message": "Gestionnaire de crochetage automatique installé, version",
-  "scan_locks_message": "Diagnostic MECALM : serrures visibles admissibles = ",
+  "installed_message": "Gestionnaire de compagnons installé, version",
+  "scan_locks_message": "Diagnostic MECM : serrures visibles admissibles = ",
   "scan_locksmiths_message": ", crocheteurs disponibles = ",
   "state_on": "ACTIF",
   "state_off": "INACTIF",
   "lock_claim_message": "Je vais crocheter cette serrure !",
-  "settings_title": "Gestionnaire de crochetage automatique",
+  "settings_title": "Gestionnaire de compagnons",
   "auto_lockpicking_option_label": "Crochetage automatique",
   "enabled_label": "Activé",
   "search_radius_label": "Rayon de recherche (1-100 m)",
@@ -28,5 +28,5 @@
   "save_label": "Enregistrer",
   "cancel_label": "Annuler",
   "invalid_value_message": "Valeur incorrecte. Respectez les plages indiquées.",
-  "settings_saved_message": "Paramètres MECALM enregistrés."
+  "settings_saved_message": "Paramètres MECM enregistrés."
 }
