@@ -3,11 +3,13 @@ name: Release package
 on:
   push:
     tags:
+      - 'memoria-v*'
       - 'esi-v*'
+      - 'meconfig-v*'
       - 'melse-v*'
       - 'mecm-v*'
       - 'metact-v*'
-      - 'memoria-v*'
+      - 'medt-v*'
 
 permissions:
   contents: write
@@ -15,15 +17,10 @@ permissions:
 jobs:
   publish:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
 
       - name: Parse package tag
         id: package
@@ -32,20 +29,42 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           $tag = $env:RELEASE_TAG
-          if ($tag -notmatch '^(?<id>esi|melse|mecm|metact|memoria)-v(?<version>(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))$') { throw "Invalid release tag: $tag" }
-          $projects = @{ esi = 'EventScriptInjector'; melse = 'LootingSystemEnhanced'; mecm = 'CompanionManager'; metact = 'TacticsArchitect'; memoria = 'Memoria' }
+          if ($tag -notmatch '^(?<id>esi|meconfig|medt|melse|mecm|metact|memoria)-v(?<version>(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))$') { throw "Invalid release tag: $tag" }
+          $projects = @{ esi = 'EventScriptInjector'; meconfig = 'ConfigurationManager'; medt = 'DebugTools'; melse = 'LootingSystemEnhanced'; mecm = 'CompanionManager'; metact = 'TacticsArchitect'; memoria = 'Memoria' }
           "id=$($Matches['id'])" >> $env:GITHUB_OUTPUT
           "project=$($projects[$Matches['id']])" >> $env:GITHUB_OUTPUT
-          "version=$($Matches['version'])" >> $env:GITHUB_OUTPUT
+          "tag_version=$($Matches['version'])" >> $env:GITHUB_OUTPUT
+
+      - name: Verify project version
+        id: version
+        shell: pwsh
+        env:
+          PROJECT_FILE: Mods/${{ steps.package.outputs.project }}/${{ steps.package.outputs.project }}.proj
+          RELEASE_TAG: ${{ github.ref_name }}
+          TAG_VERSION: ${{ steps.package.outputs.tag_version }}
+        run: |
+          $versionOutput = @(& dotnet msbuild $env:PROJECT_FILE -getProperty:Version -p:Configuration=Release -nologo | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+          if ($LASTEXITCODE -ne 0) { throw "Failed to read Version from '$env:PROJECT_FILE' through MSBuild." }
+          if ($versionOutput.Count -ne 1) { throw "Expected MSBuild to return exactly one Version value for '$env:PROJECT_FILE'; received $($versionOutput.Count)." }
+          $projectVersion = $versionOutput[0].Trim()
+          if ($projectVersion -ne $env:TAG_VERSION) {
+            $message = "Tag version '$env:TAG_VERSION' does not match project version '$projectVersion'."
+            Write-Output "ERROR: $message"
+            Write-Output "Deleting remote tag '$env:RELEASE_TAG'."
+            git push origin --delete "${{ github.ref_name }}"
+            if ($LASTEXITCODE -ne 0) { throw "$message Remote tag deletion also failed with exit code $LASTEXITCODE." }
+            throw $message
+          }
+          "version=$projectVersion" >> $env:GITHUB_OUTPUT
 
       - name: Build and publish package
         shell: pwsh
-        run: dotnet msbuild "Mods/${{ steps.package.outputs.project }}/${{ steps.package.outputs.project }}.proj" -restore -t:Publish -p:Configuration=Release -p:Version=${{ steps.package.outputs.version }}
+        run: dotnet msbuild "Mods/${{ steps.package.outputs.project }}/${{ steps.package.outputs.project }}.proj" -restore -t:Publish -p:Configuration=Release
 
       - name: Validate Steam Workshop manifest
         shell: pwsh
         run: |
-          $manifest = 'artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.package.outputs.version }}/steam-workshop.vdf'
+          $manifest = 'artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.version.outputs.version }}/steam-workshop.vdf'
           if (-not (Test-Path -LiteralPath $manifest -PathType Leaf)) { throw 'Steam Workshop upload is not configured. Set WorkshopPublishedFileId in the mod project.' }
 
       - name: Restore clean SteamCMD
@@ -110,19 +129,34 @@ jobs:
       - name: Upload Steam Workshop item
         shell: pwsh
         env:
-          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
-          STEAM_PASSWORD: ${{ secrets.STEAM_PASSWORD }}
-          STEAM_SHARED_SECRET: ${{ secrets.STEAM_SHARED_SECRET }}
+          STEAM_CONFIG_VDF_BASE64: ${{ secrets.STEAM_CONFIG_VDF_BASE64 }}
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:STEAM_USERNAME)) { throw 'STEAM_USERNAME is not configured.' }
-          if ([string]::IsNullOrWhiteSpace($env:STEAM_PASSWORD)) { throw 'STEAM_PASSWORD is not configured.' }
-          if ([string]::IsNullOrWhiteSpace($env:STEAM_SHARED_SECRET)) { throw 'STEAM_SHARED_SECRET is not configured. It is required for unattended Steam Guard authentication.' }
-          $manifest = (Resolve-Path -LiteralPath 'artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.package.outputs.version }}/steam-workshop.vdf').Path
-          $guardCode = & '.github/scripts/Get-SteamGuardCode.ps1' -SharedSecret $env:STEAM_SHARED_SECRET
-          Write-Output "::add-mask::$guardCode"
-          Push-Location 'artifacts/steamcmd/runtime'
+          if ([string]::IsNullOrWhiteSpace($env:STEAM_CONFIG_VDF_BASE64)) { throw 'STEAM_CONFIG_VDF_BASE64 is not configured.' }
           try {
-            & .\steamcmd.exe '+@ShutdownOnFailedCommand' 1 '+@NoPromptForPassword' 1 +login $env:STEAM_USERNAME $env:STEAM_PASSWORD $guardCode +workshop_build_item $manifest +quit
+            $configBytes = [Convert]::FromBase64String($env:STEAM_CONFIG_VDF_BASE64)
+          }
+          catch {
+            throw 'STEAM_CONFIG_VDF_BASE64 is not valid Base64.'
+          }
+          finally {
+            [Environment]::SetEnvironmentVariable('STEAM_CONFIG_VDF_BASE64', $null, 'Process')
+          }
+          $configText = [Text.Encoding]::UTF8.GetString($configBytes)
+          $accountMatches = [regex]::Matches($configText, '(?ms)"Accounts"\s*\{\s*"(?<username>[^"]+)"\s*\{')
+          if ($accountMatches.Count -ne 1) { throw "SteamCMD config must contain exactly one cached account; found $($accountMatches.Count)." }
+          if ($configText -notmatch '(?m)^\s*"ConnectCache"\s*$') { throw 'SteamCMD config does not contain cached authentication data.' }
+          $steamUsername = $accountMatches[0].Groups['username'].Value
+          Write-Output "::add-mask::$steamUsername"
+          $runtimeRoot = (Resolve-Path -LiteralPath 'artifacts/steamcmd/runtime').Path
+          $configDirectory = Join-Path $runtimeRoot 'config'
+          New-Item -ItemType Directory -Force $configDirectory | Out-Null
+          [IO.File]::WriteAllBytes((Join-Path $configDirectory 'config.vdf'), $configBytes)
+          [Array]::Clear($configBytes, 0, $configBytes.Length)
+          $configText = $null
+          $manifest = (Resolve-Path -LiteralPath 'artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.version.outputs.version }}/steam-workshop.vdf').Path
+          Push-Location $runtimeRoot
+          try {
+            & .\steamcmd.exe '+@ShutdownOnFailedCommand' 1 '+@NoPromptForPassword' 1 +login $steamUsername +workshop_build_item $manifest +quit
             if ($LASTEXITCODE -ne 0) { throw "Steam Workshop upload failed with exit code $LASTEXITCODE." }
           }
           finally {
@@ -137,12 +171,12 @@ jobs:
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.package.outputs.id }}-${{ steps.package.outputs.version }}
-          path: artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.package.outputs.version }}
+          name: ${{ steps.package.outputs.id }}-${{ steps.version.outputs.version }}
+          path: artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.version.outputs.version }}
           if-no-files-found: error
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.package.outputs.version }}/nexus/*.zip
+          files: artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.version.outputs.version }}/nexus/*.zip

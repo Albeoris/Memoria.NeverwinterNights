@@ -6,7 +6,7 @@
         <ModDisplayName>Memoria: Configuration Manager</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
-        <WorkshopPublishedFileId />
+        <WorkshopPublishedFileId>3803402964</WorkshopPublishedFileId>
         <WorkshopTags>override;singleplayer;script</WorkshopTags>
     </PropertyGroup>
     <ItemGroup>

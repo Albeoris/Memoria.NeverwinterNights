@@ -6,7 +6,7 @@
         <ModDisplayName>Memoria: Debug Tools</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
-        <WorkshopPublishedFileId />
+        <WorkshopPublishedFileId>3803404068</WorkshopPublishedFileId>
         <WorkshopTags>override;singleplayer;script</WorkshopTags>
     </PropertyGroup>
     <ItemGroup>

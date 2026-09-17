@@ -21,7 +21,7 @@ internal sealed class ModProjectInputs
     public string? WorkshopPublishedFileId { get; private set; }
     public string? WorkshopVisibility { get; private set; }
     public string? WorkshopDescriptionFile { get; private set; }
-    public string? WorkshopPreviewFile { get; private set; }
+    public string? WorkshopThumbnailFile { get; private set; }
     public string? WorkshopChangeNoteFile { get; private set; }
 
     public static async Task<ModProjectInputs> LoadAsync(string path)
@@ -53,7 +53,7 @@ internal sealed class ModProjectInputs
                 case "workshop-published-file-id": inputs.WorkshopPublishedFileId = SetOnce(inputs.WorkshopPublishedFileId, value, kind); break;
                 case "workshop-visibility": inputs.WorkshopVisibility = SetOnce(inputs.WorkshopVisibility, value, kind); break;
                 case "workshop-description": inputs.WorkshopDescriptionFile = SetOnce(inputs.WorkshopDescriptionFile, Path.GetFullPath(value), kind); break;
-                case "workshop-preview": inputs.WorkshopPreviewFile = SetOnce(inputs.WorkshopPreviewFile, Path.GetFullPath(value), kind); break;
+                case "workshop-thumbnail": inputs.WorkshopThumbnailFile = SetOnce(inputs.WorkshopThumbnailFile, Path.GetFullPath(value), kind); break;
                 case "workshop-change-note": inputs.WorkshopChangeNoteFile = SetOnce(inputs.WorkshopChangeNoteFile, Path.GetFullPath(value), kind); break;
                 case "workshop-tag": inputs.WorkshopTags.Add(value); break;
                 default: throw new InvalidDataException($"Unknown mod input kind: {kind}");

@@ -64,14 +64,14 @@ Push a tag in the form `<package>-v<X.Y.Z>`, for example `metact-v0.7.0` or `mem
 Before the first tagged release:
 
 1. Set `WorkshopPublishedFileId` in the mod project's `Steam Workshop` property group to the public ID of the existing Workshop item. The pipeline deliberately refuses `0` or an empty value so it cannot create duplicate items.
-2. Replace `workshop/description.txt`, `workshop/changenote.txt`, and `workshop/thumbnail.png` in that mod. The thumbnail must be a PNG, JPG, or GIF smaller than 1 MB.
-3. Add the `STEAM_USERNAME`, `STEAM_PASSWORD`, and base64-encoded mobile-authenticator `STEAM_SHARED_SECRET` Actions secrets. Use the Steam account that owns the Workshop items, preferably a dedicated publishing account.
+2. Replace `workshop/description.txt`, `workshop/changenote.txt`, and `workshop/thumbnail.png` in that mod. The thumbnail must be a 512x512 PNG no larger than 1,000,000 bytes.
+3. Log in once with SteamCMD using the Steam account that owns the Workshop items, encode SteamCMD's authenticated `config/config.vdf` as Base64, and add it as the `STEAM_CONFIG_VDF_BASE64` Actions secret. Refresh this secret when Steam expires the cached session.
 
-The project display name supplies the Workshop title. `WorkshopVisibility` defaults to `0` (public); the other accepted values are `1` (friends-only), `2` (private), and `3` (unlisted). SteamCMD's `workshop_build_item` supports title, description, visibility, content, primary preview, and change note updates.
+The project display name supplies the Workshop title. `WorkshopVisibility` defaults to `0` (public); the other accepted values are `1` (friends-only), `2` (private), and `3` (unlisted). Publish stages `steam-workshop.vdf` and `thumbnail.png` beside the Workshop content; SteamCMD's `workshop_build_item` updates the title, description, visibility, content, thumbnail, and change note.
 
 `WorkshopTags` is a semicolon-separated property and currently records the intended Workshop categories in the generated package's `tags.txt`. SteamCMD does not apply Workshop tags, so select the matching category on the Workshop page manually. All current packages use NWN:EE's `override` category.
 
-The workflow downloads Valve's Windows SteamCMD bootstrap, verifies its Authenticode signature before execution, and caches only a self-updated, unauthenticated copy. The cached executable's Valve signature is checked again on every run. Authentication runs in a separate disposable copy that is deleted after the upload; credentials, Steam Guard state, and session files never enter Actions Cache.
+The workflow downloads Valve's Windows SteamCMD bootstrap, verifies its Authenticode signature before execution, and caches only a self-updated, unauthenticated copy. The cached executable's Valve signature is checked again on every run. The authenticated `config.vdf` is decoded only into a separate disposable runtime copy after the clean SteamCMD cache has been restored or saved. That runtime copy is deleted after the upload, so cached authentication data and session files never enter Actions Cache.
 
 ## Licensing
 

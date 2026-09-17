@@ -7,7 +7,7 @@
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
         <!-- Set this to the ID of the existing Workshop item. Leaving it empty prevents accidental item creation. -->
-        <WorkshopPublishedFileId />
+        <WorkshopPublishedFileId>3802970314</WorkshopPublishedFileId>
         <!-- SteamCMD cannot apply tags; keep this value in sync with the category selected on the Workshop page. -->
         <WorkshopTags>override;singleplayer;script</WorkshopTags>
     </PropertyGroup>
