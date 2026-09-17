@@ -66,7 +66,7 @@ Before the first tagged release:
 1. Set `WorkshopPublishedFileId` in the mod project's `Steam Workshop` property group to the public ID of the existing Workshop item. The pipeline deliberately refuses `0` or an empty value so it cannot create duplicate items.
 2. Log in once with SteamCMD using the Steam account that owns the Workshop items, encode SteamCMD's authenticated `config/config.vdf` as Base64, and add it as the `STEAM_CONFIG_VDF_BASE64` Actions secret. Refresh this secret when Steam expires the cached session.
 
-The project display name supplies the Workshop title. Publish converts the mod's `README.md` to Steam formatting, excludes its `Installation` section, appends a link to the repository copy, and writes the result to the `description` field in `steam-workshop.vdf`. The manifest contains only `appid`, `publishedfileid`, `contentfolder`, `title`, and `description`.
+The project display name supplies the Workshop title. Publish converts the mod's `README.md` to Steam formatting, excludes its `Installation` section, appends the UTC generation date and a link to the repository copy, and writes the result to the `description` field in `steam-workshop.vdf`. The manifest contains only `appid`, `publishedfileid`, `contentfolder`, `title`, and `description`.
 
 `WorkshopTags` is a semicolon-separated property and currently records the intended Workshop categories in the generated package's `tags.txt`. SteamCMD does not apply Workshop tags, so select the matching category on the Workshop page manually. All current packages use NWN:EE's `override` category.
 

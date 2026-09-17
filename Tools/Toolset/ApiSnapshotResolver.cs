@@ -36,7 +36,7 @@ internal static class ApiSnapshotResolver
         ValidateRepository(repository);
         ValidateSafeSegment(dependency.ModId, "dependency ModId");
         string version = dependency.MinimumVersion.ToString(3);
-        string tag = $"{dependency.ModId.ToLowerInvariant()}-api-v{version}";
+        string tag = $"api-{dependency.ModId.ToLowerInvariant()}-v{version}";
         string modCacheDirectory = Path.Combine(context.ApiCacheDirectory, dependency.ModId.ToLowerInvariant());
         string versionDirectory = Path.Combine(modCacheDirectory, version);
         string sourceDirectory = Path.Combine(versionDirectory, "source");

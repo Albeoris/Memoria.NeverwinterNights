@@ -23,13 +23,30 @@ jobs:
 
       - name: Create immutable API snapshot tags
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git fetch --tags --force
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
 
+          $allProjects = @(Get-ChildItem Mods -Recurse -Filter *.proj)
+          $referencedProjects = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+          foreach ($consumerProject in $allProjects) {
+              [xml] $consumerXml = Get-Content -LiteralPath $consumerProject.FullName -Raw
+              foreach ($dependencyNode in @($consumerXml.SelectNodes('/Project/ItemGroup/NwnRequiredPackage[@Include]'))) {
+                  $dependencyInclude = $dependencyNode.GetAttribute('Include').Replace('\', [IO.Path]::DirectorySeparatorChar).Replace('/', [IO.Path]::DirectorySeparatorChar)
+                  $dependencyPath = [IO.Path]::GetFullPath([IO.Path]::Combine($consumerProject.DirectoryName, $dependencyInclude))
+                  if (-not (Test-Path -LiteralPath $dependencyPath -PathType Leaf)) {
+                      throw "$($consumerProject.FullName) references missing dependency project $dependencyPath."
+                  }
+                  $referencedProjects.Add($dependencyPath) | Out-Null
+              }
+          }
+
           $createdTags = @()
-          foreach ($project in Get-ChildItem Mods -Recurse -Filter *.proj) {
+          $legacyTagsToDelete = @()
+          foreach ($project in $allProjects | Where-Object { $referencedProjects.Contains($_.FullName) }) {
               Write-Host "Checking $($project.FullName)"
               [xml] $xml = Get-Content -LiteralPath $project.FullName -Raw
               $modIdNodes = @($xml.SelectNodes('/Project/PropertyGroup[not(@Condition)]/ModId[not(@Condition)]'))
@@ -46,14 +63,33 @@ jobs:
                   throw "Mod version must use X.Y.Z notation in $($project.FullName): $version"
               }
 
-              $tag = "$($modId.ToLowerInvariant())-api-v$version"
-              if (git tag --list $tag) {
+              $tag = "api-$($modId.ToLowerInvariant())-v$version"
+              $legacyTag = "$($modId.ToLowerInvariant())-api-v$version"
+              $tagExists = $null -ne (git tag --list --exact-match $tag)
+              $legacyTagExists = $null -ne (git tag --list --exact-match $legacyTag)
+              if ($tagExists) {
                   Write-Host "$tag already exists."
+                  if ($legacyTagExists) {
+                      $tagCommit = (git rev-list -n 1 $tag).Trim()
+                      $legacyTagCommit = (git rev-list -n 1 $legacyTag).Trim()
+                      if ($tagCommit -ne $legacyTagCommit) {
+                          throw "Cannot replace $legacyTag with $tag because they reference different commits."
+                      }
+                      $legacyTagsToDelete += $legacyTag
+                  }
                   continue
               }
 
-              Write-Host "Creating $tag at $env:GITHUB_SHA"
-              git tag --annotate $tag $env:GITHUB_SHA --message "API snapshot for $modId $version"
+              $targetCommit = $env:GITHUB_SHA
+              if ($legacyTagExists) {
+                  $targetCommit = (git rev-list -n 1 $legacyTag).Trim()
+                  $legacyTagsToDelete += $legacyTag
+                  Write-Host "Replacing $legacyTag with $tag at $targetCommit"
+              }
+              else {
+                  Write-Host "Creating $tag at $targetCommit"
+              }
+              git tag --annotate $tag $targetCommit --message "API snapshot for $modId $version"
               if ($LASTEXITCODE -ne 0) {
                   throw "Failed to create $tag."
               }
@@ -65,5 +101,14 @@ jobs:
               git push origin $tag
               if ($LASTEXITCODE -ne 0) {
                   throw "Failed to push $tag."
+              }
+          }
+
+          foreach ($legacyTag in $legacyTagsToDelete) {
+              Write-Host "Deleting legacy API tag $legacyTag"
+              $encodedTag = [Uri]::EscapeDataString($legacyTag)
+              gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/tags/$encodedTag"
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Failed to delete legacy API tag $legacyTag."
               }
           }

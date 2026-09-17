@@ -76,7 +76,9 @@ internal static partial class MarkdownToSteam
         if (inCodeBlock) result.AppendLine("[/noparse]");
         string description = result.ToString().Trim();
         if (description.Length == 0) throw new InvalidDataException("README.md produced an empty Workshop description.");
-        return $"{description}{Environment.NewLine}{Environment.NewLine}[hr][/hr]{Environment.NewLine}[url={readmeUrl}]README.md on GitHub[/url]";
+        DateTime generatedAt = DateTime.UtcNow;
+        string updateDate = $"{generatedAt.Year:D4}-{generatedAt.Month:D2}-{generatedAt.Day:D2}";
+        return $"{description}{Environment.NewLine}{Environment.NewLine}[hr][/hr]{Environment.NewLine}[i]Last updated: {updateDate}[/i]{Environment.NewLine}[url={readmeUrl}]README.md on GitHub[/url]";
     }
 
     private static string ConvertInline(string text)
