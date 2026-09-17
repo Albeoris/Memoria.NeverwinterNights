@@ -21,16 +21,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.0.x
-
       - name: Create immutable API snapshot tags
         shell: pwsh
-        env:
-          DOTNET_NOLOGO: true
-          DOTNET_CLI_TELEMETRY_OPTOUT: true
         run: |
           git fetch --tags --force
           git config user.name github-actions[bot]
@@ -39,16 +31,14 @@ jobs:
           $createdTags = @()
           foreach ($project in Get-ChildItem Mods -Recurse -Filter *.proj) {
               Write-Host "Checking $($project.FullName)"
-              $json = dotnet msbuild $project.FullName -nologo '-getProperty:ModId,Version' | Out-String
-              if ($LASTEXITCODE -ne 0) {
-                  throw "Failed to evaluate $($project.FullName)."
+              [xml] $xml = Get-Content -LiteralPath $project.FullName -Raw
+              $modIdNodes = @($xml.SelectNodes('/Project/PropertyGroup[not(@Condition)]/ModId[not(@Condition)]'))
+              $versionNodes = @($xml.SelectNodes('/Project/PropertyGroup[not(@Condition)]/Version[not(@Condition)]'))
+              if ($modIdNodes.Count -ne 1 -or $versionNodes.Count -ne 1) {
+                  throw "$($project.FullName) must declare exactly one unconditional ModId and Version."
               }
-              $properties = $json | ConvertFrom-Json
-              $modId = $properties.Properties.ModId
-              $version = $properties.Properties.Version
-              if ([string]::IsNullOrWhiteSpace($modId) -or [string]::IsNullOrWhiteSpace($version)) {
-                  continue
-              }
+              $modId = $modIdNodes[0].InnerText.Trim()
+              $version = $versionNodes[0].InnerText.Trim()
               if ($modId -notmatch '^[A-Za-z0-9._-]+$') {
                   throw "Invalid ModId in $($project.FullName): $modId"
               }
@@ -72,7 +62,7 @@ jobs:
 
           foreach ($tag in $createdTags) {
               Write-Host "Pushing $tag"
-              git push origin "refs/tags/$tag:refs/tags/$tag"
+              git push origin $tag
               if ($LASTEXITCODE -ne 0) {
                   throw "Failed to push $tag."
               }
