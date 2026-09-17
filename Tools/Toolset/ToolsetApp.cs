@@ -8,6 +8,10 @@ internal static class ToolsetApp
     {
         Console.OutputEncoding = Encoding.UTF8;
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        List<string> commandLine = arguments.ToList();
+        bool verbose = commandLine.RemoveAll(argument => argument.Equals("--verbose", StringComparison.OrdinalIgnoreCase)) > 0;
+        ToolsetLog.Configure(verbose);
+        arguments = commandLine.ToArray();
         if (arguments.Length == 0 || arguments[0] is "help" or "--help" or "-h")
         {
             PrintHelp();
@@ -69,7 +73,7 @@ internal static class ToolsetApp
         return await CompileAsync(context, source, output, includes, encoding);
     }
 
-    internal static async Task<int> CompileAsync(ProjectContext context, string source, string output, IReadOnlyCollection<string> includeDirectories, string encodingName)
+    internal static async Task<int> CompileAsync(ProjectContext context, string source, string output, IReadOnlyCollection<string> includeDirectories, string encodingName, int? progress = null, int? total = null)
     {
         if (!File.Exists(source)) return Fail($"Source file not found: {source}");
         Directory.CreateDirectory(Path.GetDirectoryName(output)!);
@@ -87,17 +91,21 @@ internal static class ToolsetApp
             }
 
             string[] effectiveIncludes = includeDirectories.Prepend(Path.GetDirectoryName(source)!).Append(context.IncludeDirectory).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-            List<string> toolArguments = [.. context.ResManArguments(), "--dirs", string.Join(',', effectiveIncludes), "--nwn-encoding", encodingName, "-o", output, compilerSource];
+            List<string> toolArguments = [.. context.ResManArguments(), "--quiet", "--dirs", string.Join(',', effectiveIncludes), "--nwn-encoding", encodingName, "-o", output, compilerSource];
             ToolResult result = await ToolRunner.CaptureAsync(context.Tool("nwn_script_comp"), toolArguments, Path.GetDirectoryName(source));
             if (result.ExitCode == 0)
             {
-                Console.Write(result.StandardOutput);
-                Console.Error.Write(result.StandardError);
-                Console.WriteLine($"Compiled [{encodingName}]: {source} -> {output}");
+                string counter = progress.HasValue && total.HasValue ? $"[{progress}/{total}]" : string.Empty;
+                string encoding = encodingName.Equals("windows-1252", StringComparison.OrdinalIgnoreCase) ? string.Empty : $" [{encodingName}]";
+                string message = $"Compiled{counter}: {ToolsetLog.RepositoryPath(context, source)} -> {ToolsetLog.RepositoryPath(context, output)}{encoding}";
+                if (progress.HasValue) ToolsetLog.Verbose(message);
+                else Console.WriteLine(message);
             }
             else
             {
                 WriteCompilerErrors(result, source, effectiveIncludes);
+                string counter = progress.HasValue && total.HasValue ? $"[{progress}/{total}]" : string.Empty;
+                Console.Error.WriteLine($"Failed{counter}: {ToolsetLog.RepositoryPath(context, source)} -> {ToolsetLog.RepositoryPath(context, output)}");
             }
 
             return result.ExitCode;
@@ -152,7 +160,7 @@ internal static class ToolsetApp
         foreach (string file in files.Order())
         {
             ToolResult result = await ToolRunner.CaptureAsync(context.Tool("nwn_asm"), ["--silent", "--no-color", "--term-width", "0", .. context.ResManArguments(), "--dirs", context.IncludeDirectory, "-d", file]);
-            if (result.ExitCode == 0) Console.WriteLine($"OK  {file}");
+            if (result.ExitCode == 0) ToolsetLog.Verbose($"Verified: {ToolsetLog.RepositoryPath(context, file)}");
             else
             {
                 failures++;
@@ -170,14 +178,24 @@ internal static class ToolsetApp
         return await GffConvertAsync(context, Path.GetFullPath(arguments[0]), Path.GetFullPath(arguments[1]), inputFormat, outputFormat);
     }
 
-    internal static async Task<int> GffConvertAsync(ProjectContext context, string input, string output, string inputFormat, string outputFormat)
+    internal static async Task<int> GffConvertAsync(ProjectContext context, string input, string output, string inputFormat, string outputFormat, bool verboseOnly = false)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(output)!);
         List<string> toolArguments = ["-i", input, "-l", inputFormat, "-o", output, "-k", outputFormat, "--other-encoding", "utf-8"];
         if (outputFormat == "json") toolArguments.Add("--pretty");
-        int exitCode = await ToolRunner.RunAsync(context.Tool("nwn_gff"), toolArguments);
-        if (exitCode == 0) Console.WriteLine($"GFF: {input} -> {output}");
-        return exitCode;
+        ToolResult result = await ToolRunner.CaptureAsync(context.Tool("nwn_gff"), toolArguments);
+        if (result.ExitCode == 0)
+        {
+            string message = $"Converted GFF: {ToolsetLog.RepositoryPath(context, input)} -> {ToolsetLog.RepositoryPath(context, output)}";
+            if (verboseOnly) ToolsetLog.Verbose(message);
+            else Console.WriteLine(message);
+        }
+        else
+        {
+            Console.Write(result.StandardOutput);
+            Console.Error.Write(result.StandardError);
+        }
+        return result.ExitCode;
     }
 
     internal static string? TakeOption(List<string> arguments, params string[] names)
@@ -214,8 +232,8 @@ internal static class ToolsetApp
     {
         Console.WriteLine("Memoria Toolset");
         Console.WriteLine();
-        Console.WriteLine("  doctor");
-        Console.WriteLine("  compile <source.nss> [-o output.ncs] [--includes dir1,dir2] [--encoding utf-8|windows-1251|windows-1252]");
+        Console.WriteLine("  [--verbose] doctor");
+        Console.WriteLine("  [--verbose] compile <source.nss> [-o output.ncs] [--includes dir1,dir2] [--encoding utf-8|windows-1251|windows-1252]");
         Console.WriteLine("  build <generated-inputs> --output directory [--layouts-output directory]");
         Console.WriteLine("  merge-output <source-directory> --output directory --manifests directory --lock-file file --owner name");
         Console.WriteLine("  verify <file.ncs|directory>");

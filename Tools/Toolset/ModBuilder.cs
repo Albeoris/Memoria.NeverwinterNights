@@ -27,23 +27,27 @@ internal static partial class ModBuilder
 
         ModProjectInputs inputs = await ModProjectInputs.LoadAsync(inputsPath);
         ValidateOwnedInputs(inputs);
+        Console.WriteLine($"Building {inputs.ModDisplayName} {inputs.ModVersion}: {ToolsetLog.RepositoryPath(context, inputs.ProjectDirectory!)} -> {ToolsetLog.RepositoryPath(context, outputDirectory)}");
         string[] includeDirectories = (await ApiSnapshotResolver.ResolveIncludeDirectoriesAsync(context, inputs)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         HashSet<string> outputNames = new(StringComparer.OrdinalIgnoreCase);
         int compiled = 0;
         int includes = 0;
-        foreach (string source in inputs.Sources.Distinct(StringComparer.OrdinalIgnoreCase).Order())
+        string[] sources = inputs.Sources.Distinct(StringComparer.OrdinalIgnoreCase).Order().ToArray();
+        for (int sourceIndex = 0; sourceIndex < sources.Length; sourceIndex++)
         {
+            string source = sources[sourceIndex];
             EnsureFileExists(source);
             string text = await File.ReadAllTextAsync(source, new UTF8Encoding(false, true));
             if (!HasEntrypoint(text))
             {
                 includes++;
+                ToolsetLog.Verbose($"Skipped[{sourceIndex + 1}/{sources.Length}]: {ToolsetLog.RepositoryPath(context, source)} [include]");
                 continue;
             }
 
             string output = ReserveOutput(outputDirectory, Path.GetFileNameWithoutExtension(source) + ".ncs", outputNames);
             string encoding = SelectNwnEncoding(text, source);
-            int exitCode = await ToolsetApp.CompileAsync(context, source, output, includeDirectories, encoding);
+            int exitCode = await ToolsetApp.CompileAsync(context, source, output, includeDirectories, encoding, sourceIndex + 1, sources.Length);
             if (exitCode != 0) return exitCode;
             compiled++;
         }
@@ -65,7 +69,7 @@ internal static partial class ModBuilder
             else if (IsGffJson(resource))
             {
                 string output = ReserveOutput(outputDirectory, Path.GetFileNameWithoutExtension(resource), outputNames);
-                int exitCode = await ToolsetApp.GffConvertAsync(context, resource, output, "json", "gff");
+                int exitCode = await ToolsetApp.GffConvertAsync(context, resource, output, "json", "gff", true);
                 if (exitCode != 0) return exitCode;
                 gffConverted++;
             }
@@ -97,12 +101,12 @@ internal static partial class ModBuilder
         {
             EnsureFileExists(layout);
             string layoutOutput = Path.Combine(layoutsOutputDirectory!, Path.GetFileNameWithoutExtension(layout));
-            int exitCode = NuiLayoutTool.Run([layout, "-o", layoutOutput]);
+            int exitCode = NuiLayoutTool.Run([layout, "-o", layoutOutput], true);
             if (exitCode != 0) return exitCode;
             layouts++;
         }
 
-        Console.WriteLine($"Mod build completed: {compiled} scripts, {includes} includes, {gffConverted} GFF resources, {resJsonConverted} ResJSON resources, {jsonTextConverted} JSON text resources, {copied} copied files, {layouts} layouts.");
+        Console.WriteLine($"Built {inputs.ModDisplayName} {inputs.ModVersion}: {compiled} compiled, {includes} skipped, {gffConverted} GFF, {resJsonConverted} ResJSON, {jsonTextConverted} JSON, {copied} copied, {layouts} layouts -> {ToolsetLog.RepositoryPath(context, outputDirectory)}");
         return 0;
     }
 
@@ -158,7 +162,7 @@ internal static partial class ModBuilder
             string encodingName = SelectNwnEncoding(text, source);
             Encoding targetEncoding = Encoding.GetEncoding(encodingName, EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback);
             await File.WriteAllTextAsync(output, text, targetEncoding);
-            Console.WriteLine($"Converted ResJSON [{encodingName}]: {source} -> {output}");
+            ToolsetLog.Verbose($"Converted ResJSON [{encodingName}]: {source} -> {output}");
         }
         catch (JsonException exception)
         {
@@ -188,7 +192,7 @@ internal static partial class ModBuilder
                 text = root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine;
             }
             await File.WriteAllTextAsync(output, text, new UTF8Encoding(false));
-            Console.WriteLine($"Converted JSON text resource: {source} -> {output}");
+            ToolsetLog.Verbose($"Converted JSON text resource: {source} -> {output}");
             return isManifest;
         }
         catch (JsonException exception)
@@ -223,7 +227,7 @@ internal static partial class ModBuilder
     {
         Directory.CreateDirectory(Path.GetDirectoryName(output)!);
         File.Copy(source, output, true);
-        Console.WriteLine($"Copied: {source} -> {output}");
+        ToolsetLog.Verbose($"Copied: {source} -> {output}");
     }
 
     private static void EnsureFileExists(string path)

@@ -12,7 +12,7 @@ internal static class NuiLayoutTool
 
     private sealed record Element(string Id, string Type, Rect Logical, Rect Physical);
 
-    public static int Run(string[] arguments)
+    public static int Run(string[] arguments, bool verboseOnly = false)
     {
         if (arguments.Length == 0) return Fail("nui-layout: specify a JSON configuration.");
         List<string> mutable = arguments.ToList();
@@ -45,9 +45,19 @@ internal static class NuiLayoutTool
         JsonObject report = BuildReport(configPath, screenWidth, screenHeight, scale, logicalWidth, logicalHeight, physicalWindow, elements, diagnostics);
         File.WriteAllText(jsonPath, report.ToJsonString(new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }), new UTF8Encoding(false));
         File.WriteAllText(svgPath, BuildSvg(screenWidth, screenHeight, physicalWindow, elements, diagnostics), new UTF8Encoding(false));
-        Console.WriteLine($"NUI layout: {logicalWidth:0}x{logicalHeight:0} logical, {physicalWindow.Width:0}x{physicalWindow.Height:0} physical, scale x{scale:0.##}");
-        Console.WriteLine($"Model: {jsonPath}");
-        Console.WriteLine($"Preview: {svgPath}");
+        string summary = $"NUI layout: {logicalWidth:0}x{logicalHeight:0} logical, {physicalWindow.Width:0}x{physicalWindow.Height:0} physical, scale x{scale:0.##}";
+        if (verboseOnly)
+        {
+            ToolsetLog.Verbose(summary);
+            ToolsetLog.Verbose($"Model: {jsonPath}");
+            ToolsetLog.Verbose($"Preview: {svgPath}");
+        }
+        else
+        {
+            Console.WriteLine(summary);
+            Console.WriteLine($"Model: {jsonPath}");
+            Console.WriteLine($"Preview: {svgPath}");
+        }
         foreach (string diagnostic in diagnostics) Console.Error.WriteLine("WARN: " + diagnostic);
         return diagnostics.Count == 0 ? 0 : 2;
     }

@@ -9,6 +9,7 @@
     <!-- NWN mods are MSBuild projects, but they do not produce managed assemblies or require a target framework. -->
     <RestoreProjectStyle>None</RestoreProjectStyle>
     <ToolsetAssembly>$(RepositoryRoot)artifacts\msbuild\Memoria.NeverwinterNights.Toolset\bin\$(Configuration)\net10.0\Memoria.NeverwinterNights.Toolset.dll</ToolsetAssembly>
+    <ToolsetLogArgument Condition="'$(ToolsetVerbosity)' == 'verbose'">--verbose</ToolsetLogArgument>
     <NwnInputsFile>$(RepositoryRoot)artifacts\inputs\$(ModId).inputs</NwnInputsFile>
     <BuildOutput>$(RepositoryRoot)artifacts\build\$(ModId)</BuildOutput>
   </PropertyGroup>
@@ -24,6 +25,7 @@
   <Target Name="Publish" DependsOnTargets="Build;PublishNwnMod" />
 
   <Target Name="BuildToolset">
+    <Error Condition="'$(ToolsetVerbosity)' != 'minimal' and '$(ToolsetVerbosity)' != 'verbose'" Text="ToolsetVerbosity must be minimal or verbose." />
     <MSBuild Projects="@(ProjectReference)" Targets="Build" BuildInParallel="true" Properties="Configuration=$(Configuration)" />
   </Target>
 
@@ -52,8 +54,8 @@
   </Target>
 
   <Target Name="BuildNwnMod" DependsOnTargets="GenerateNwnModInputs" Condition="'$(DesignTimeBuild)' != 'true'">
-    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; build &quot;$(NwnInputsFile)&quot; --output &quot;$(BuildOutput)&quot; --layouts-output &quot;$(RepositoryRoot)artifacts\layouts\$(ModId)&quot;" />
-    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; verify &quot;$(BuildOutput)&quot;" Condition="Exists('$(BuildOutput)') and '$(VerifyScripts)' != 'false'" />
+    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; $(ToolsetLogArgument) build &quot;$(NwnInputsFile)&quot; --output &quot;$(BuildOutput)&quot; --layouts-output &quot;$(RepositoryRoot)artifacts\layouts\$(ModId)&quot;" />
+    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; $(ToolsetLogArgument) verify &quot;$(BuildOutput)&quot;" Condition="Exists('$(BuildOutput)') and '$(VerifyScripts)' != 'false'" />
     <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; merge-output &quot;$(BuildOutput)&quot; --output &quot;$(CommonOutputPath)&quot; --manifests &quot;$(CommonOutputManifestPath)&quot; --lock-file &quot;$(CommonOutputLockFile)&quot; --owner &quot;$(ModId)&quot;" Condition="'$(CommonOutput)' == 'true'" />
   </Target>
 
@@ -65,6 +67,6 @@
   </Target>
 
   <Target Name="PublishNwnMod" DependsOnTargets="GenerateNwnModInputs" Condition="'$(DesignTimeBuild)' != 'true'">
-    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; publish &quot;$(NwnInputsFile)&quot; --build-directory &quot;$(BuildOutput)&quot;" />
+    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; $(ToolsetLogArgument) publish &quot;$(NwnInputsFile)&quot; --build-directory &quot;$(BuildOutput)&quot;" />
   </Target>
 </Project>

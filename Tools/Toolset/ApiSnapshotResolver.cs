@@ -18,7 +18,7 @@ internal static class ApiSnapshotResolver
             {
                 sourceDirectory = Path.Combine(Path.GetDirectoryName(dependency.ProjectPath)!, "source");
                 if (!Directory.Exists(sourceDirectory)) throw new DirectoryNotFoundException($"Dependency source directory was not found: {sourceDirectory}");
-                Console.WriteLine($"API source [{dependency.ModId} {dependency.MinimumVersion.ToString(3)}]: local project");
+                ToolsetLog.Verbose($"API source [{dependency.ModId} {dependency.MinimumVersion.ToString(3)}]: local project");
             }
             else
             {
@@ -43,7 +43,7 @@ internal static class ApiSnapshotResolver
         string marker = Marker(repository, tag, dependency.ProjectPath, context.RepositoryRoot);
         if (IsComplete(versionDirectory, sourceDirectory, marker))
         {
-            Console.WriteLine($"API source [{dependency.ModId} {version}]: cache");
+            ToolsetLog.Verbose($"API source [{dependency.ModId} {version}]: cache");
             return sourceDirectory;
         }
 
@@ -52,7 +52,7 @@ internal static class ApiSnapshotResolver
         await using FileStream cacheLock = await AcquireLockAsync(lockPath);
         if (IsComplete(versionDirectory, sourceDirectory, marker))
         {
-            Console.WriteLine($"API source [{dependency.ModId} {version}]: cache");
+            ToolsetLog.Verbose($"API source [{dependency.ModId} {version}]: cache");
             return sourceDirectory;
         }
 
@@ -72,7 +72,7 @@ internal static class ApiSnapshotResolver
             throw;
         }
 
-        Console.WriteLine($"API source [{dependency.ModId} {version}]: downloaded tag {tag}");
+        ToolsetLog.Verbose($"API source [{dependency.ModId} {version}]: downloaded tag {tag}");
         return sourceDirectory;
     }
 

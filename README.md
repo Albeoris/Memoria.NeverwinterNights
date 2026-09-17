@@ -46,6 +46,8 @@ dotnet build Mods/TacticsArchitect/TacticsArchitect.proj -c Release
 dotnet msbuild Mods/TacticsArchitect/TacticsArchitect.proj -restore -t:Publish -p:Configuration=Release -p:Version=0.7.0
 ```
 
+Build logging is minimal by default: each mod reports what is being built, its output directory, failures, and a final summary. Pass `-p:ToolsetVerbosity=verbose` to show compact per-file progress such as `Compiled[X/N]` and `Skipped[X/N]`; non-default NWScript encodings are shown on the affected files.
+
 Publish output contains a Workshop-ready directory and a Nexus-ready ZIP under `artifacts/publish`.
 
 For local testing, enable the common-output mode on either build or publish. It merges every package's flat override output into `artifacts/common_output` and fails if two packages produce the same resource:

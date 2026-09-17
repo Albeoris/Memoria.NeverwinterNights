@@ -65,7 +65,7 @@ jobs:
 
       - name: Build and publish package
         shell: pwsh
-        run: dotnet msbuild "Mods/${{ steps.package.outputs.project }}/${{ steps.package.outputs.project }}.proj" -restore -t:Publish -p:Configuration=Release
+        run: dotnet msbuild "Mods/${{ steps.package.outputs.project }}/${{ steps.package.outputs.project }}.proj" -restore -t:Publish -p:Configuration=Release -verbosity:minimal
 
       - name: Validate publish output
         shell: pwsh
