@@ -19,7 +19,7 @@ After a MAJOR increment, update every dependent project's `Versions` range so th
 
 ## Repository layout
 
-- `Mods/<Project>` contains one independently publishable mod, its matching SDK-independent `<Project>.proj`, `README.md`, optional `CHANGELOG.md`, `source`, and `resources`.
+- `Mods/<Project>` contains one independently publishable mod, its matching SDK-independent `<Project>.proj`, `README.md`, `source`, and `resources`.
 - `Tools/Toolset` contains the C# build, validation, layout-emulation, and publishing application.
 - `Tools/NeverwinterNim`, `Tools/NwnIncludes`, and `Tools/NwnRoot` are vendored build dependencies. `Tools/NwnRoot/bin` is part of the minimal compiler resource tree, not generated output.
 - `Docs/` holds short, single-topic write-ups for architecture decisions that aren't obvious from the code alone (e.g. shared subsystems, caching strategies). Start from `Docs/README.md`, which is the registry/index of these files. Add a new short doc there whenever you introduce a similar shared subsystem.
@@ -92,7 +92,7 @@ To validate publishing for all packages, run:
 dotnet msbuild Memoria.NeverwinterNights.slnx -restore -t:Publish -p:Configuration=Release -p:Version=0.0.0-validation -m:1
 ```
 
-Confirm that every package contains its README, MELSE/MECM/METACT contain their changelogs, no package contains obsolete RTF documentation, and only MEMORIA contains `override/default.ncs`.
+Confirm that every package contains its README, no package contains obsolete RTF documentation, and only MEMORIA contains `override/default.ncs`.
 
 Build or publish one mod through its project:
 

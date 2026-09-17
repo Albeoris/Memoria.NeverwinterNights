@@ -15,9 +15,5 @@
     <BaseIntermediateOutputPath>$(RepositoryRoot)artifacts\msbuild\$(MSBuildProjectName)\obj\</BaseIntermediateOutputPath>
     <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
     <WorkshopAppId>704450</WorkshopAppId>
-    <WorkshopVisibility Condition="'$(WorkshopVisibility)' == ''">0</WorkshopVisibility>
-    <WorkshopDescriptionFile Condition="'$(WorkshopDescriptionFile)' == ''">$(MSBuildProjectDirectory)\workshop\description.txt</WorkshopDescriptionFile>
-    <WorkshopThumbnailFile Condition="'$(WorkshopThumbnailFile)' == ''">$(MSBuildProjectDirectory)\workshop\thumbnail.png</WorkshopThumbnailFile>
-    <WorkshopChangeNoteFile Condition="'$(WorkshopChangeNoteFile)' == ''">$(MSBuildProjectDirectory)\workshop\changenote.txt</WorkshopChangeNoteFile>
   </PropertyGroup>
 </Project>

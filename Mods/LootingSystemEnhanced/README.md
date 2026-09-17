@@ -23,7 +23,7 @@ Do not combine MELSE with legacy LSE. Logical conflicts are possible with other 
 
 ## Credits
 
-Original LSE design, scripts, and documentation are by Ravick. See [CHANGELOG.md](CHANGELOG.md) for the original release history and the repository's third-party notices for licensing details.
+Original LSE design, scripts, and documentation are by Ravick. See the repository's third-party notices for licensing details.
 
 - [Ravick on Steam](https://steamcommunity.com/profiles/76561198044092406/)
 - [Ravick on Neverwinter Vault](https://forum.neverwintervault.org/u/Ravick/summary)

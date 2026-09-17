@@ -8,8 +8,6 @@ Event Script Injector (ESI), Looting System Enhanced (LSE), and the original `ra
 
 Upstream project: <https://neverwintervault.org/project/nwn1/script/ravicks-looting-system-enhanced-lse>
 
-Several MELSE compatibility scripts are derived from Neverwinter Nights campaign scripts and retain their original Floodgate Entertainment, BioWare, or other upstream notices.
-
 ## neverwinter.nim
 
 The bundled compiler and resource utilities are from `neverwinter.nim`, Copyright (c) 2018 Bernhard Stoeckner and contributors, distributed under the MIT License. The complete license is in `Tools/NeverwinterNim/LICENSE-neverwinter-nim.txt`.

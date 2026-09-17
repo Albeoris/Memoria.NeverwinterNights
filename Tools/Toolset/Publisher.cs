@@ -1,4 +1,3 @@
-using System.Buffers.Binary;
 using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -63,8 +62,7 @@ internal static partial class Publisher
 
         if (inputs.WorkshopTags.Count > 0) await File.WriteAllLinesAsync(Path.Combine(workshopRoot, "tags.txt"), inputs.WorkshopTags.Distinct(StringComparer.OrdinalIgnoreCase), new UTF8Encoding(false));
 
-        string thumbnailFile = CopyWorkshopThumbnail(inputs, packageRoot);
-        string? workshopManifest = await CreateWorkshopManifestAsync(inputs, packageRoot, workshopRoot, displayName, version, thumbnailFile);
+        string? workshopManifest = await CreateWorkshopManifestAsync(context, inputs, packageRoot, workshopRoot, displayName);
 
         string nexusDirectory = Path.Combine(packageRoot, "nexus");
         Directory.CreateDirectory(nexusDirectory);
@@ -78,44 +76,23 @@ internal static partial class Publisher
         return 0;
     }
 
-    private static async Task<string?> CreateWorkshopManifestAsync(ModProjectInputs inputs, string packageRoot, string workshopRoot, string displayName, string version, string thumbnailFile)
+    private static async Task<string?> CreateWorkshopManifestAsync(ProjectContext context, ModProjectInputs inputs, string packageRoot, string workshopRoot, string displayName)
     {
         if (string.IsNullOrWhiteSpace(inputs.WorkshopPublishedFileId)) return null;
         if (!ulong.TryParse(inputs.WorkshopAppId, out ulong appId) || appId == 0) throw new InvalidDataException("WorkshopAppId must be a positive integer.");
         if (!ulong.TryParse(inputs.WorkshopPublishedFileId, out ulong publishedFileId) || publishedFileId == 0) throw new InvalidDataException("WorkshopPublishedFileId must be the positive ID of an existing item. The release pipeline never creates Workshop items implicitly.");
-        if (!int.TryParse(inputs.WorkshopVisibility, out int visibility) || visibility is < 0 or > 3) throw new InvalidDataException("WorkshopVisibility must be 0 (public), 1 (friends-only), 2 (private), or 3 (unlisted).");
-        if (inputs.WorkshopDescriptionFile is null || !File.Exists(inputs.WorkshopDescriptionFile)) throw new FileNotFoundException("Workshop description file was not found.", inputs.WorkshopDescriptionFile);
-        if (inputs.WorkshopChangeNoteFile is null || !File.Exists(inputs.WorkshopChangeNoteFile)) throw new FileNotFoundException("Workshop change-note file was not found.", inputs.WorkshopChangeNoteFile);
-        string description = (await File.ReadAllTextAsync(inputs.WorkshopDescriptionFile, Encoding.UTF8)).Trim();
-        string changeNote = (await File.ReadAllTextAsync(inputs.WorkshopChangeNoteFile, Encoding.UTF8)).Trim();
-        if (string.IsNullOrWhiteSpace(description)) throw new InvalidDataException("Workshop description must not be empty.");
-        if (string.IsNullOrWhiteSpace(changeNote)) changeNote = $"Release {version}";
+        string[] readmes = inputs.Documents.Where(document => Path.GetFileName(document).Equals("README.md", StringComparison.OrdinalIgnoreCase)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        if (readmes.Length != 1) throw new InvalidDataException($"Publish requires exactly one README.md PackageDocument; found {readmes.Length}.");
+        string readmePath = readmes[0];
+        string relativeReadmePath = Path.GetRelativePath(context.RepositoryRoot, readmePath);
+        if (relativeReadmePath.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) || Path.IsPathRooted(relativeReadmePath)) throw new InvalidDataException($"README.md must be inside the repository: {readmePath}");
+        string readmeUrl = $"https://github.com/{inputs.ApiSnapshotRepository}/blob/main/{string.Join('/', relativeReadmePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Select(Uri.EscapeDataString))}";
+        string description = MarkdownToSteam.Convert(await File.ReadAllTextAsync(readmePath, Encoding.UTF8), readmeUrl);
 
         string manifest = Path.Combine(packageRoot, "steam-workshop.vdf");
-        string[] lines = ["\"workshopitem\"", "{", VdfEntry("appid", appId.ToString()), VdfEntry("publishedfileid", publishedFileId.ToString()), VdfEntry("contentfolder", Path.GetFullPath(workshopRoot)), VdfEntry("previewfile", Path.GetFullPath(thumbnailFile)), VdfEntry("visibility", visibility.ToString()), VdfEntry("title", displayName), VdfEntry("description", description), VdfEntry("changenote", changeNote), "}"];
+        string[] lines = ["\"workshopitem\"", "{", VdfEntry("appid", appId.ToString()), VdfEntry("publishedfileid", publishedFileId.ToString()), VdfEntry("contentfolder", Path.GetFullPath(workshopRoot)), VdfEntry("title", displayName), VdfEntry("description", description), "}"];
         await File.WriteAllLinesAsync(manifest, lines, new UTF8Encoding(false));
         return manifest;
-    }
-
-    private static string CopyWorkshopThumbnail(ModProjectInputs inputs, string packageRoot)
-    {
-        if (inputs.WorkshopThumbnailFile is null || !File.Exists(inputs.WorkshopThumbnailFile)) throw new FileNotFoundException("Workshop thumbnail file was not found.", inputs.WorkshopThumbnailFile);
-        if (!Path.GetExtension(inputs.WorkshopThumbnailFile).Equals(".png", StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Workshop thumbnail must be a PNG image.");
-        if (new FileInfo(inputs.WorkshopThumbnailFile).Length > 1_000_000) throw new InvalidDataException("Workshop thumbnail must not exceed 1,000,000 bytes.");
-        Span<byte> header = stackalloc byte[24];
-        using (FileStream stream = File.OpenRead(inputs.WorkshopThumbnailFile))
-        {
-            stream.ReadExactly(header);
-        }
-        ReadOnlySpan<byte> pngSignature = [137, 80, 78, 71, 13, 10, 26, 10];
-        ReadOnlySpan<byte> ihdrType = [73, 72, 68, 82];
-        if (!header[..8].SequenceEqual(pngSignature) || !header[12..16].SequenceEqual(ihdrType)) throw new InvalidDataException("Workshop thumbnail has an invalid PNG header.");
-        uint width = BinaryPrimitives.ReadUInt32BigEndian(header[16..20]);
-        uint height = BinaryPrimitives.ReadUInt32BigEndian(header[20..24]);
-        if (width != 512 || height != 512) throw new InvalidDataException($"Workshop thumbnail must be 512x512 pixels; found {width}x{height}.");
-        string thumbnailFile = Path.Combine(packageRoot, "thumbnail.png");
-        File.Copy(inputs.WorkshopThumbnailFile, thumbnailFile, true);
-        return thumbnailFile;
     }
 
     private static string VdfEntry(string key, string value)

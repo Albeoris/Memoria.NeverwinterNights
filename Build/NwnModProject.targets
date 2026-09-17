@@ -45,10 +45,6 @@
       <_NwnInput Include="@(NwnRequiredPackage->'dependency|%(ModId)|%(Versions)|%(PackageName)|%(FullPath)')" />
       <_NwnInput Include="workshop-app-id|$(WorkshopAppId)" />
       <_NwnInput Include="workshop-published-file-id|$(WorkshopPublishedFileId)" Condition="'$(WorkshopPublishedFileId)' != ''" />
-      <_NwnInput Include="workshop-visibility|$(WorkshopVisibility)" />
-      <_NwnInput Include="workshop-description|$(WorkshopDescriptionFile)" />
-      <_NwnInput Include="workshop-thumbnail|$(WorkshopThumbnailFile)" />
-      <_NwnInput Include="workshop-change-note|$(WorkshopChangeNoteFile)" />
       <_NwnWorkshopTag Include="$(WorkshopTags)" />
       <_NwnInput Include="@(_NwnWorkshopTag->'workshop-tag|%(Identity)')" />
     </ItemGroup>
