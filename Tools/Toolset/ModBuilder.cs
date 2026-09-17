@@ -27,7 +27,7 @@ internal static partial class ModBuilder
 
         ModProjectInputs inputs = await ModProjectInputs.LoadAsync(inputsPath);
         ValidateOwnedInputs(inputs);
-        string[] includeDirectories = inputs.IncludeDirectories.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        string[] includeDirectories = (await ApiSnapshotResolver.ResolveIncludeDirectoriesAsync(context, inputs)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         HashSet<string> outputNames = new(StringComparer.OrdinalIgnoreCase);
         int compiled = 0;
         int includes = 0;
@@ -180,10 +180,10 @@ internal static partial class ModBuilder
                 if (root["schema"]?.GetValue<int>() != 2) throw new InvalidDataException($"Runtime manifest schema must be 2: {source}");
                 string? id = root["id"]?.GetValue<string>();
                 if (!string.Equals(id, inputs.ModId, StringComparison.Ordinal)) throw new InvalidDataException($"Runtime manifest id '{id}' does not match project ModId '{inputs.ModId}': {source}");
-                root["name"] = inputs.PackageDisplayName;
-                root["version"] = inputs.PackageVersion;
+                root["name"] = inputs.ModDisplayName;
+                root["version"] = inputs.ModVersion;
                 JsonArray dependencies = [];
-                foreach (PackageDependency dependency in inputs.Dependencies) dependencies.Add(new JsonObject { ["id"] = dependency.ModId, ["versions"] = dependency.Versions });
+                foreach (ModDependency dependency in inputs.Dependencies) dependencies.Add(new JsonObject { ["id"] = dependency.ModId, ["versions"] = dependency.Versions });
                 root["dependencies"] = dependencies;
                 text = root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine;
             }

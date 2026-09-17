@@ -167,7 +167,7 @@ int MEMORIA_FindPackage(json jPackages, string sId)
     return -1;
 }
 
-string MEMORIA_ValidateDependencies(json jDependencies, string sPackageId)
+string MEMORIA_ValidateDependencies(json jDependencies, string sModId)
 {
     if (JsonGetType(jDependencies) != JSON_TYPE_ARRAY) return "dependencies must be an array";
     json jIds = JsonArray();
@@ -178,7 +178,7 @@ string MEMORIA_ValidateDependencies(json jDependencies, string sPackageId)
         string sId = JsonGetString(JsonObjectGet(jDependency, "id"));
         string sVersions = JsonGetString(JsonObjectGet(jDependency, "versions"));
         if (JsonGetType(jDependency) != JSON_TYPE_OBJECT || sId == "" || !MEMORIA_IsValidVersions(sVersions)) return "each dependency must contain an id and valid versions";
-        if (MEMORIA_IdEquals(sId, sPackageId)) return "a package cannot depend on itself";
+        if (MEMORIA_IdEquals(sId, sModId)) return "a package cannot depend on itself";
         int nSeen;
         for (nSeen = 0; nSeen < JsonGetLength(jIds); nSeen++)
         {

@@ -4,13 +4,15 @@ internal sealed class DependencyVersionRange
 {
     private readonly IReadOnlyList<VersionInterval> intervals;
 
-    private DependencyVersionRange(string text, IReadOnlyList<VersionInterval> intervals)
+    private DependencyVersionRange(string text, IReadOnlyList<VersionInterval> intervals, Version minimumVersion)
     {
         Text = text;
         this.intervals = intervals;
+        MinimumVersion = minimumVersion;
     }
 
     public string Text { get; }
+    public Version MinimumVersion { get; }
 
     public static DependencyVersionRange Parse(string text)
     {
@@ -18,7 +20,10 @@ internal sealed class DependencyVersionRange
         string[] parts = text.Split(';', StringSplitOptions.TrimEntries);
         if (parts.Any(part => part.Length == 0)) throw new FormatException($"Invalid dependency versions '{text}': empty interval.");
         List<VersionInterval> intervals = parts.Select(part => VersionInterval.Parse(part, text)).ToList();
-        return new DependencyVersionRange(text, intervals);
+        VersionInterval first = intervals.OrderBy(interval => interval.Minimum).First();
+        if (first.Minimum is null) throw new FormatException($"Invalid dependency versions '{text}': API validation requires a bounded minimum version.");
+        if (!first.IncludeMinimum) throw new FormatException($"Invalid dependency versions '{text}': API validation requires an inclusive minimum version.");
+        return new DependencyVersionRange(text, intervals, first.Minimum);
     }
 
     public bool Contains(Version version)

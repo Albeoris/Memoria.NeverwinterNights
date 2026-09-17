@@ -3,8 +3,7 @@
     <PropertyGroup>
         <ModId>MEMORIA</ModId>
         <Version>1.0.0</Version>
-        <PackageId>memoria</PackageId>
-        <PackageDisplayName>Memoria</PackageDisplayName>
+        <ModDisplayName>Memoria</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
         <!-- Set this to the ID of the existing Workshop item. Leaving it empty prevents accidental item creation. -->

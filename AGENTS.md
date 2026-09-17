@@ -25,6 +25,7 @@ After a MAJOR increment, update every dependent project's `Versions` range so th
 - `Docs/` holds short, single-topic write-ups for architecture decisions that aren't obvious from the code alone (e.g. shared subsystems, caching strategies). Start from `Docs/README.md`, which is the registry/index of these files. Add a new short doc there whenever you introduce a similar shared subsystem.
 - `Build/NwnModProject.targets` is a checked-in MSBuild definition. The `Build` directory must not contain `bin`, `obj`, manifests, or other generated files.
 - Every generated or temporary file must be placed under the ignored `artifacts` directory. This includes MSBuild `bin`/`obj`, evaluated project inputs, compiled mods, layout previews, and release packages.
+- `artifacts/api-cache` contains immutable downloaded NWScript API snapshots and must survive normal clean operations.
 
 ## Package architecture
 
@@ -50,7 +51,7 @@ Use wildcard project items:
 - `NwnResource` for files copied or converted into the override package.
 - `NwnLayout` for NUI layout-emulator inputs.
 - `NwnPackageFile` for source files intentionally shipped as package content, such as MEMORIA includes.
-- `NwnRequiredPackage` for cross-project NWScript includes and runtime dependencies. It must declare `ModId`, NuGet-style `Versions`, and `PackageName`; dependency sources are compiler inputs only and never enter the dependent package output.
+- `NwnRequiredPackage` for cross-project NWScript includes and runtime dependencies. It must declare `ModId`, a NuGet-style `Versions` range with a bounded inclusive minimum, and `PackageName`; dependency sources are compiler inputs only and never enter the dependent package output. Compilation uses the minimum version's immutable API snapshot, or local sources when that minimum equals the dependency project's current version.
 - `NwnIncludeDirectory` only for compiler include directories that are not mod-package dependencies.
 - `PackageDocument` and `NwnRequiredPackage` items for publishing metadata. Each `NwnRequiredPackage` points to an existing mod project and supplies its published name through `PackageName` metadata.
 - Steam Workshop metadata belongs in a separate `PropertyGroup` labeled `Steam Workshop`. `WorkshopTags` is a semicolon-separated property rather than an item because tags are labels, not file dependencies.

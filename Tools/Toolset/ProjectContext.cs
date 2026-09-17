@@ -7,6 +7,7 @@ internal sealed class ProjectContext
     public string IncludeDirectory => Path.Combine(RepositoryRoot, "Tools", "NwnIncludes");
     public string CompilerRoot => Path.Combine(RepositoryRoot, "Tools", "NwnRoot");
     public string CompilerUserDirectory => Path.Combine(RepositoryRoot, "artifacts", "nwn-user");
+    public string ApiCacheDirectory => Path.Combine(RepositoryRoot, "artifacts", "api-cache");
 
     private ProjectContext(string repositoryRoot)
     {

@@ -3,8 +3,7 @@
     <PropertyGroup>
         <ModId>MECONFIG</ModId>
         <Version>1.0.0</Version>
-        <PackageId>meconfig</PackageId>
-        <PackageDisplayName>Memoria: Configuration Manager</PackageDisplayName>
+        <ModDisplayName>Memoria: Configuration Manager</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
         <WorkshopPublishedFileId />

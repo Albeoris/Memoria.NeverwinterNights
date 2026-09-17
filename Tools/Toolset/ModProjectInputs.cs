@@ -6,15 +6,16 @@ internal sealed class ModProjectInputs
 {
     public string? ProjectDirectory { get; private set; }
     public string? ModId { get; private set; }
-    public string? PackageDisplayName { get; private set; }
-    public string? PackageVersion { get; private set; }
+    public string? ModDisplayName { get; private set; }
+    public string? ModVersion { get; private set; }
+    public string? ApiSnapshotRepository { get; private set; }
     public List<string> Sources { get; } = [];
     public List<string> Resources { get; } = [];
     public List<string> Layouts { get; } = [];
     public List<string> PackageFiles { get; } = [];
     public List<string> IncludeDirectories { get; } = [];
     public List<string> Documents { get; } = [];
-    public List<PackageDependency> Dependencies { get; } = [];
+    public List<ModDependency> Dependencies { get; } = [];
     public List<string> WorkshopTags { get; } = [];
     public string? WorkshopAppId { get; private set; }
     public string? WorkshopPublishedFileId { get; private set; }
@@ -38,15 +39,16 @@ internal sealed class ModProjectInputs
             {
                 case "project-directory": inputs.ProjectDirectory = SetOnce(inputs.ProjectDirectory, Path.GetFullPath(value), kind); break;
                 case "mod-id": inputs.ModId = SetOnce(inputs.ModId, value, kind); break;
-                case "package-display-name": inputs.PackageDisplayName = SetOnce(inputs.PackageDisplayName, value, kind); break;
-                case "package-version": inputs.PackageVersion = SetOnce(inputs.PackageVersion, value, kind); break;
+                case "mod-display-name": inputs.ModDisplayName = SetOnce(inputs.ModDisplayName, value, kind); break;
+                case "mod-version": inputs.ModVersion = SetOnce(inputs.ModVersion, value, kind); break;
+                case "api-snapshot-repository": inputs.ApiSnapshotRepository = SetOnce(inputs.ApiSnapshotRepository, value, kind); break;
                 case "source": inputs.Sources.Add(Path.GetFullPath(value)); break;
                 case "resource": inputs.Resources.Add(Path.GetFullPath(value)); break;
                 case "layout": inputs.Layouts.Add(Path.GetFullPath(value)); break;
                 case "package": inputs.PackageFiles.Add(Path.GetFullPath(value)); break;
                 case "include": inputs.IncludeDirectories.Add(Path.GetFullPath(value)); break;
                 case "document": inputs.Documents.Add(Path.GetFullPath(value)); break;
-                case "dependency": inputs.Dependencies.Add(PackageDependency.Parse(value)); break;
+                case "dependency": inputs.Dependencies.Add(ModDependency.Parse(value)); break;
                 case "workshop-app-id": inputs.WorkshopAppId = SetOnce(inputs.WorkshopAppId, value, kind); break;
                 case "workshop-published-file-id": inputs.WorkshopPublishedFileId = SetOnce(inputs.WorkshopPublishedFileId, value, kind); break;
                 case "workshop-visibility": inputs.WorkshopVisibility = SetOnce(inputs.WorkshopVisibility, value, kind); break;
@@ -60,8 +62,9 @@ internal sealed class ModProjectInputs
 
         if (inputs.ProjectDirectory is null) throw new InvalidDataException("Missing project-directory mod input.");
         if (string.IsNullOrWhiteSpace(inputs.ModId)) throw new InvalidDataException("Missing mod-id mod input.");
-        if (string.IsNullOrWhiteSpace(inputs.PackageDisplayName)) throw new InvalidDataException("Missing package-display-name mod input.");
-        if (inputs.PackageVersion is null || !SemanticVersion.IsValid(inputs.PackageVersion)) throw new InvalidDataException($"Package version must be SemVer: {inputs.PackageVersion}");
+        if (string.IsNullOrWhiteSpace(inputs.ModDisplayName)) throw new InvalidDataException("Missing mod-display-name mod input.");
+        if (inputs.ModVersion is null || !SemanticVersion.IsValid(inputs.ModVersion)) throw new InvalidDataException($"Mod version must be SemVer: {inputs.ModVersion}");
+        if (string.IsNullOrWhiteSpace(inputs.ApiSnapshotRepository)) throw new InvalidDataException("Missing api-snapshot-repository mod input.");
         string? duplicateDependency = inputs.Dependencies.GroupBy(dependency => dependency.ModId, StringComparer.OrdinalIgnoreCase).FirstOrDefault(group => group.Count() > 1)?.Key;
         if (duplicateDependency is not null) throw new InvalidDataException($"Duplicate runtime dependency: {duplicateDependency}");
 
@@ -75,9 +78,9 @@ internal sealed class ModProjectInputs
     }
 }
 
-internal sealed record PackageDependency(string ModId, string Versions, string DisplayName, string ProjectPath)
+internal sealed record ModDependency(string ModId, string Versions, string DisplayName, string ProjectPath, Version MinimumVersion, Version CurrentVersion)
 {
-    public static PackageDependency Parse(string value)
+    public static ModDependency Parse(string value)
     {
         string[] fields = value.Split('|', 4);
         if (fields.Length != 4 || fields.Any(string.IsNullOrWhiteSpace)) throw new InvalidDataException($"Invalid dependency mod input: {value}");
@@ -86,16 +89,25 @@ internal sealed record PackageDependency(string ModId, string Versions, string D
         catch (FormatException exception) { throw new InvalidDataException(exception.Message, exception); }
         string projectPath = Path.GetFullPath(fields[3]);
         if (!File.Exists(projectPath)) throw new FileNotFoundException("Dependency project was not found.", projectPath);
-        ValidateVersions(fields[0], versions, projectPath);
-        return new PackageDependency(fields[0], fields[1], fields[2], projectPath);
+        (string projectModId, string currentVersionText, Version currentVersion) = ReadProjectIdentity(projectPath);
+        if (!string.Equals(fields[0], projectModId, StringComparison.Ordinal)) throw new InvalidDataException($"Dependency ModId '{fields[0]}' does not match project ModId '{projectModId}': {projectPath}");
+        ValidateVersions(fields[0], versions, currentVersionText, currentVersion, projectPath);
+        return new ModDependency(fields[0], fields[1], fields[2], projectPath, versions.MinimumVersion, currentVersion);
     }
 
-    private static void ValidateVersions(string modId, DependencyVersionRange versions, string projectPath)
+    internal static (string ModId, string VersionText, Version Version) ReadProjectIdentity(string projectPath)
     {
         XDocument project = XDocument.Load(projectPath, LoadOptions.SetLineInfo);
+        string? modId = project.Descendants().Where(element => element.Name.LocalName == "ModId" && element.Attribute("Condition") is null && element.Ancestors().All(ancestor => ancestor.Attribute("Condition") is null)).Select(element => element.Value.Trim()).LastOrDefault(value => value.Length > 0);
         string? currentVersionText = project.Descendants().Where(element => element.Name.LocalName == "Version" && element.Attribute("Condition") is null && element.Ancestors().All(ancestor => ancestor.Attribute("Condition") is null)).Select(element => element.Value.Trim()).LastOrDefault(value => value.Length > 0);
+        if (modId is null) throw new InvalidDataException($"Dependency project {projectPath} must declare an unconditional ModId.");
         if (currentVersionText is null || !SemanticVersion.IsRelease(currentVersionText)) throw new InvalidDataException($"Dependency project {projectPath} must declare an unconditional release Version in X.Y.Z notation.");
-        Version currentVersion = SemanticVersion.ParseRelease(currentVersionText);
-        if (!versions.Contains(currentVersion)) throw new InvalidDataException($"Dependency {modId} versions {versions.Text} do not include its current package version {currentVersionText}: {projectPath}");
+        return (modId, currentVersionText, SemanticVersion.ParseRelease(currentVersionText));
+    }
+
+    private static void ValidateVersions(string modId, DependencyVersionRange versions, string currentVersionText, Version currentVersion, string projectPath)
+    {
+        if (versions.MinimumVersion > currentVersion) throw new InvalidDataException($"Dependency {modId} minimum version {versions.MinimumVersion.ToString(3)} is newer than its current version {currentVersionText}: {projectPath}");
+        if (!versions.Contains(currentVersion)) throw new InvalidDataException($"Dependency {modId} versions {versions.Text} do not include its current mod version {currentVersionText}: {projectPath}");
     }
 }

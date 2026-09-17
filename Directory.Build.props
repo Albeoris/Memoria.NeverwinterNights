@@ -7,6 +7,7 @@
     <CommonOutputPath>$(RepositoryRoot)artifacts\common_output</CommonOutputPath>
     <CommonOutputManifestPath>$(RepositoryRoot)artifacts\common_output.manifests</CommonOutputManifestPath>
     <CommonOutputLockFile>$(RepositoryRoot)artifacts\common_output.lock</CommonOutputLockFile>
+    <ApiSnapshotRepository Condition="'$(ApiSnapshotRepository)' == ''">Albeoris/Memoria.NeverwinterNights</ApiSnapshotRepository>
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

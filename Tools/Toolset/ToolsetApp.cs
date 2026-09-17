@@ -223,6 +223,6 @@ internal static class ToolsetApp
         Console.WriteLine("  gff-from-json <input.json> <output>");
         Console.WriteLine("  nui-layout <layout.json> [-o output-directory]");
         Console.WriteLine("  aoe-sim <output.json>");
-        Console.WriteLine("  publish <generated-inputs> --id id --display-name name --build-directory directory --version version [-o output-directory]");
+        Console.WriteLine("  publish <generated-inputs> --build-directory directory [-o output-directory]");
     }
 }

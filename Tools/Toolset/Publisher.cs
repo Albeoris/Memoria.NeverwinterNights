@@ -12,18 +12,16 @@ internal static partial class Publisher
         List<string> mutable = arguments.ToList();
         string inputsPath = Path.GetFullPath(mutable[0]);
         mutable.RemoveAt(0);
-        string? id = ToolsetApp.TakeOption(mutable, "--id");
-        string? displayName = ToolsetApp.TakeOption(mutable, "--display-name");
         string? buildDirectoryOption = ToolsetApp.TakeOption(mutable, "--build-directory");
-        string? version = ToolsetApp.TakeOption(mutable, "--version");
         string outputRoot = Path.GetFullPath(ToolsetApp.TakeOption(mutable, "-o", "--output") ?? Path.Combine(context.RepositoryRoot, "artifacts", "publish"));
         if (mutable.Count > 0) return Fail($"publish: unknown arguments: {string.Join(' ', mutable)}");
-        if (id is null || !SafeSegmentRegex().IsMatch(id)) return Fail("publish: --id must contain only letters, digits, dots, underscores, or hyphens.");
-        if (string.IsNullOrWhiteSpace(displayName)) return Fail("publish: --display-name is required.");
         if (buildDirectoryOption is null) return Fail("publish: --build-directory is required.");
-        if (version is null || !SemanticVersion.IsValid(version)) return Fail("publish: --version must be a valid SemVer version.");
 
         ModProjectInputs inputs = await ModProjectInputs.LoadAsync(inputsPath);
+        string id = inputs.ModId!.ToLowerInvariant();
+        string displayName = inputs.ModDisplayName!;
+        string version = inputs.ModVersion!;
+        if (!SafeSegmentRegex().IsMatch(id)) return Fail("publish: ModId must contain only letters, digits, dots, underscores, or hyphens.");
         string buildDirectory = Path.GetFullPath(buildDirectoryOption);
         if (!Directory.Exists(buildDirectory)) return Fail($"Build directory not found: {buildDirectory}");
 
@@ -57,7 +55,7 @@ internal static partial class Publisher
 
         if (inputs.Dependencies.Count > 0)
         {
-            string[] dependencyLines = ["Required packages, installed first:", .. inputs.Dependencies.Select((dependency, index) => $"{index + 1}. {dependency.DisplayName}: {dependency.Versions}")];
+            string[] dependencyLines = ["Required mods, installed first:", .. inputs.Dependencies.Select((dependency, index) => $"{index + 1}. {dependency.DisplayName}: {dependency.Versions}")];
             await File.WriteAllLinesAsync(Path.Combine(workshopRoot, "dependencies.txt"), dependencyLines, new UTF8Encoding(false));
             await File.WriteAllLinesAsync(Path.Combine(nexusRoot, "dependencies.txt"), dependencyLines, new UTF8Encoding(false));
         }
@@ -118,7 +116,7 @@ internal static partial class Publisher
     {
         string result = InvalidFileNameCharactersRegex().Replace(value, " - ");
         result = WhitespaceRegex().Replace(result, " ").Trim().TrimEnd('.');
-        if (result.Length == 0) throw new InvalidDataException("Package display name does not contain a valid directory name.");
+        if (result.Length == 0) throw new InvalidDataException("Mod display name does not contain a valid directory name.");
         if (ReservedDeviceNameRegex().IsMatch(result)) result = "_" + result;
         return result;
     }

@@ -1,0 +1,79 @@
+name: API Snapshots
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: api-snapshots
+  cancel-in-progress: false
+
+jobs:
+  create-api-tags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Create immutable API snapshot tags
+        shell: pwsh
+        env:
+          DOTNET_NOLOGO: true
+          DOTNET_CLI_TELEMETRY_OPTOUT: true
+        run: |
+          git fetch --tags --force
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+          $createdTags = @()
+          foreach ($project in Get-ChildItem Mods -Recurse -Filter *.proj) {
+              Write-Host "Checking $($project.FullName)"
+              $json = dotnet msbuild $project.FullName -nologo '-getProperty:ModId,Version' | Out-String
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Failed to evaluate $($project.FullName)."
+              }
+              $properties = $json | ConvertFrom-Json
+              $modId = $properties.Properties.ModId
+              $version = $properties.Properties.Version
+              if ([string]::IsNullOrWhiteSpace($modId) -or [string]::IsNullOrWhiteSpace($version)) {
+                  continue
+              }
+              if ($modId -notmatch '^[A-Za-z0-9._-]+$') {
+                  throw "Invalid ModId in $($project.FullName): $modId"
+              }
+              if ($version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
+                  throw "Mod version must use X.Y.Z notation in $($project.FullName): $version"
+              }
+
+              $tag = "$($modId.ToLowerInvariant())-api-v$version"
+              if (git tag --list $tag) {
+                  Write-Host "$tag already exists."
+                  continue
+              }
+
+              Write-Host "Creating $tag at $env:GITHUB_SHA"
+              git tag --annotate $tag $env:GITHUB_SHA --message "API snapshot for $modId $version"
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Failed to create $tag."
+              }
+              $createdTags += $tag
+          }
+
+          foreach ($tag in $createdTags) {
+              Write-Host "Pushing $tag"
+              git push origin "refs/tags/$tag:refs/tags/$tag"
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Failed to push $tag."
+              }
+          }

@@ -3,7 +3,11 @@ name: Release package
 on:
   push:
     tags:
-      - '*-v*'
+      - 'esi-v*'
+      - 'melse-v*'
+      - 'mecm-v*'
+      - 'metact-v*'
+      - 'memoria-v*'
 
 permissions:
   contents: write

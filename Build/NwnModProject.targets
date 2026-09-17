@@ -33,14 +33,14 @@
       <_NwnInput Remove="@(_NwnInput)" />
       <_NwnInput Include="project-directory|$(MSBuildProjectDirectory)" />
       <_NwnInput Include="mod-id|$(ModId)" />
-      <_NwnInput Include="package-display-name|$(PackageDisplayName)" />
-      <_NwnInput Include="package-version|$(Version)" />
+      <_NwnInput Include="mod-display-name|$(ModDisplayName)" />
+      <_NwnInput Include="mod-version|$(Version)" />
+      <_NwnInput Include="api-snapshot-repository|$(ApiSnapshotRepository)" />
       <_NwnInput Include="@(NwnSource->'source|%(FullPath)')" />
       <_NwnInput Include="@(NwnResource->'resource|%(FullPath)')" />
       <_NwnInput Include="@(NwnLayout->'layout|%(FullPath)')" />
       <_NwnInput Include="@(NwnPackageFile->'package|%(FullPath)')" />
       <_NwnInput Include="@(NwnIncludeDirectory->'include|%(FullPath)')" />
-      <_NwnInput Include="@(NwnRequiredPackage->'include|%(RootDir)%(Directory)source')" />
       <_NwnInput Include="@(PackageDocument->'document|%(FullPath)')" />
       <_NwnInput Include="@(NwnRequiredPackage->'dependency|%(ModId)|%(Versions)|%(PackageName)|%(FullPath)')" />
       <_NwnInput Include="workshop-app-id|$(WorkshopAppId)" />
@@ -63,12 +63,12 @@
 
   <Target Name="CleanNwnMod" Condition="'$(DesignTimeBuild)' != 'true'">
     <RemoveDir Directories="$(BuildOutput)" />
-    <RemoveDir Directories="$(RepositoryRoot)artifacts\publish\$(PackageId)" />
+    <RemoveDir Directories="$(RepositoryRoot)artifacts\publish\$([System.String]::Copy('$(ModId)').ToLowerInvariant())" />
     <RemoveDir Directories="$(RepositoryRoot)artifacts\layouts\$(ModId)" />
     <Delete Files="$(NwnInputsFile)" />
   </Target>
 
   <Target Name="PublishNwnMod" DependsOnTargets="GenerateNwnModInputs" Condition="'$(DesignTimeBuild)' != 'true'">
-    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; publish &quot;$(NwnInputsFile)&quot; --id &quot;$(PackageId)&quot; --display-name &quot;$(PackageDisplayName)&quot; --build-directory &quot;$(BuildOutput)&quot; --version &quot;$(Version)&quot;" />
+    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; publish &quot;$(NwnInputsFile)&quot; --build-directory &quot;$(BuildOutput)&quot;" />
   </Target>
 </Project>

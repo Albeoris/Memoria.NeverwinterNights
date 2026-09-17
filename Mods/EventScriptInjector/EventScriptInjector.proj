@@ -3,8 +3,7 @@
     <PropertyGroup>
         <ModId>esi</ModId>
         <Version>2.0.0</Version>
-        <PackageId>esi</PackageId>
-        <PackageDisplayName>Memoria: Event Script Injector</PackageDisplayName>
+        <ModDisplayName>Memoria: Event Script Injector</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
         <!-- Set this to the ID of the existing Workshop item. Leaving it empty prevents accidental item creation. -->

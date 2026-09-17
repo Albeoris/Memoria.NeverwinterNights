@@ -9,6 +9,7 @@
     <InvariantGlobalization>false</InvariantGlobalization>
     <Copyright>Copyright (c) Albeoris</Copyright>
   </PropertyGroup>
+  <!-- artifacts/api-cache is intentionally persistent and must survive Clean. -->
   <Target Name="CleanRepositoryArtifacts" AfterTargets="Clean" Condition="Exists('$(RepositoryRoot)artifacts')">
     <ItemGroup>
       <_ArtifactDirectory Include="$(CommonOutputPath);$(CommonOutputManifestPath);$(RepositoryRoot)artifacts\nwn-user" />
