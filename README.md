@@ -64,7 +64,7 @@ Push a tag in the form `<package>-v<X.Y.Z>`, for example `metact-v0.7.0` or `mem
 Before the first tagged release:
 
 1. Set `WorkshopPublishedFileId` in the mod project's `Steam Workshop` property group to the public ID of the existing Workshop item. The pipeline deliberately refuses `0` or an empty value so it cannot create duplicate items.
-2. Replace `workshop/description.txt`, `workshop/changenote.txt`, and `workshop/preview.png` in that mod. The preview must be a PNG, JPG, or GIF smaller than 1 MB.
+2. Replace `workshop/description.txt`, `workshop/changenote.txt`, and `workshop/thumbnail.png` in that mod. The thumbnail must be a PNG, JPG, or GIF smaller than 1 MB.
 3. Add the `STEAM_USERNAME`, `STEAM_PASSWORD`, and base64-encoded mobile-authenticator `STEAM_SHARED_SECRET` Actions secrets. Use the Steam account that owns the Workshop items, preferably a dedicated publishing account.
 
 The project display name supplies the Workshop title. `WorkshopVisibility` defaults to `0` (public); the other accepted values are `1` (friends-only), `2` (private), and `3` (unlisted). SteamCMD's `workshop_build_item` supports title, description, visibility, content, primary preview, and change note updates.

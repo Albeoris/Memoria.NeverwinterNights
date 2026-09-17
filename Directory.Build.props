@@ -17,7 +17,7 @@
     <WorkshopAppId>704450</WorkshopAppId>
     <WorkshopVisibility Condition="'$(WorkshopVisibility)' == ''">0</WorkshopVisibility>
     <WorkshopDescriptionFile Condition="'$(WorkshopDescriptionFile)' == ''">$(MSBuildProjectDirectory)\workshop\description.txt</WorkshopDescriptionFile>
-    <WorkshopPreviewFile Condition="'$(WorkshopPreviewFile)' == ''">$(MSBuildProjectDirectory)\workshop\preview.png</WorkshopPreviewFile>
+    <WorkshopPreviewFile Condition="'$(WorkshopPreviewFile)' == ''">$(MSBuildProjectDirectory)\workshop\thumbnail.png</WorkshopPreviewFile>
     <WorkshopChangeNoteFile Condition="'$(WorkshopChangeNoteFile)' == ''">$(MSBuildProjectDirectory)\workshop\changenote.txt</WorkshopChangeNoteFile>
   </PropertyGroup>
 </Project>
