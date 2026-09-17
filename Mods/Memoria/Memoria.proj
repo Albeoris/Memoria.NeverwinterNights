@@ -10,7 +10,7 @@
         <!-- Set this to the ID of the existing Workshop item. Leaving it empty prevents accidental item creation. -->
         <WorkshopPublishedFileId />
         <!-- SteamCMD cannot apply tags; keep this value in sync with the category selected on the Workshop page. -->
-        <WorkshopTags>override</WorkshopTags>
+        <WorkshopTags>override;singleplayer;script</WorkshopTags>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\Tools\Toolset\Memoria.NeverwinterNights.Toolset.csproj" />

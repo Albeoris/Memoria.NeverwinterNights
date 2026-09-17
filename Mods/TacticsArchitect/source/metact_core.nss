@@ -4,10 +4,10 @@
 #include "memoria_group"
 #include "memoria_item"
 #include "memoria_locale"
-#include "memoria_i18n"
+#include "memoria_loc"
 
 const string METACT_VERSION = "0.7.0";
-const string METACT_I18N_PREFIX = "metact";
+const string METACT_LOC_PREFIX = "metact";
 const string METACT_ESI_KEY_GUI = "metact.module.gui";
 const string METACT_ESI_KEY_TARGET = "metact.module.target";
 const string METACT_LOCAL_DATABASE = "METACT_DATABASE_V1";
@@ -197,7 +197,7 @@ string METACT_GetLanguage(object oPC)
 
 string METACT_GetText(string sKey, object oPC)
 {
-    return MEMORIA_I18N_GetText(METACT_I18N_PREFIX, METACT_GetLanguage(oPC), sKey);
+    return MEMORIA_LOC_GetText(METACT_LOC_PREFIX, METACT_GetLanguage(oPC), sKey);
 }
 
 string METACT_GetFriendlyFireHelpKey(int iPolicy)

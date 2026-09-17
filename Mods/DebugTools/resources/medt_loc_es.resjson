@@ -1,0 +1,15 @@
+{
+  "mod_display_name": "Debug Tools",
+  "examine_action": "Examinar objeto",
+  "delete_action": "Eliminar objeto",
+  "select_examine": "Selecciona un objeto del inventario o del mundo para examinarlo.",
+  "select_delete": "Selecciona un objeto del inventario o del mundo para eliminarlo.",
+  "selection_cancelled": "Selección de objeto cancelada.",
+  "confirm_title": "Eliminar objeto",
+  "confirm_question": "¿Seguro que quieres eliminar {name} ({id})?",
+  "protected_warning": "Este es un objeto protegido o de servicio. Eliminarlo puede dañar permanentemente misiones o integraciones con mods.",
+  "confirm_delete": "Eliminar",
+  "confirm_cancel": "Cancelar",
+  "target_missing": "El objeto seleccionado ya no existe.",
+  "deleted": "Se eliminó {name} ({id})."
+}

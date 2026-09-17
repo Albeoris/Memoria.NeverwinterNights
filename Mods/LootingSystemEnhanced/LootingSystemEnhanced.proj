@@ -2,24 +2,24 @@
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
         <ModId>MELSE</ModId>
-        <Version>1.1.0</Version>
+        <Version>2.0.0</Version>
         <PackageId>melse</PackageId>
-        <PackageDisplayName>Ravick's Looting System Enhanced - Memoria Edition</PackageDisplayName>
+        <PackageDisplayName>Memoria: Ravick's Looting System Enhanced</PackageDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
         <!-- Set this to the ID of the existing Workshop item. Leaving it empty prevents accidental item creation. -->
         <WorkshopPublishedFileId />
         <!-- SteamCMD cannot apply tags; keep this value in sync with the category selected on the Workshop page. -->
-        <WorkshopTags>override</WorkshopTags>
+        <WorkshopTags>override;singleplayer;script</WorkshopTags>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\Tools\Toolset\Memoria.NeverwinterNights.Toolset.csproj" />
         <NwnSource Include="source\**\*.nss" />
         <NwnResource Include="resources\**\*" Exclude="resources\**\.gitkeep" />
         <PackageDocument Include="*.md" />
-        <NwnRequiredPackage Include="..\Memoria\Memoria.proj" ModId="MEMORIA" MinimumVersion="1.0.0" PackageName="Memoria" />
-        <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" ModId="esi" MinimumVersion="1.0.0" PackageName="Event Script Injector (Memoria Edition)" />
-        <NwnRequiredPackage Include="..\Configuration\Configuration.proj" ModId="MEMORIA_CONFIG" MinimumVersion="1.0.0" PackageName="Memoria Configuration Manager" />
+        <NwnRequiredPackage Include="..\Memoria\Memoria.proj" ModId="MEMORIA" Versions="[1.0.0,2.0.0)" PackageName="Memoria" />
+        <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" ModId="esi" Versions="[2.0.0,3.0.0)" PackageName="Event Script Injector (Memoria Edition)" />
+        <NwnRequiredPackage Include="..\ConfigurationManager\ConfigurationManager.proj" ModId="MECONFIG" Versions="[1.0.0,2.0.0)" PackageName="Memoria Configuration Manager" />
     </ItemGroup>
     <Import Project="..\..\Build\NwnModProject.targets" />
 </Project>

@@ -1,11 +1,14 @@
 // Shared manifest discovery and dependency compatibility for Memoria packages.
 
 #include "nw_inc_nui"
+#include "x3_inc_string"
 
 const string MEMORIA_MANIFEST_SUFFIX = "_memoria";
 const string MEMORIA_CACHE_OWNER_LOCAL = "MEMORIA_CACHE_OWNER";
 const string MEMORIA_CACHE_WINDOW = "memoria_cache";
-const int MEMORIA_MANIFEST_SCHEMA = 1;
+const string MEMORIA_ERRORS_LOCAL = "MEMORIA_ERRORS";
+const string MEMORIA_ERRORS_REPORTED_LOCAL = "MEMORIA_ERRORS_REPORTED";
+const int MEMORIA_MANIFEST_SCHEMA = 2;
 
 int MEMORIA_IdEquals(string sLeft, string sRight)
 {
@@ -24,7 +27,7 @@ void MEMORIA_ReportError(object oPlayer, string sResource, string sError)
     string sLocal = "MEMORIA_ERR_" + sResource;
     if (GetLocalString(oPlayer, sLocal) == sError) return;
     SetLocalString(oPlayer, sLocal, sError);
-    SendMessageToPC(oPlayer, "Memoria ignored " + sResource + ".txt: " + sError);
+    SendMessageToPC(oPlayer, StringToRGBString("Memoria error: ", STRING_COLOR_RED) + StringToRGBString(sResource + ".txt: " + sError, "770"));
 }
 
 json MEMORIA_ParseVersion(string sVersion)
@@ -38,23 +41,120 @@ json MEMORIA_ParseVersion(string sVersion)
     return jVersion;
 }
 
-int MEMORIA_IsCompatibleVersion(string sInstalled, string sMinimum)
+json MEMORIA_ParseRangeVersion(string sVersion)
 {
-    json jInstalled = MEMORIA_ParseVersion(sInstalled);
-    json jMinimum = MEMORIA_ParseVersion(sMinimum);
-    if (JsonGetLength(jInstalled) != 3 || JsonGetLength(jMinimum) != 3) return FALSE;
-    int nInstalledMajor = JsonGetInt(JsonArrayGet(jInstalled, 0));
-    int nMinimumMajor = JsonGetInt(JsonArrayGet(jMinimum, 0));
-    if (nInstalledMajor != nMinimumMajor) return FALSE;
+    json jVersion = MEMORIA_ParseVersion(sVersion);
+    if (JsonGetLength(jVersion) == 3) return jVersion;
+    json jMatch = RegExpMatch("^(0|[1-9][0-9]*)(?:[.](0|[1-9][0-9]*))?$", sVersion);
+    if (JsonGetLength(jMatch) < 2) return JsonArray();
+    jVersion = JsonArray();
+    jVersion = JsonArrayInsert(jVersion, JsonInt(StringToInt(JsonGetString(JsonArrayGet(jMatch, 1)))));
+    jVersion = JsonArrayInsert(jVersion, JsonInt(JsonGetLength(jMatch) > 2 ? StringToInt(JsonGetString(JsonArrayGet(jMatch, 2))) : 0));
+    jVersion = JsonArrayInsert(jVersion, JsonInt(0));
+    return jVersion;
+}
+
+int MEMORIA_CompareVersions(json jLeft, json jRight)
+{
     int nIndex;
     for (nIndex = 0; nIndex < 3; nIndex++)
     {
-        int nInstalled = JsonGetInt(JsonArrayGet(jInstalled, nIndex));
-        int nRequired = JsonGetInt(JsonArrayGet(jMinimum, nIndex));
-        if (nInstalled > nRequired) return TRUE;
-        if (nInstalled < nRequired) return FALSE;
+        int nLeft = JsonGetInt(JsonArrayGet(jLeft, nIndex));
+        int nRight = JsonGetInt(JsonArrayGet(jRight, nIndex));
+        if (nLeft > nRight) return 1;
+        if (nLeft < nRight) return -1;
+    }
+    return 0;
+}
+
+int MEMORIA_IsCompatibleInterval(json jInstalled, string sInterval)
+{
+    int nLength = GetStringLength(sInterval);
+    if (nLength < 3) return FALSE;
+    string sOpen = GetSubString(sInterval, 0, 1);
+    string sClose = GetSubString(sInterval, nLength - 1, 1);
+    if ((sOpen != "[" && sOpen != "(") || (sClose != "]" && sClose != ")")) return FALSE;
+    string sBody = GetSubString(sInterval, 1, nLength - 2);
+    int nComma = FindSubString(sBody, ",");
+    if (nComma < 0)
+    {
+        if (sOpen != "[" || sClose != "]") return FALSE;
+        json jExact = MEMORIA_ParseRangeVersion(sBody);
+        return JsonGetLength(jExact) == 3 && MEMORIA_CompareVersions(jInstalled, jExact) == 0;
+    }
+    if (FindSubString(sBody, ",", nComma + 1) >= 0) return FALSE;
+    string sMinimum = GetStringLeft(sBody, nComma);
+    string sMaximum = GetStringRight(sBody, GetStringLength(sBody) - nComma - 1);
+    if ((sMinimum == "" && sOpen != "(") || (sMaximum == "" && sClose != ")")) return FALSE;
+    if (sMinimum != "")
+    {
+        json jMinimum = MEMORIA_ParseRangeVersion(sMinimum);
+        if (JsonGetLength(jMinimum) != 3) return FALSE;
+        int nMinimumComparison = MEMORIA_CompareVersions(jInstalled, jMinimum);
+        if (nMinimumComparison < 0 || (nMinimumComparison == 0 && sOpen == "(")) return FALSE;
+    }
+    if (sMaximum != "")
+    {
+        json jMaximum = MEMORIA_ParseRangeVersion(sMaximum);
+        if (JsonGetLength(jMaximum) != 3) return FALSE;
+        int nMaximumComparison = MEMORIA_CompareVersions(jInstalled, jMaximum);
+        if (nMaximumComparison > 0 || (nMaximumComparison == 0 && sClose == ")")) return FALSE;
     }
     return TRUE;
+}
+
+int MEMORIA_IsCompatibleVersion(string sInstalled, string sVersions)
+{
+    json jInstalled = MEMORIA_ParseVersion(sInstalled);
+    if (JsonGetLength(jInstalled) != 3 || sVersions == "") return FALSE;
+    int nStart;
+    while (nStart <= GetStringLength(sVersions))
+    {
+        int nSeparator = FindSubString(sVersions, ";", nStart);
+        int nEnd = nSeparator < 0 ? GetStringLength(sVersions) : nSeparator;
+        if (MEMORIA_IsCompatibleInterval(jInstalled, GetSubString(sVersions, nStart, nEnd - nStart))) return TRUE;
+        if (nSeparator < 0) return FALSE;
+        nStart = nSeparator + 1;
+    }
+    return FALSE;
+}
+
+int MEMORIA_IsValidVersions(string sVersions)
+{
+    if (sVersions == "") return FALSE;
+    int nStart;
+    while (nStart <= GetStringLength(sVersions))
+    {
+        int nSeparator = FindSubString(sVersions, ";", nStart);
+        int nEnd = nSeparator < 0 ? GetStringLength(sVersions) : nSeparator;
+        string sInterval = GetSubString(sVersions, nStart, nEnd - nStart);
+        int nLength = GetStringLength(sInterval);
+        if (nLength < 3) return FALSE;
+        string sOpen = GetSubString(sInterval, 0, 1);
+        string sClose = GetSubString(sInterval, nLength - 1, 1);
+        string sBody = GetSubString(sInterval, 1, nLength - 2);
+        int nComma = FindSubString(sBody, ",");
+        if ((sOpen != "[" && sOpen != "(") || (sClose != "]" && sClose != ")")) return FALSE;
+        if (nComma < 0)
+        {
+            if (sOpen != "[" || sClose != "]" || JsonGetLength(MEMORIA_ParseRangeVersion(sBody)) != 3) return FALSE;
+        }
+        else
+        {
+            if (FindSubString(sBody, ",", nComma + 1) >= 0) return FALSE;
+            string sMinimum = GetStringLeft(sBody, nComma);
+            string sMaximum = GetStringRight(sBody, GetStringLength(sBody) - nComma - 1);
+            if ((sMinimum == "" && sOpen != "(") || (sMaximum == "" && sClose != ")") || (sMinimum != "" && JsonGetLength(MEMORIA_ParseRangeVersion(sMinimum)) != 3) || (sMaximum != "" && JsonGetLength(MEMORIA_ParseRangeVersion(sMaximum)) != 3)) return FALSE;
+            if (sMinimum != "" && sMaximum != "")
+            {
+                int nComparison = MEMORIA_CompareVersions(MEMORIA_ParseRangeVersion(sMinimum), MEMORIA_ParseRangeVersion(sMaximum));
+                if (nComparison > 0 || (nComparison == 0 && (sOpen != "[" || sClose != "]"))) return FALSE;
+            }
+        }
+        if (nSeparator < 0) return TRUE;
+        nStart = nSeparator + 1;
+    }
+    return FALSE;
 }
 
 int MEMORIA_FindPackage(json jPackages, string sId)
@@ -76,8 +176,8 @@ string MEMORIA_ValidateDependencies(json jDependencies, string sPackageId)
     {
         json jDependency = JsonArrayGet(jDependencies, nIndex);
         string sId = JsonGetString(JsonObjectGet(jDependency, "id"));
-        string sVersion = JsonGetString(JsonObjectGet(jDependency, "version"));
-        if (JsonGetType(jDependency) != JSON_TYPE_OBJECT || sId == "" || JsonGetLength(MEMORIA_ParseVersion(sVersion)) != 3) return "each dependency must contain an id and an X.Y.Z minimum version";
+        string sVersions = JsonGetString(JsonObjectGet(jDependency, "versions"));
+        if (JsonGetType(jDependency) != JSON_TYPE_OBJECT || sId == "" || !MEMORIA_IsValidVersions(sVersions)) return "each dependency must contain an id and valid versions";
         if (MEMORIA_IdEquals(sId, sPackageId)) return "a package cannot depend on itself";
         int nSeen;
         for (nSeen = 0; nSeen < JsonGetLength(jIds); nSeen++)
@@ -87,6 +187,42 @@ string MEMORIA_ValidateDependencies(json jDependencies, string sPackageId)
         jIds = JsonArrayInsert(jIds, JsonString(sId));
     }
     return "";
+}
+
+void MEMORIA_ReportPackageErrors(object oPlayer, json jPackages)
+{
+    string sSignature = "";
+    string sDetails = "";
+    int nFailed;
+    int nIndex;
+    for (nIndex = 0; nIndex < JsonGetLength(jPackages); nIndex++)
+    {
+        json jPackage = JsonArrayGet(jPackages, nIndex);
+        if (JsonGetInt(JsonObjectGet(jPackage, "_enabled"))) continue;
+        string sResource = JsonGetString(JsonObjectGet(jPackage, "_resource"));
+        string sName = JsonGetString(JsonObjectGet(jPackage, "name"));
+        if (sName == "") sName = JsonGetString(JsonObjectGet(jPackage, "id"));
+        if (sName == "") sName = sResource;
+        string sError = JsonGetString(JsonObjectGet(jPackage, "_error"));
+        string sEntry = sName + " (" + sResource + ".txt) incompatible with:\n- " + sError;
+        nFailed++;
+        sSignature += "|" + sResource + ":" + sError;
+        sDetails = sDetails == "" ? sEntry : sDetails + "\n\n" + sEntry;
+    }
+    if (GetLocalInt(oPlayer, MEMORIA_ERRORS_REPORTED_LOCAL) && GetLocalString(oPlayer, MEMORIA_ERRORS_LOCAL) == sSignature) return;
+    SetLocalInt(oPlayer, MEMORIA_ERRORS_REPORTED_LOCAL, TRUE);
+    SetLocalString(oPlayer, MEMORIA_ERRORS_LOCAL, sSignature);
+    int nLoaded = JsonGetLength(jPackages) - nFailed;
+    if (sDetails != "")
+    {
+        string sSummary = IntToString(nFailed) + (nFailed == 1 ? " mod failed" : " mods failed") + " to initialize; " + IntToString(nLoaded) + (nLoaded == 1 ? " mod loaded successfully." : " mods loaded successfully.");
+        SendMessageToPC(oPlayer, StringToRGBString("Memoria found incompatible mods:", STRING_COLOR_RED) + "\n\n" + StringToRGBString(sDetails, "770") + "\n\n" + StringToRGBString(sSummary, STRING_COLOR_RED));
+    }
+    else
+    {
+        string sMod = nLoaded == 1 ? " mod" : " mods";
+        SendMessageToPC(oPlayer, StringToRGBString("All " + IntToString(nLoaded) + sMod + " loaded successfully.", STRING_COLOR_GREEN));
+    }
 }
 
 json MEMORIA_DiscoverPackages(object oPlayer)
@@ -101,6 +237,7 @@ json MEMORIA_DiscoverPackages(object oPlayer)
             json jManifest = JsonParse(ResManGetFileContents(sResource, RESTYPE_TXT));
             string sError = JsonGetError(jManifest);
             string sId = JsonGetString(JsonObjectGet(jManifest, "id"));
+            string sName = JsonGetString(JsonObjectGet(jManifest, "name"));
             string sVersion = JsonGetString(JsonObjectGet(jManifest, "version"));
             if (sError != "") { }
             else if (JsonGetType(jManifest) != JSON_TYPE_OBJECT || JsonGetInt(JsonObjectGet(jManifest, "schema")) != MEMORIA_MANIFEST_SCHEMA || sId == "") sError = "invalid schema or id";
@@ -111,16 +248,26 @@ json MEMORIA_DiscoverPackages(object oPlayer)
             if (sError == "" && JsonGetType(jBootstrapper) != JSON_TYPE_NULL && (JsonGetType(jBootstrapper) != JSON_TYPE_OBJECT || sHeartbeat == "")) sError = "invalid bootstrapper section or heartbeat resource";
             else if (sError == "" && sHeartbeat != "" && ResManGetAliasFor(sHeartbeat, RESTYPE_NCS) == "") sError = "heartbeat script " + sHeartbeat + ".ncs was not found";
             int nDuplicate = sError == "" ? MEMORIA_FindPackage(jPackages, sId) : -1;
-            if (sError != "") MEMORIA_ReportError(oPlayer, sResource, sError);
+            if (sError != "")
+            {
+                if (JsonGetType(jManifest) != JSON_TYPE_OBJECT) jManifest = JsonObject();
+                jManifest = JsonObjectSet(jManifest, "id", JsonString(sId));
+                jManifest = JsonObjectSet(jManifest, "name", JsonString(sName));
+                jManifest = JsonObjectSet(jManifest, "_resource", JsonString(sResource));
+                jManifest = JsonObjectSet(jManifest, "_enabled", JsonBool(FALSE));
+                jManifest = JsonObjectSet(jManifest, "_error", JsonString(sError));
+                jPackages = JsonArrayInsert(jPackages, jManifest);
+            }
             else if (nDuplicate >= 0)
             {
                 json jDuplicate = JsonArrayGet(jPackages, nDuplicate);
-                string sDuplicateResource = JsonGetString(JsonObjectGet(jDuplicate, "_resource"));
-                MEMORIA_ReportError(oPlayer, sDuplicateResource, "duplicate package id " + sId);
-                MEMORIA_ReportError(oPlayer, sResource, "duplicate package id " + sId);
                 jDuplicate = JsonObjectSet(jDuplicate, "_enabled", JsonBool(FALSE));
                 jDuplicate = JsonObjectSet(jDuplicate, "_error", JsonString("duplicate package id " + sId));
                 jPackages = JsonArraySet(jPackages, nDuplicate, jDuplicate);
+                jManifest = JsonObjectSet(jManifest, "_resource", JsonString(sResource));
+                jManifest = JsonObjectSet(jManifest, "_enabled", JsonBool(FALSE));
+                jManifest = JsonObjectSet(jManifest, "_error", JsonString("duplicate package id " + sId));
+                jPackages = JsonArrayInsert(jPackages, jManifest);
             }
             else
             {
@@ -148,15 +295,15 @@ json MEMORIA_DiscoverPackages(object oPlayer)
             {
                 json jRequirement = JsonArrayGet(jDependencies, nDependency);
                 string sRequiredId = JsonGetString(JsonObjectGet(jRequirement, "id"));
-                string sMinimum = JsonGetString(JsonObjectGet(jRequirement, "version"));
+                string sVersions = JsonGetString(JsonObjectGet(jRequirement, "versions"));
                 int nInstalledIndex = MEMORIA_FindPackage(jPackages, sRequiredId);
-                if (nInstalledIndex < 0) sDependencyError = "requires " + sRequiredId + " " + sMinimum + " or newer within major version " + GetSubString(sMinimum, 0, FindSubString(sMinimum, ".")) + ", but it is not installed";
+                if (nInstalledIndex < 0) sDependencyError = sRequiredId + " not installed, requires: " + sVersions;
                 else
                 {
                     json jInstalled = JsonArrayGet(jPackages, nInstalledIndex);
                     string sInstalledVersion = JsonGetString(JsonObjectGet(jInstalled, "version"));
-                    if (!JsonGetInt(JsonObjectGet(jInstalled, "_enabled"))) sDependencyError = "requires " + sRequiredId + ", but that package is disabled";
-                    else if (!MEMORIA_IsCompatibleVersion(sInstalledVersion, sMinimum)) sDependencyError = "requires " + sRequiredId + " " + sMinimum + " or newer within the same major version, but " + sInstalledVersion + " is installed";
+                    if (!JsonGetInt(JsonObjectGet(jInstalled, "_enabled"))) sDependencyError = sRequiredId + " " + sInstalledVersion + " disabled, requires: " + sVersions;
+                    else if (!MEMORIA_IsCompatibleVersion(sInstalledVersion, sVersions)) sDependencyError = sRequiredId + " " + sInstalledVersion + ", requires: " + sVersions;
                 }
             }
             if (sDependencyError != "")
@@ -164,11 +311,11 @@ json MEMORIA_DiscoverPackages(object oPlayer)
                 jPackage = JsonObjectSet(jPackage, "_enabled", JsonBool(FALSE));
                 jPackage = JsonObjectSet(jPackage, "_error", JsonString(sDependencyError));
                 jPackages = JsonArraySet(jPackages, nPackage, jPackage);
-                MEMORIA_ReportError(oPlayer, JsonGetString(JsonObjectGet(jPackage, "_resource")), sDependencyError);
             }
         }
     }
 
+    MEMORIA_ReportPackageErrors(oPlayer, jPackages);
     json jCompatible = JsonArray();
     int nIndex;
     for (nIndex = 0; nIndex < JsonGetLength(jPackages); nIndex++)

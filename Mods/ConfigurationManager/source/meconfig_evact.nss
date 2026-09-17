@@ -1,14 +1,14 @@
-#include "memoria_config"
+#include "meconfig"
 
 void main()
 {
     object oItem = GetItemActivated();
     object oPC = GetItemActivator();
-    if (GetTag(oItem) != MEMORIA_CONFIG_ITEM_TAG || !GetIsPC(oPC))
+    if (GetTag(oItem) != MECONFIG_ITEM_TAG || !GetIsPC(oPC))
         return;
     object oTarget = GetItemActivatedTarget();
     if (!GetIsObjectValid(oTarget) || oTarget == oPC)
-        MEMORIA_CONFIG_Open(oPC);
+        MECONFIG_Open(oPC);
     else
-        MEMORIA_CONFIG_RunDiagnostics(oPC, oTarget);
+        MECONFIG_RunDiagnostics(oPC, oTarget);
 }

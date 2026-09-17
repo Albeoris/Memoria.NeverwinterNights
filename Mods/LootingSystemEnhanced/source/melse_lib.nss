@@ -20,7 +20,7 @@
 #include "esi_lib"
 #include "rav_util"
 #include "memoria_locale"
-#include "memoria_i18n"
+#include "memoria_loc"
 
 const string MELSE_VERSION = "1.1";
 const string MELSE_VERSION_BUILD = "1010";
@@ -70,7 +70,7 @@ const float MELSE_DELAY_TREASURE_NOTIFY = 0.1f;
 const float MELSE_DELAY_TREASURE_TRACK = 0.1f;
 const float MELSE_DELAY_CORPSE_INITIALIZE = 1.0f;
 
-const string MELSE_I18N_PREFIX = "melse";
+const string MELSE_LOC_PREFIX = "melse";
 const string MELSE_LOCAL_LANGUAGE = "MELSE_LANGUAGE";
 
 const int MELSE_TEXT_ITEM_TAKEN = 1;
@@ -111,7 +111,7 @@ void MELSE_DetectLanguage(object oPC)
 
 string MELSE_GetLocalizedText(string sKey)
 {
-    return MEMORIA_I18N_GetText(MELSE_I18N_PREFIX, MELSE_GetLanguage(), sKey);
+    return MEMORIA_LOC_GetText(MELSE_LOC_PREFIX, MELSE_GetLanguage(), sKey);
 }
 
 const string MELSE_SCRIPT_EVENT_MODULE_ACQUIRED_ITEM = "melse_modacqit";

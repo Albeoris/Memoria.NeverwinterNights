@@ -11,11 +11,12 @@ ATTENTION: The mods are ready but are currently being debugged. I will release t
 | Package | Runtime dependency | Purpose |
 | --- | --- | --- |
 | MEMORIA | None | Owns `default.ncs`, shared `memoria_*.nss` helpers, manifest caching, dependency validation, and compatible heartbeat dispatch. |
-| ESI | MEMORIA 1.0.0+ within major 1 | Event Script Injector with persistent compatible `esi_uni_*` trampolines and a transient runtime hook registry. Always dispatched first. |
-| MEMORIA_CONFIG | MEMORIA 1.0.0+, ESI 1.0.0+ | Shared inventory tool and NUI Mod Configuration Manager. It uses Memoria's compatible manifest list. |
-| MELSE | MEMORIA 1.0.0+, ESI 1.0.0+, MEMORIA_CONFIG 1.0.0+ | Memoria edition of Looting System Enhanced, namespaced as `MELSE_*` and `melse_*`. |
-| MECM | MEMORIA 1.0.0+, ESI 1.0.0+, MEMORIA_CONFIG 1.0.0+ | Companion Manager. |
-| METACT | MEMORIA 1.0.0+, ESI 1.0.0+, MEMORIA_CONFIG 1.0.0+ | Tactics Architect. |
+| ESI | MEMORIA `[1.0.0,2.0.0)` | Event Script Injector with persistent compatible `esi_uni_*` trampolines and a transient runtime hook registry. Always dispatched first. |
+| MECONFIG | MEMORIA `[1.0.0,2.0.0)`, ESI `[2.0.0,3.0.0)` | Shared inventory tool and NUI Mod Configuration Manager. It uses Memoria's compatible manifest list. |
+| MEDT | MEMORIA `[1.0.0,2.0.0)`, ESI `[2.0.0,3.0.0)`, MECONFIG `[1.0.0,2.0.0)` | Debug Tools for examining and explicitly deleting inventory items and world objects. |
+| MELSE | MEMORIA `[1.0.0,2.0.0)`, ESI `[2.0.0,3.0.0)`, MECONFIG `[1.0.0,2.0.0)` | Memoria edition of Looting System Enhanced, namespaced as `MELSE_*` and `melse_*`. |
+| MECM | MEMORIA `[1.0.0,2.0.0)`, ESI `[2.0.0,3.0.0)`, MECONFIG `[1.0.0,2.0.0)` | Companion Manager. |
+| METACT | MEMORIA `[1.0.0,2.0.0)`, ESI `[2.0.0,3.0.0)`, MECONFIG `[1.0.0,2.0.0)` | Tactics Architect. |
 | Toolset | .NET 10 | Builds, validates, and packages all projects. |
 
 Memoria-owned mod identifiers and resources use package-specific `ME<PACKAGE>_` and `me<package>_` prefixes. MEMORIA uses `MEMORIA_*` and `memoria_*`; ESI retains its original compatibility names.
@@ -32,9 +33,9 @@ Requirements: Windows and the .NET 10 SDK. A local NWN installation is not requi
 dotnet build Memoria.NeverwinterNights.slnx -c Release
 ```
 
-The build compiles every entry-point script, converts UTI and ResJSON resources, verifies generated NCS files, and runs every MEMORIA_CONFIG and METACT NUI layout through the layout emulator.
+The build compiles every entry-point script, converts UTI and ResJSON resources, verifies generated NCS files, and runs every MECONFIG and METACT NUI layout through the layout emulator.
 
-Mod projects use wildcard items for `source`, `resources`, documentation, and layouts. MSBuild writes the evaluated inputs to `artifacts/inputs`; there are no hand-maintained file manifests. Each package owns one `<package>_memoria.json` manifest. `NwnRequiredPackage` provides compile-time includes without copying dependency files into the current build or publish output. Its `ModId` and `MinimumVersion` metadata are emitted into the package's schema-1 manifest together with the package `Version`. Runtime compatibility means the installed dependency is at least the minimum and has the same major version.
+Mod projects use wildcard items for `source`, `resources`, documentation, and layouts. MSBuild writes the evaluated inputs to `artifacts/inputs`; there are no hand-maintained file manifests. Each package owns one `<package>_memoria.json` manifest. `NwnRequiredPackage` provides compile-time includes without copying dependency files into the current build or publish output. Its `ModId` and NuGet-style `Versions` metadata are emitted into the package's schema-2 manifest together with the package `Version` and display name.
 
 NWScript sources and `.resjson` resources remain UTF-8 in the repository. The Toolset detects executable entry points, converts a temporary compiler copy to Windows-1251 when Cyrillic is present or Windows-1252 otherwise, and leaves the source unchanged. It also validates each `.resjson` file and emits a `.txt` resource in Windows-1251 when Cyrillic is present or Windows-1252 otherwise, matching the game-local encoding expected by `JsonParse`. Plain `.json` resources are validated as non-localized English ASCII and emitted as `.txt`.
 

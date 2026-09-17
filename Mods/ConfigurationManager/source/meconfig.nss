@@ -1,41 +1,41 @@
 #include "esi_lib"
 #include "memoria_loader"
 #include "memoria_locale"
-#include "memoria_i18n"
+#include "memoria_loc"
 
-const string MEMORIA_CONFIG_ITEM_RESREF = "memoria_config";
-const string MEMORIA_CONFIG_ITEM_TAG = "MEMORIA_CONFIGURATION_ITEM";
-const string MEMORIA_CONFIG_ACTIVATE_HANDLER = "meconfig_evact";
-const string MEMORIA_CONFIG_ESI_KEY = "meconfig.module.activate";
-const string MEMORIA_CONFIG_WINDOW_ID = "memoria_config";
-const string MEMORIA_CONFIG_I18N_PREFIX = "meconfig";
-const string MEMORIA_CONFIG_LOCAL_ITEM_SCHEMA = "MEMORIA_CONFIG_ITEM_SCHEMA";
-const string MEMORIA_CONFIG_LOCAL_SELECTED_ID = "MEMORIA_CONFIG_SELECTED_ID";
-const string MEMORIA_CONFIG_LOCAL_DIAGNOSTIC_TARGET = "MEMORIA_CONFIG_DIAGNOSTIC_TARGET";
-const string MEMORIA_CONFIG_LOCAL_LANGUAGE = "MEMORIA_CONFIG_LANGUAGE";
-const string MEMORIA_CONFIG_LOCAL_ITEM_LANGUAGE = "MEMORIA_CONFIG_ITEM_LANGUAGE";
-const string MEMORIA_CONFIG_LOCAL_ITEM_OBJECT = "MEMORIA_CONFIG_ITEM_OBJECT";
-const int MEMORIA_CONFIG_ITEM_SCHEMA = 1;
+const string MECONFIG_ITEM_RESREF = "meconfig";
+const string MECONFIG_ITEM_TAG = "MECONFIG_ITEM";
+const string MECONFIG_ACTIVATE_HANDLER = "meconfig_evact";
+const string MECONFIG_ESI_KEY = "meconfig.module.activate";
+const string MECONFIG_WINDOW_ID = "meconfig";
+const string MECONFIG_LOC_PREFIX = "meconfig";
+const string MECONFIG_LOCAL_ITEM_SCHEMA = "MECONFIG_ITEM_SCHEMA";
+const string MECONFIG_LOCAL_SELECTED_ID = "MECONFIG_SELECTED_ID";
+const string MECONFIG_LOCAL_DIAGNOSTIC_TARGET = "MECONFIG_DIAGNOSTIC_TARGET";
+const string MECONFIG_LOCAL_LANGUAGE = "MECONFIG_LANGUAGE";
+const string MECONFIG_LOCAL_ITEM_LANGUAGE = "MECONFIG_ITEM_LANGUAGE";
+const string MECONFIG_LOCAL_ITEM_OBJECT = "MECONFIG_ITEM_OBJECT";
+const int MECONFIG_ITEM_SCHEMA = 1;
 
-const string MEMORIA_CONFIG_TEXT_ITEM_NAME = "item_name";
-const string MEMORIA_CONFIG_TEXT_ITEM_DESCRIPTION = "item_description";
-const string MEMORIA_CONFIG_TEXT_WINDOW_TITLE = "window_title";
-const string MEMORIA_CONFIG_TEXT_NO_MODULES = "no_modules";
-const string MEMORIA_CONFIG_TEXT_SAVE = "save";
-const string MEMORIA_CONFIG_TEXT_CLOSE = "close";
-const string MEMORIA_CONFIG_TEXT_RANGE_ERROR = "range_error";
+const string MECONFIG_TEXT_ITEM_NAME = "item_name";
+const string MECONFIG_TEXT_ITEM_DESCRIPTION = "item_description";
+const string MECONFIG_TEXT_WINDOW_TITLE = "window_title";
+const string MECONFIG_TEXT_NO_MODULES = "no_modules";
+const string MECONFIG_TEXT_SAVE = "save";
+const string MECONFIG_TEXT_CLOSE = "close";
+const string MECONFIG_TEXT_RANGE_ERROR = "range_error";
 
-string MEMORIA_CONFIG_GetLanguage(object oPC)
+string MECONFIG_GetLanguage(object oPC)
 {
-    return MEMORIA_GetLanguage(oPC, MEMORIA_CONFIG_LOCAL_LANGUAGE);
+    return MEMORIA_GetLanguage(oPC, MECONFIG_LOCAL_LANGUAGE);
 }
 
-string MEMORIA_CONFIG_GetText(object oPC, string sKey)
+string MECONFIG_GetText(object oPC, string sKey)
 {
-    return MEMORIA_I18N_GetText(MEMORIA_CONFIG_I18N_PREFIX, MEMORIA_CONFIG_GetLanguage(oPC), sKey);
+    return MEMORIA_LOC_GetText(MECONFIG_LOC_PREFIX, MECONFIG_GetLanguage(oPC), sKey);
 }
 
-int MEMORIA_CONFIG_CompareNames(string sLeft, string sRight)
+int MECONFIG_CompareNames(string sLeft, string sRight)
 {
     string sAlphabet = " 0123456789abcdefghijklmnopqrstuvwxyz";
     sLeft = GetStringLowerCase(sLeft);
@@ -57,37 +57,37 @@ int MEMORIA_CONFIG_CompareNames(string sLeft, string sRight)
     return 0;
 }
 
-string MEMORIA_CONFIG_GetLocalizedValue(object oPC, json jModule, json jValue, string sFallbackField, string sKeyField)
+string MECONFIG_GetLocalizedValue(object oPC, json jModule, json jValue, string sFallbackField, string sKeyField)
 {
     string sFallback = JsonGetString(JsonObjectGet(jValue, sFallbackField));
     string sKey = JsonGetString(JsonObjectGet(jValue, sKeyField));
     string sPrefix = JsonGetString(JsonObjectGet(JsonObjectGet(jModule, "localization"), "prefix"));
     if (sKey == "" || sPrefix == "") return sFallback;
-    string sLocalized = MEMORIA_I18N_GetText(sPrefix, MEMORIA_CONFIG_GetLanguage(oPC), sKey);
+    string sLocalized = MEMORIA_LOC_GetText(sPrefix, MECONFIG_GetLanguage(oPC), sKey);
     return sLocalized == "" ? sFallback : sLocalized;
 }
 
-json MEMORIA_CONFIG_LocalizeModules(object oPC, json jModules)
+json MECONFIG_LocalizeModules(object oPC, json jModules)
 {
     json jLocalized = JsonArray();
     int nIndex;
     for (nIndex = 0; nIndex < JsonGetLength(jModules); nIndex++)
     {
         json jModule = JsonArrayGet(jModules, nIndex);
-        jModule = JsonObjectSet(jModule, "name", JsonString(MEMORIA_CONFIG_GetLocalizedValue(oPC, jModule, jModule, "name", "name_key")));
+        jModule = JsonObjectSet(jModule, "name", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jModule, "name", "name_key")));
         json jOptions = JsonObjectGet(jModule, "options");
         int nOption;
         for (nOption = 0; nOption < JsonGetLength(jOptions); nOption++)
         {
             json jOption = JsonArrayGet(jOptions, nOption);
-            jOption = JsonObjectSet(jOption, "label", JsonString(MEMORIA_CONFIG_GetLocalizedValue(oPC, jModule, jOption, "label", "label_key")));
+            jOption = JsonObjectSet(jOption, "label", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jOption, "label", "label_key")));
             jOptions = JsonArraySet(jOptions, nOption, jOption);
         }
         jModule = JsonObjectSet(jModule, "options", jOptions);
         int nInsert = JsonGetLength(jLocalized);
         string sName = JsonGetString(JsonObjectGet(jModule, "name"));
         jLocalized = JsonArrayInsert(jLocalized, jModule);
-        while (nInsert > 0 && MEMORIA_CONFIG_CompareNames(sName, JsonGetString(JsonObjectGet(JsonArrayGet(jLocalized, nInsert - 1), "name"))) < 0)
+        while (nInsert > 0 && MECONFIG_CompareNames(sName, JsonGetString(JsonObjectGet(JsonArrayGet(jLocalized, nInsert - 1), "name"))) < 0)
         {
             jLocalized = JsonArraySet(jLocalized, nInsert, JsonArrayGet(jLocalized, nInsert - 1));
             nInsert--;
@@ -97,7 +97,7 @@ json MEMORIA_CONFIG_LocalizeModules(object oPC, json jModules)
     return jLocalized;
 }
 
-json MEMORIA_CONFIG_LoadModules(object oPC)
+json MECONFIG_LoadModules(object oPC)
 {
     json jModules = JsonArray();
     json jPackages = MEMORIA_GetPackages(oPC);
@@ -113,7 +113,7 @@ json MEMORIA_CONFIG_LoadModules(object oPC)
             int nInsert = JsonGetLength(jModules);
             string sName = JsonGetString(JsonObjectGet(jModule, "name"));
             jModules = JsonArrayInsert(jModules, jModule);
-            while (nInsert > 0 && MEMORIA_CONFIG_CompareNames(sName, JsonGetString(JsonObjectGet(JsonArrayGet(jModules, nInsert - 1), "name"))) < 0)
+            while (nInsert > 0 && MECONFIG_CompareNames(sName, JsonGetString(JsonObjectGet(JsonArrayGet(jModules, nInsert - 1), "name"))) < 0)
             {
                 jModules = JsonArraySet(jModules, nInsert, JsonArrayGet(jModules, nInsert - 1));
                 nInsert--;
@@ -124,14 +124,14 @@ json MEMORIA_CONFIG_LoadModules(object oPC)
     return jModules;
 }
 
-json MEMORIA_CONFIG_GetModules(object oPC)
+json MECONFIG_GetModules(object oPC)
 {
-    return MEMORIA_CONFIG_LocalizeModules(oPC, MEMORIA_CONFIG_LoadModules(oPC));
+    return MECONFIG_LocalizeModules(oPC, MECONFIG_LoadModules(oPC));
 }
 
-json MEMORIA_CONFIG_GetSelectedModule(object oPC, json jModules)
+json MECONFIG_GetSelectedModule(object oPC, json jModules)
 {
-    string sSelectedId = GetLocalString(oPC, MEMORIA_CONFIG_LOCAL_SELECTED_ID);
+    string sSelectedId = GetLocalString(oPC, MECONFIG_LOCAL_SELECTED_ID);
     int nIndex;
     for (nIndex = 0; nIndex < JsonGetLength(jModules); nIndex++)
     {
@@ -142,36 +142,36 @@ json MEMORIA_CONFIG_GetSelectedModule(object oPC, json jModules)
     if (JsonGetLength(jModules) == 0)
         return JsonObject();
     json jModule = JsonArrayGet(jModules, 0);
-    SetLocalString(oPC, MEMORIA_CONFIG_LOCAL_SELECTED_ID, JsonGetString(JsonObjectGet(jModule, "id")));
+    SetLocalString(oPC, MECONFIG_LOCAL_SELECTED_ID, JsonGetString(JsonObjectGet(jModule, "id")));
     return jModule;
 }
 
-string MEMORIA_CONFIG_OptionBind(int nIndex)
+string MECONFIG_OptionBind(int nIndex)
 {
     return "option_" + IntToString(nIndex);
 }
 
-object MEMORIA_CONFIG_GetOptionOwner(json jOption, object oPC)
+object MECONFIG_GetOptionOwner(json jOption, object oPC)
 {
     if (JsonGetString(JsonObjectGet(jOption, "scope")) == "module")
         return GetModule();
     return oPC;
 }
 
-json MEMORIA_CONFIG_BuildModuleList()
+json MECONFIG_BuildModuleList()
 {
     json jTemplate = JsonArray();
     jTemplate = JsonArrayInsert(jTemplate, NuiListTemplateCell(NuiId(NuiButtonSelect(NuiBind("module_names"), NuiBind("module_selected")), "module_select"), 0.0f, TRUE));
     return NuiList(jTemplate, NuiBind("module_count"), 32.0f, TRUE, NUI_SCROLLBARS_Y);
 }
 
-json MEMORIA_CONFIG_BuildOptions(object oPC, json jModule)
+json MECONFIG_BuildOptions(object oPC, json jModule)
 {
     json jColumn = JsonArray();
     string sName = JsonGetString(JsonObjectGet(jModule, "name"));
     if (sName == "")
     {
-        jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiLabel(JsonString(MEMORIA_CONFIG_GetText(oPC, MEMORIA_CONFIG_TEXT_NO_MODULES)), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), 30.0f));
+        jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiLabel(JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_NO_MODULES)), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), 30.0f));
         return NuiCol(jColumn);
     }
     jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiStyleForegroundColor(NuiLabel(JsonString(sName), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), NuiColor(225, 190, 95)), 30.0f));
@@ -182,7 +182,7 @@ json MEMORIA_CONFIG_BuildOptions(object oPC, json jModule)
         json jOption = JsonArrayGet(jOptions, nIndex);
         string sType = JsonGetString(JsonObjectGet(jOption, "type"));
         string sLabel = JsonGetString(JsonObjectGet(jOption, "label"));
-        string sBind = MEMORIA_CONFIG_OptionBind(nIndex);
+        string sBind = MECONFIG_OptionBind(nIndex);
         if (sType == "bool")
             jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiCheck(JsonString(sLabel), NuiBind(sBind)), 28.0f));
         else if (sType == "int" || sType == "float")
@@ -196,22 +196,22 @@ json MEMORIA_CONFIG_BuildOptions(object oPC, json jModule)
             jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiId(NuiButton(JsonString(sLabel)), "action_" + IntToString(nIndex)), 32.0f));
     }
     json jButtons = JsonArray();
-    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MEMORIA_CONFIG_GetText(oPC, MEMORIA_CONFIG_TEXT_SAVE))), "save"), 130.0f));
+    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_SAVE))), "save"), 130.0f));
     jButtons = JsonArrayInsert(jButtons, NuiSpacer());
-    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MEMORIA_CONFIG_GetText(oPC, MEMORIA_CONFIG_TEXT_CLOSE))), "close"), 130.0f));
+    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_CLOSE))), "close"), 130.0f));
     jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiRow(jButtons), 36.0f));
     return NuiCol(jColumn);
 }
 
-json MEMORIA_CONFIG_BuildWindow(object oPC, json jModule)
+json MECONFIG_BuildWindow(object oPC, json jModule)
 {
     json jRow = JsonArray();
-    jRow = JsonArrayInsert(jRow, NuiWidth(NuiGroup(MEMORIA_CONFIG_BuildModuleList(), TRUE, NUI_SCROLLBARS_NONE), 250.0f));
-    jRow = JsonArrayInsert(jRow, NuiWidth(NuiGroup(MEMORIA_CONFIG_BuildOptions(oPC, jModule), TRUE, NUI_SCROLLBARS_Y), 540.0f));
-    return NuiWindow(NuiRow(jRow), JsonString(MEMORIA_CONFIG_GetText(oPC, MEMORIA_CONFIG_TEXT_WINDOW_TITLE)), NuiRect(-1.0f, -1.0f, 830.0f, 500.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
+    jRow = JsonArrayInsert(jRow, NuiWidth(NuiGroup(MECONFIG_BuildModuleList(), TRUE, NUI_SCROLLBARS_NONE), 250.0f));
+    jRow = JsonArrayInsert(jRow, NuiWidth(NuiGroup(MECONFIG_BuildOptions(oPC, jModule), TRUE, NUI_SCROLLBARS_Y), 540.0f));
+    return NuiWindow(NuiRow(jRow), JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_WINDOW_TITLE)), NuiRect(-1.0f, -1.0f, 830.0f, 500.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
 }
 
-void MEMORIA_CONFIG_SetOptionBinds(object oPC, int nToken, json jModule)
+void MECONFIG_SetOptionBinds(object oPC, int nToken, json jModule)
 {
     json jOptions = JsonObjectGet(jModule, "options");
     int nIndex;
@@ -219,23 +219,23 @@ void MEMORIA_CONFIG_SetOptionBinds(object oPC, int nToken, json jModule)
     {
         json jOption = JsonArrayGet(jOptions, nIndex);
         string sType = JsonGetString(JsonObjectGet(jOption, "type"));
-        object oOwner = MEMORIA_CONFIG_GetOptionOwner(jOption, oPC);
+        object oOwner = MECONFIG_GetOptionOwner(jOption, oPC);
         string sLocal = JsonGetString(JsonObjectGet(jOption, "local"));
-        string sBind = MEMORIA_CONFIG_OptionBind(nIndex);
+        string sBind = MECONFIG_OptionBind(nIndex);
         if (sType == "bool") NuiSetBind(oPC, nToken, sBind, JsonBool(GetLocalInt(oOwner, sLocal)));
         else if (sType == "int") NuiSetBind(oPC, nToken, sBind, JsonString(IntToString(GetLocalInt(oOwner, sLocal))));
         else if (sType == "float") NuiSetBind(oPC, nToken, sBind, JsonString(FloatToString(GetLocalFloat(oOwner, sLocal), 0, 1)));
     }
 }
 
-void MEMORIA_CONFIG_Open(object oPC)
+void MECONFIG_Open(object oPC)
 {
-    json jModules = MEMORIA_CONFIG_GetModules(oPC);
-    json jModule = MEMORIA_CONFIG_GetSelectedModule(oPC, jModules);
-    int nOldToken = NuiFindWindow(oPC, MEMORIA_CONFIG_WINDOW_ID);
+    json jModules = MECONFIG_GetModules(oPC);
+    json jModule = MECONFIG_GetSelectedModule(oPC, jModules);
+    int nOldToken = NuiFindWindow(oPC, MECONFIG_WINDOW_ID);
     if (nOldToken > 0)
         NuiDestroy(oPC, nOldToken);
-    int nToken = NuiCreate(oPC, MEMORIA_CONFIG_BuildWindow(oPC, jModule), MEMORIA_CONFIG_WINDOW_ID, "meconfig_nuievt");
+    int nToken = NuiCreate(oPC, MECONFIG_BuildWindow(oPC, jModule), MECONFIG_WINDOW_ID, "meconfig_nuievt");
     if (nToken <= 0)
         return;
     json jNames = JsonArray();
@@ -250,18 +250,18 @@ void MEMORIA_CONFIG_Open(object oPC)
     NuiSetBind(oPC, nToken, "module_names", jNames);
     NuiSetBind(oPC, nToken, "module_selected", jSelected);
     NuiSetBind(oPC, nToken, "module_count", JsonInt(JsonGetLength(jModules)));
-    MEMORIA_CONFIG_SetOptionBinds(oPC, nToken, jModule);
+    MECONFIG_SetOptionBinds(oPC, nToken, jModule);
 }
 
-int MEMORIA_CONFIG_IsValidNumber(string sValue, string sType)
+int MECONFIG_IsValidNumber(string sValue, string sType)
 {
     string sPattern = sType == "int" ? "^[+-]?[0-9]+$" : "^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$";
     return JsonGetLength(RegExpMatch(sPattern, sValue)) > 0;
 }
 
-int MEMORIA_CONFIG_Save(object oPC, int nToken)
+int MECONFIG_Save(object oPC, int nToken)
 {
-    json jModule = MEMORIA_CONFIG_GetSelectedModule(oPC, MEMORIA_CONFIG_GetModules(oPC));
+    json jModule = MECONFIG_GetSelectedModule(oPC, MECONFIG_GetModules(oPC));
     json jOptions = JsonObjectGet(jModule, "options");
     int nIndex;
     for (nIndex = 0; nIndex < JsonGetLength(jOptions); nIndex++)
@@ -270,13 +270,13 @@ int MEMORIA_CONFIG_Save(object oPC, int nToken)
         string sType = JsonGetString(JsonObjectGet(jOption, "type"));
         if (sType != "int" && sType != "float")
             continue;
-        string sValue = RegExpReplace(",", JsonGetString(NuiGetBind(oPC, nToken, MEMORIA_CONFIG_OptionBind(nIndex))), ".");
+        string sValue = RegExpReplace(",", JsonGetString(NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex))), ".");
         float fValue = StringToFloat(sValue);
         float fMinimum = JsonGetFloat(JsonObjectGet(jOption, "minimum"));
         float fMaximum = JsonGetFloat(JsonObjectGet(jOption, "maximum"));
-        if (!MEMORIA_CONFIG_IsValidNumber(sValue, sType) || fValue < fMinimum || fValue > fMaximum)
+        if (!MECONFIG_IsValidNumber(sValue, sType) || fValue < fMinimum || fValue > fMaximum)
         {
-            SendMessageToPC(oPC, JsonGetString(JsonObjectGet(jOption, "label")) + " " + MEMORIA_CONFIG_GetText(oPC, MEMORIA_CONFIG_TEXT_RANGE_ERROR) + " " + FloatToString(fMinimum, 0, 1) + " - " + FloatToString(fMaximum, 0, 1) + ".");
+            SendMessageToPC(oPC, JsonGetString(JsonObjectGet(jOption, "label")) + " " + MECONFIG_GetText(oPC, MECONFIG_TEXT_RANGE_ERROR) + " " + FloatToString(fMinimum, 0, 1) + " - " + FloatToString(fMaximum, 0, 1) + ".");
             return FALSE;
         }
     }
@@ -284,10 +284,10 @@ int MEMORIA_CONFIG_Save(object oPC, int nToken)
     {
         json jOption = JsonArrayGet(jOptions, nIndex);
         string sType = JsonGetString(JsonObjectGet(jOption, "type"));
-        object oOwner = MEMORIA_CONFIG_GetOptionOwner(jOption, oPC);
+        object oOwner = MECONFIG_GetOptionOwner(jOption, oPC);
         string sLocal = JsonGetString(JsonObjectGet(jOption, "local"));
-        string sValue = RegExpReplace(",", JsonGetString(NuiGetBind(oPC, nToken, MEMORIA_CONFIG_OptionBind(nIndex))), ".");
-        if (sType == "bool") SetLocalInt(oOwner, sLocal, JsonGetInt(NuiGetBind(oPC, nToken, MEMORIA_CONFIG_OptionBind(nIndex))));
+        string sValue = RegExpReplace(",", JsonGetString(NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex))), ".");
+        if (sType == "bool") SetLocalInt(oOwner, sLocal, JsonGetInt(NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex))));
         else if (sType == "int") SetLocalInt(oOwner, sLocal, StringToInt(sValue));
         else if (sType == "float") SetLocalFloat(oOwner, sLocal, StringToFloat(sValue));
     }
@@ -297,9 +297,9 @@ int MEMORIA_CONFIG_Save(object oPC, int nToken)
     return TRUE;
 }
 
-void MEMORIA_CONFIG_RunAction(object oPC, int nActionIndex)
+void MECONFIG_RunAction(object oPC, int nActionIndex)
 {
-    json jModule = MEMORIA_CONFIG_GetSelectedModule(oPC, MEMORIA_CONFIG_GetModules(oPC));
+    json jModule = MECONFIG_GetSelectedModule(oPC, MECONFIG_GetModules(oPC));
     json jOptions = JsonObjectGet(jModule, "options");
     if (nActionIndex < 0 || nActionIndex >= JsonGetLength(jOptions))
         return;
@@ -308,10 +308,10 @@ void MEMORIA_CONFIG_RunAction(object oPC, int nActionIndex)
         ExecuteScript(sScript, oPC);
 }
 
-void MEMORIA_CONFIG_RunDiagnostics(object oPC, object oTarget)
+void MECONFIG_RunDiagnostics(object oPC, object oTarget)
 {
-    SetLocalObject(oPC, MEMORIA_CONFIG_LOCAL_DIAGNOSTIC_TARGET, oTarget);
-    json jModules = MEMORIA_CONFIG_GetModules(oPC);
+    SetLocalObject(oPC, MECONFIG_LOCAL_DIAGNOSTIC_TARGET, oTarget);
+    json jModules = MECONFIG_GetModules(oPC);
     int nIndex;
     for (nIndex = 0; nIndex < JsonGetLength(jModules); nIndex++)
     {
@@ -319,56 +319,56 @@ void MEMORIA_CONFIG_RunDiagnostics(object oPC, object oTarget)
         if (sDiagnostic != "")
             ExecuteScript(sDiagnostic, oPC);
     }
-    DeleteLocalObject(oPC, MEMORIA_CONFIG_LOCAL_DIAGNOSTIC_TARGET);
+    DeleteLocalObject(oPC, MECONFIG_LOCAL_DIAGNOSTIC_TARGET);
 }
 
-void MEMORIA_CONFIG_LocalizeItem(object oItem, object oPC)
+void MECONFIG_LocalizeItem(object oItem, object oPC)
 {
-    SetName(oItem, MEMORIA_CONFIG_GetText(oPC, MEMORIA_CONFIG_TEXT_ITEM_NAME));
-    string sDescription = MEMORIA_CONFIG_GetText(oPC, MEMORIA_CONFIG_TEXT_ITEM_DESCRIPTION);
+    SetName(oItem, MECONFIG_GetText(oPC, MECONFIG_TEXT_ITEM_NAME));
+    string sDescription = MECONFIG_GetText(oPC, MECONFIG_TEXT_ITEM_DESCRIPTION);
     SetDescription(oItem, sDescription, TRUE);
     SetDescription(oItem, sDescription, FALSE);
-    SetLocalString(oItem, MEMORIA_CONFIG_LOCAL_ITEM_LANGUAGE, MEMORIA_CONFIG_GetLanguage(oPC));
+    SetLocalString(oItem, MECONFIG_LOCAL_ITEM_LANGUAGE, MECONFIG_GetLanguage(oPC));
 }
 
-void MEMORIA_CONFIG_EnsureItem(object oPC)
+void MECONFIG_EnsureItem(object oPC)
 {
-    object oItem = GetLocalObject(oPC, MEMORIA_CONFIG_LOCAL_ITEM_OBJECT);
-    int bCached = GetIsObjectValid(oItem) && GetItemPossessor(oItem) == oPC && GetTag(oItem) == MEMORIA_CONFIG_ITEM_TAG;
-    if (!bCached) oItem = GetItemPossessedBy(oPC, MEMORIA_CONFIG_ITEM_TAG);
-    if (GetIsObjectValid(oItem) && GetLocalInt(oItem, MEMORIA_CONFIG_LOCAL_ITEM_SCHEMA) == MEMORIA_CONFIG_ITEM_SCHEMA)
+    object oItem = GetLocalObject(oPC, MECONFIG_LOCAL_ITEM_OBJECT);
+    int bCached = GetIsObjectValid(oItem) && GetItemPossessor(oItem) == oPC && GetTag(oItem) == MECONFIG_ITEM_TAG;
+    if (!bCached) oItem = GetItemPossessedBy(oPC, MECONFIG_ITEM_TAG);
+    if (GetIsObjectValid(oItem) && GetLocalInt(oItem, MECONFIG_LOCAL_ITEM_SCHEMA) == MECONFIG_ITEM_SCHEMA)
     {
-        if (GetLocalString(oItem, MEMORIA_CONFIG_LOCAL_ITEM_LANGUAGE) != MEMORIA_CONFIG_GetLanguage(oPC)) MEMORIA_CONFIG_LocalizeItem(oItem, oPC);
-        if (!bCached) SetLocalObject(oPC, MEMORIA_CONFIG_LOCAL_ITEM_OBJECT, oItem);
+        if (GetLocalString(oItem, MECONFIG_LOCAL_ITEM_LANGUAGE) != MECONFIG_GetLanguage(oPC)) MECONFIG_LocalizeItem(oItem, oPC);
+        if (!bCached) SetLocalObject(oPC, MECONFIG_LOCAL_ITEM_OBJECT, oItem);
         return;
     }
-    if (GetIsObjectValid(oItem) && GetLocalInt(oItem, MEMORIA_CONFIG_LOCAL_ITEM_SCHEMA) != MEMORIA_CONFIG_ITEM_SCHEMA)
+    if (GetIsObjectValid(oItem) && GetLocalInt(oItem, MECONFIG_LOCAL_ITEM_SCHEMA) != MECONFIG_ITEM_SCHEMA)
     {
         DestroyObject(oItem);
         oItem = OBJECT_INVALID;
     }
     if (!GetIsObjectValid(oItem))
-        oItem = CreateItemOnObject(MEMORIA_CONFIG_ITEM_RESREF, oPC, 1, MEMORIA_CONFIG_ITEM_TAG);
+        oItem = CreateItemOnObject(MECONFIG_ITEM_RESREF, oPC, 1, MECONFIG_ITEM_TAG);
     if (GetIsObjectValid(oItem))
     {
-        SetLocalInt(oItem, MEMORIA_CONFIG_LOCAL_ITEM_SCHEMA, MEMORIA_CONFIG_ITEM_SCHEMA);
+        SetLocalInt(oItem, MECONFIG_LOCAL_ITEM_SCHEMA, MECONFIG_ITEM_SCHEMA);
         SetPlotFlag(oItem, TRUE);
         SetItemCursedFlag(oItem, TRUE);
-        if (GetLocalString(oItem, MEMORIA_CONFIG_LOCAL_ITEM_LANGUAGE) != MEMORIA_CONFIG_GetLanguage(oPC)) MEMORIA_CONFIG_LocalizeItem(oItem, oPC);
-        SetLocalObject(oPC, MEMORIA_CONFIG_LOCAL_ITEM_OBJECT, oItem);
+        if (GetLocalString(oItem, MECONFIG_LOCAL_ITEM_LANGUAGE) != MECONFIG_GetLanguage(oPC)) MECONFIG_LocalizeItem(oItem, oPC);
+        SetLocalObject(oPC, MECONFIG_LOCAL_ITEM_OBJECT, oItem);
     }
 }
 
-void MEMORIA_CONFIG_InstallHook()
+void MECONFIG_InstallHook()
 {
     object oModule = GetModule();
-    ESI_InjectToObject(oModule, MEMORIA_CONFIG_ESI_KEY, EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, MEMORIA_CONFIG_ACTIVATE_HANDLER, ESI_INJECTION_PLACEMENT_FIRST);
+    ESI_InjectToObject(oModule, MECONFIG_ESI_KEY, EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, MECONFIG_ACTIVATE_HANDLER, ESI_INJECTION_PLACEMENT_FIRST);
 }
 
-void MEMORIA_CONFIG_Heartbeat(object oPC)
+void MECONFIG_Heartbeat(object oPC)
 {
     if (!GetIsPC(oPC) || GetIsDM(oPC) || GetIsObjectValid(GetMaster(oPC)))
         return;
-    MEMORIA_CONFIG_InstallHook();
-    MEMORIA_CONFIG_EnsureItem(oPC);
+    MECONFIG_InstallHook();
+    MECONFIG_EnsureItem(oPC);
 }

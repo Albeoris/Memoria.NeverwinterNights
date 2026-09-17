@@ -1,7 +1,8 @@
 <Solution>
   <Folder Name="/Mods/">
     <Project Path="Mods/CompanionManager/CompanionManager.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="CompanionManager" />
-    <Project Path="Mods/Configuration/Configuration.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="Configuration" />
+    <Project Path="Mods/ConfigurationManager/ConfigurationManager.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="ConfigurationManager" />
+    <Project Path="Mods/DebugTools/DebugTools.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="DebugTools" />
     <Project Path="Mods/EventScriptInjector/EventScriptInjector.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="EventScriptInjector" />
     <Project Path="Mods/Memoria/Memoria.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="Memoria" />
     <Project Path="Mods/LootingSystemEnhanced/LootingSystemEnhanced.proj" Type="13B669BE-BB05-4DDF-9536-439F39A36129" DisplayName="LootingSystemEnhanced" />

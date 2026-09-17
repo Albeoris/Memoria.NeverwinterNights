@@ -13,7 +13,7 @@ MELSE automates looting and adds configurable lootable corpses, container handli
 
 ## Installation
 
-Remove any legacy LSE installation, then install Memoria, ESI, MEMORIA_CONFIG, and MELSE by copying each package's `override` contents into the NWN user `override` directory.
+Remove any legacy LSE installation, then install Memoria, ESI, MECONFIG, and MELSE by copying each package's `override` contents into the NWN user `override` directory.
 
 Open **Memoria Configuration** from the inventory and select Looting System Enhanced to change its options.
 

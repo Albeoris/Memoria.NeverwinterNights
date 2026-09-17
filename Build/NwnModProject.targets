@@ -33,6 +33,7 @@
       <_NwnInput Remove="@(_NwnInput)" />
       <_NwnInput Include="project-directory|$(MSBuildProjectDirectory)" />
       <_NwnInput Include="mod-id|$(ModId)" />
+      <_NwnInput Include="package-display-name|$(PackageDisplayName)" />
       <_NwnInput Include="package-version|$(Version)" />
       <_NwnInput Include="@(NwnSource->'source|%(FullPath)')" />
       <_NwnInput Include="@(NwnResource->'resource|%(FullPath)')" />
@@ -41,7 +42,7 @@
       <_NwnInput Include="@(NwnIncludeDirectory->'include|%(FullPath)')" />
       <_NwnInput Include="@(NwnRequiredPackage->'include|%(RootDir)%(Directory)source')" />
       <_NwnInput Include="@(PackageDocument->'document|%(FullPath)')" />
-      <_NwnInput Include="@(NwnRequiredPackage->'dependency|%(ModId)|%(MinimumVersion)|%(PackageName)|%(FullPath)')" />
+      <_NwnInput Include="@(NwnRequiredPackage->'dependency|%(ModId)|%(Versions)|%(PackageName)|%(FullPath)')" />
       <_NwnInput Include="workshop-app-id|$(WorkshopAppId)" />
       <_NwnInput Include="workshop-published-file-id|$(WorkshopPublishedFileId)" Condition="'$(WorkshopPublishedFileId)' != ''" />
       <_NwnInput Include="workshop-visibility|$(WorkshopVisibility)" />

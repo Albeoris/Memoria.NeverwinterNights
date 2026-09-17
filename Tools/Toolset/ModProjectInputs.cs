@@ -1,9 +1,12 @@
+using System.Xml.Linq;
+
 namespace Memoria.NeverwinterNights.Toolset;
 
 internal sealed class ModProjectInputs
 {
     public string? ProjectDirectory { get; private set; }
     public string? ModId { get; private set; }
+    public string? PackageDisplayName { get; private set; }
     public string? PackageVersion { get; private set; }
     public List<string> Sources { get; } = [];
     public List<string> Resources { get; } = [];
@@ -35,6 +38,7 @@ internal sealed class ModProjectInputs
             {
                 case "project-directory": inputs.ProjectDirectory = SetOnce(inputs.ProjectDirectory, Path.GetFullPath(value), kind); break;
                 case "mod-id": inputs.ModId = SetOnce(inputs.ModId, value, kind); break;
+                case "package-display-name": inputs.PackageDisplayName = SetOnce(inputs.PackageDisplayName, value, kind); break;
                 case "package-version": inputs.PackageVersion = SetOnce(inputs.PackageVersion, value, kind); break;
                 case "source": inputs.Sources.Add(Path.GetFullPath(value)); break;
                 case "resource": inputs.Resources.Add(Path.GetFullPath(value)); break;
@@ -56,6 +60,7 @@ internal sealed class ModProjectInputs
 
         if (inputs.ProjectDirectory is null) throw new InvalidDataException("Missing project-directory mod input.");
         if (string.IsNullOrWhiteSpace(inputs.ModId)) throw new InvalidDataException("Missing mod-id mod input.");
+        if (string.IsNullOrWhiteSpace(inputs.PackageDisplayName)) throw new InvalidDataException("Missing package-display-name mod input.");
         if (inputs.PackageVersion is null || !SemanticVersion.IsValid(inputs.PackageVersion)) throw new InvalidDataException($"Package version must be SemVer: {inputs.PackageVersion}");
         string? duplicateDependency = inputs.Dependencies.GroupBy(dependency => dependency.ModId, StringComparer.OrdinalIgnoreCase).FirstOrDefault(group => group.Count() > 1)?.Key;
         if (duplicateDependency is not null) throw new InvalidDataException($"Duplicate runtime dependency: {duplicateDependency}");
@@ -70,15 +75,27 @@ internal sealed class ModProjectInputs
     }
 }
 
-internal sealed record PackageDependency(string ModId, string MinimumVersion, string DisplayName, string ProjectPath)
+internal sealed record PackageDependency(string ModId, string Versions, string DisplayName, string ProjectPath)
 {
     public static PackageDependency Parse(string value)
     {
         string[] fields = value.Split('|', 4);
         if (fields.Length != 4 || fields.Any(string.IsNullOrWhiteSpace)) throw new InvalidDataException($"Invalid dependency mod input: {value}");
-        if (!SemanticVersion.IsRelease(fields[1])) throw new InvalidDataException($"Dependency minimum version must use X.Y.Z SemVer notation: {fields[1]}");
+        DependencyVersionRange versions;
+        try { versions = DependencyVersionRange.Parse(fields[1]); }
+        catch (FormatException exception) { throw new InvalidDataException(exception.Message, exception); }
         string projectPath = Path.GetFullPath(fields[3]);
         if (!File.Exists(projectPath)) throw new FileNotFoundException("Dependency project was not found.", projectPath);
+        ValidateVersions(fields[0], versions, projectPath);
         return new PackageDependency(fields[0], fields[1], fields[2], projectPath);
+    }
+
+    private static void ValidateVersions(string modId, DependencyVersionRange versions, string projectPath)
+    {
+        XDocument project = XDocument.Load(projectPath, LoadOptions.SetLineInfo);
+        string? currentVersionText = project.Descendants().Where(element => element.Name.LocalName == "Version" && element.Attribute("Condition") is null && element.Ancestors().All(ancestor => ancestor.Attribute("Condition") is null)).Select(element => element.Value.Trim()).LastOrDefault(value => value.Length > 0);
+        if (currentVersionText is null || !SemanticVersion.IsRelease(currentVersionText)) throw new InvalidDataException($"Dependency project {projectPath} must declare an unconditional release Version in X.Y.Z notation.");
+        Version currentVersion = SemanticVersion.ParseRelease(currentVersionText);
+        if (!versions.Contains(currentVersion)) throw new InvalidDataException($"Dependency {modId} versions {versions.Text} do not include its current package version {currentVersionText}: {projectPath}");
     }
 }

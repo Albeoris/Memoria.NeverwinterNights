@@ -2,7 +2,6 @@
 
 #include "memoria_loader"
 
-const string MEMORIA_BOOT_DISCOVERY_LOCAL = "MEMORIA_BOOT_DISCOVERY";
 const string MEMORIA_BOOT_DISPATCH_CYCLE_LOCAL = "MEMORIA_BOOT_DISPATCH_CYCLE";
 const string MEMORIA_BOOT_DISPATCH_DONE_LOCAL = "MEMORIA_BOOT_DISPATCH_DONE_";
 const string MEMORIA_BOOT_DISPATCH_FAILURE_LOCAL = "MEMORIA_BOOT_DISPATCH_FAILURE_";
@@ -78,7 +77,6 @@ void main()
     json jEntries = MEMORIA_BOOT_GetEntries(oPlayer);
     int nCycle = GetLocalInt(oPlayer, MEMORIA_BOOT_DISPATCH_CYCLE_LOCAL) + 1;
     SetLocalInt(oPlayer, MEMORIA_BOOT_DISPATCH_CYCLE_LOCAL, nCycle);
-    string sDetected = "";
     int nIndex;
     for (nIndex = 0; nIndex < JsonGetLength(jEntries); nIndex++)
     {
@@ -86,11 +84,5 @@ void main()
         string sHeartbeat = JsonGetString(JsonObjectGet(jEntry, "heartbeat"));
         string sId = JsonGetString(JsonObjectGet(jEntry, "id"));
         DelayCommand(IntToFloat(nIndex) * 0.01f, MEMORIA_BOOT_Dispatch(oPlayer, sId, sHeartbeat, nCycle, nIndex));
-        sDetected = sDetected == "" ? sId : sDetected + "," + sId;
-    }
-    if (GetLocalString(oPlayer, MEMORIA_BOOT_DISCOVERY_LOCAL) != sDetected)
-    {
-        SetLocalString(oPlayer, MEMORIA_BOOT_DISCOVERY_LOCAL, sDetected);
-        SendMessageToPC(oPlayer, "Memoria heartbeat modules: " + (sDetected == "" ? "none" : sDetected) + ".");
     }
 }

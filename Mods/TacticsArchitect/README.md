@@ -14,7 +14,7 @@ METACT adds a persistent Dragon Age-style behavior editor for the player charact
 
 ## Installation
 
-Install Memoria, ESI, MEMORIA_CONFIG, and then METACT by copying each package's `override` contents into the NWN user `override` directory.
+Install Memoria, ESI, MECONFIG, and then METACT by copying each package's `override` contents into the NWN user `override` directory.
 
 Open **Memoria Configuration** from the inventory, select Tactics Architect, and choose **Open tactics editor**.
 

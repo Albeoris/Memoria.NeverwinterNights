@@ -1,21 +1,20 @@
 <Project DefaultTargets="Build">
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
-        <ModId>MECM</ModId>
-        <Version>1.2.7</Version>
-        <PackageId>mecm</PackageId>
-        <PackageDisplayName>Memoria: Companion Manager</PackageDisplayName>
+        <ModId>MEDT</ModId>
+        <Version>2.0.0</Version>
+        <PackageId>medt</PackageId>
+        <PackageDisplayName>Memoria: Debug Tools</PackageDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
-        <!-- Set this to the ID of the existing Workshop item. Leaving it empty prevents accidental item creation. -->
         <WorkshopPublishedFileId />
-        <!-- SteamCMD cannot apply tags; keep this value in sync with the category selected on the Workshop page. -->
         <WorkshopTags>override;singleplayer;script</WorkshopTags>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\Tools\Toolset\Memoria.NeverwinterNights.Toolset.csproj" />
         <NwnSource Include="source\**\*.nss" />
-        <NwnResource Include="resources\**\*" Exclude="resources\**\.gitkeep" />
+        <NwnResource Include="resources\**\*" Exclude="resources\layouts\**\*;resources\**\.gitkeep" />
+        <NwnLayout Include="resources\layouts\**\*.json" />
         <PackageDocument Include="*.md" />
         <NwnRequiredPackage Include="..\Memoria\Memoria.proj" ModId="MEMORIA" Versions="[1.0.0,2.0.0)" PackageName="Memoria" />
         <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" ModId="esi" Versions="[2.0.0,3.0.0)" PackageName="Event Script Injector (Memoria Edition)" />

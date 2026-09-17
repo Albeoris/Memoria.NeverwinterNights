@@ -1,0 +1,29 @@
+{
+  "screen": {
+    "width": 3440,
+    "height": 1440,
+    "uiScale": 2.0
+  },
+  "window": {
+    "logicalWidth": 620,
+    "logicalHeight": 160,
+    "titleHeight": 24,
+    "padding": 8
+  },
+  "root": {
+    "id": "delete-confirmation",
+    "type": "column",
+    "children": [
+      {
+        "id": "question",
+        "type": "control",
+        "height": 56
+      },
+      {
+        "id": "buttons",
+        "type": "control",
+        "height": 36
+      }
+    ]
+  }
+}

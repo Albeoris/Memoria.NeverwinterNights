@@ -1,0 +1,15 @@
+{
+  "mod_display_name": "Debug Tools",
+  "examine_action": "Examine object",
+  "delete_action": "Delete object",
+  "select_examine": "Select an inventory item or an object in the world to examine.",
+  "select_delete": "Select an inventory item or an object in the world to delete.",
+  "selection_cancelled": "Object selection cancelled.",
+  "confirm_title": "Delete object",
+  "confirm_question": "Do you really want to delete {name} ({id})?",
+  "protected_warning": "This is a protected or service object. Removing it may permanently break quests or mod integrations.",
+  "confirm_delete": "Delete",
+  "confirm_cancel": "Cancel",
+  "target_missing": "The selected object no longer exists.",
+  "deleted": "Deleted {name} ({id})."
+}

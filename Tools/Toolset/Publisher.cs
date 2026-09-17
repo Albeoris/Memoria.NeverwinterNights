@@ -31,9 +31,10 @@ internal static partial class Publisher
         string normalizedOutputRoot = outputRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
         if (!packageRoot.StartsWith(normalizedOutputRoot, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException($"Unsafe publish package path: {packageRoot}");
         if (Directory.Exists(packageRoot)) Directory.Delete(packageRoot, true);
-        string workshopRoot = Path.Combine(packageRoot, "workshop", displayName);
+        string packageDirectoryName = SanitizeDirectoryName(displayName);
+        string workshopRoot = Path.Combine(packageRoot, "workshop", packageDirectoryName);
         string workshopOverride = Path.Combine(workshopRoot, "override");
-        string nexusRoot = Path.Combine(packageRoot, "nexus-stage", displayName);
+        string nexusRoot = Path.Combine(packageRoot, "nexus-stage", packageDirectoryName);
         string nexusOverride = Path.Combine(nexusRoot, "override");
         Directory.CreateDirectory(workshopOverride);
         Directory.CreateDirectory(nexusOverride);
@@ -56,7 +57,7 @@ internal static partial class Publisher
 
         if (inputs.Dependencies.Count > 0)
         {
-            string[] dependencyLines = ["Required packages, installed first:", .. inputs.Dependencies.Select((dependency, index) => $"{index + 1}. {dependency.DisplayName} {dependency.MinimumVersion} or newer within major version {dependency.MinimumVersion.Split('.')[0]}")];
+            string[] dependencyLines = ["Required packages, installed first:", .. inputs.Dependencies.Select((dependency, index) => $"{index + 1}. {dependency.DisplayName}: {dependency.Versions}")];
             await File.WriteAllLinesAsync(Path.Combine(workshopRoot, "dependencies.txt"), dependencyLines, new UTF8Encoding(false));
             await File.WriteAllLinesAsync(Path.Combine(nexusRoot, "dependencies.txt"), dependencyLines, new UTF8Encoding(false));
         }
@@ -113,6 +114,15 @@ internal static partial class Publisher
         return value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal).Replace("\r\n", "\\n", StringComparison.Ordinal).Replace("\r", "\\n", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal).Replace("\t", "\\t", StringComparison.Ordinal);
     }
 
+    private static string SanitizeDirectoryName(string value)
+    {
+        string result = InvalidFileNameCharactersRegex().Replace(value, " - ");
+        result = WhitespaceRegex().Replace(result, " ").Trim().TrimEnd('.');
+        if (result.Length == 0) throw new InvalidDataException("Package display name does not contain a valid directory name.");
+        if (ReservedDeviceNameRegex().IsMatch(result)) result = "_" + result;
+        return result;
+    }
+
     private static void CopyTree(string sourceDirectory, string destinationDirectory)
     {
         foreach (string source in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories))
@@ -133,4 +143,13 @@ internal static partial class Publisher
 
     [GeneratedRegex("^[A-Za-z0-9._-]+$")]
     private static partial Regex SafeSegmentRegex();
+
+    [GeneratedRegex("[<>:\"/\\\\|?*\\x00-\\x1F]+")]
+    private static partial Regex InvalidFileNameCharactersRegex();
+
+    [GeneratedRegex("\\s+")]
+    private static partial Regex WhitespaceRegex();
+
+    [GeneratedRegex("^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\\.|$)", RegexOptions.IgnoreCase)]
+    private static partial Regex ReservedDeviceNameRegex();
 }

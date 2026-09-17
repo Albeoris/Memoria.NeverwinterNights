@@ -1,10 +1,10 @@
 # Memoria
 
-Memoria combines the universal heartbeat bootstrapper with the shared NWScript framework. It owns `default.ncs`, discovers schema-1 `*_memoria.txt` manifests in `OVERRIDE:`, validates package versions and dependency graphs, and dispatches only compatible mod heartbeats. Memoria has no gameplay heartbeat or configuration entry of its own.
+Memoria combines the universal heartbeat bootstrapper with the shared NWScript framework. It owns `default.ncs`, discovers schema-2 `*_memoria.txt` manifests in `OVERRIDE:`, validates package versions and dependency graphs, and dispatches only compatible mod heartbeats. Memoria has no gameplay heartbeat or configuration entry of its own.
 
 ## Compatibility model
 
-Every package manifest has an X.Y.Z `version` and a `dependencies` array. A requirement such as `esi` 1.2.0 accepts 1.2.0 through any later 1.x release and rejects earlier versions and every 2.x release. Missing, malformed, duplicate, incompatible, and transitively disabled packages are excluded from both heartbeat dispatch and the Configuration Manager.
+Every package manifest has an X.Y.Z `version` and a `dependencies` array. Dependencies use NuGet-style intervals; multiple intervals separated by `;` form a union, for example `[1.0,3.5];[3.7,4.0)`. Missing, malformed, duplicate, incompatible, and transitively disabled packages are excluded from both heartbeat dispatch and the Configuration Manager.
 
 Manifests are discovered once per loaded game or module and cached in a hidden server-side NUI window. Loading a save or changing modules invalidates the cache naturally. ESI is always dispatched before other compatible heartbeat packages.
 
@@ -12,7 +12,7 @@ Manifests are discovered once per loaded game or module and cached in a hidden s
 
 - `memoria_core.nss`: player, party, possession, and hit-point helpers.
 - `memoria_group.nss`: associate caches.
-- `memoria_i18n.nss`: shared per-mod localization table loader.
+- `memoria_loc.nss`: shared per-mod localization table loader.
 - `memoria_item.nss`: spells, classes, item properties, and equipment helpers.
 - `memoria_loader.nss`: manifest discovery and SemVer dependency filtering.
 - `memoria_locale.nss`: language detection and localized script dispatch.
@@ -23,7 +23,7 @@ These include sources are distributed by Memoria for mod authors. Dependent repo
 
 ## Localization tables
 
-`memoria_i18n.nss` loads a mod's UTF-8 `<prefix>_loc_<language>.resjson` source after the Toolset validates and converts it to a game-local `<prefix>_loc_<language>.txt` resource. Tables are cached per module and language, missing languages fall back to English, and missing keys return an empty string.
+`memoria_loc.nss` loads a mod's UTF-8 `<prefix>_loc_<language>.resjson` source after the Toolset validates and converts it to a game-local `<prefix>_loc_<language>.txt` resource. Tables are cached per module and language, missing languages fall back to English, and missing keys return an empty string.
 
 `memoria_locale.nss` dispatches the shared `memoria_is_ru.ncs` probe. Its checked-in source stays UTF-8 while the Toolset compiles a temporary Windows-1251 copy.
 

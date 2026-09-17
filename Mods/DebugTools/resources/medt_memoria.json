@@ -1,0 +1,29 @@
+{
+  "schema": 2,
+  "id": "MEDT",
+  "bootstrapper": {
+    "heartbeat": "medt_hb",
+    "priority": 300
+  },
+  "configuration": {
+    "name": "Debug Tools",
+    "name_key": "mod_display_name",
+    "localization": {
+      "prefix": "medt"
+    },
+    "options": [
+      {
+        "type": "action",
+        "label": "Examine object",
+        "label_key": "examine_action",
+        "script": "medt_examine"
+      },
+      {
+        "type": "action",
+        "label": "Delete object",
+        "label_key": "delete_action",
+        "script": "medt_delete"
+      }
+    ]
+  }
+}

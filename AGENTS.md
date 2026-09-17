@@ -7,6 +7,16 @@
 - Use Windows PowerShell and the .NET SDK selected by `global.json`.
 - Preserve unrelated user changes. Generated files are disposable; source files are not.
 
+## Public package versioning
+
+MEMORIA, ESI, and MECONFIG expose public NWScript APIs through their shipped or dependency-consumed `.nss` files. Whenever one of these public functions changes, update that package's `Version` in the same change according to SemVer:
+
+- Increment PATCH for an implementation fix that preserves every public function name, parameter list, return value contract, observable behavior, and side effect.
+- Increment MINOR and reset PATCH to zero for a backward-compatible addition, such as a new public function or a new optional parameter whose default preserves existing calls and behavior.
+- Increment MAJOR and reset MINOR and PATCH to zero for a breaking change: removing or renaming a public function; changing required parameters, parameter types/order, return type, established behavior, or side effects; or changing public identifiers, resource contracts, or manifest schema incompatibly.
+
+After a MAJOR increment, update every dependent project's `Versions` range so the build accepts the new version only when that dependency has been reviewed for compatibility. Do not increment a version merely for documentation, tests, or private implementation changes with no packaged runtime effect.
+
 ## Repository layout
 
 - `Mods/<Project>` contains one independently publishable mod, its matching SDK-independent `<Project>.proj`, `README.md`, optional `CHANGELOG.md`, `source`, and `resources`.
@@ -22,13 +32,13 @@ Runtime loading order is:
 
 1. MEMORIA
 2. ESI
-3. MELSE, MECM, and METACT
+3. MECONFIG, MEDT, MELSE, MECM, and METACT
 
 MEMORIA combines the bootstrapper and shared Framework. It is the only package allowed to provide `default.ncs`; it validates installed `*_memoria.txt` package versions and dependencies before dispatching compatible heartbeats by priority. ESI must always run before consumers of injected events.
 
 The `memoria_*.nss` helpers are compile-time NWScript dependencies shipped by MEMORIA for source distribution. MEMORIA has no runtime heartbeat of its own beyond initializing other compatible packages.
 
-Memoria-owned mod identifiers use `ME<PACKAGE>_`; corresponding NWN resource files use lowercase `me<package>_` names and must respect NWN resref length limits. Package manifests use the mod-owned `<package>_memoria` resref form. MEMORIA uses `MEMORIA_*` identifiers and `memoria_*` resources. ESI is the explicit compatibility exception: preserve its original `ESI_*`, `esi_*`, and `rav_*` names and behavior. The Memoria-owned ESI registration wrapper remains separate as `esi_hb` and `esi_memoria`.
+Memoria-owned mod identifiers use `ME<PACKAGE>_`; corresponding NWN resource files use lowercase `me<package>_` names and must respect NWN resref length limits. Package manifests use the mod-owned `<package>_memoria` resref form. MEMORIA uses `MEMORIA_*` identifiers and `memoria_*` resources; MECONFIG uses `MECONFIG_*` identifiers and `meconfig_*` resources. ESI is the explicit compatibility exception: preserve its original `ESI_*`, `esi_*`, and `rav_*` names and behavior. The Memoria-owned ESI registration wrapper remains separate as `esi_hb` and `esi_memoria`.
 
 ## Project inputs
 
@@ -40,7 +50,7 @@ Use wildcard project items:
 - `NwnResource` for files copied or converted into the override package.
 - `NwnLayout` for NUI layout-emulator inputs.
 - `NwnPackageFile` for source files intentionally shipped as package content, such as MEMORIA includes.
-- `NwnRequiredPackage` for cross-project NWScript includes and runtime dependencies. It must declare `ModId`, `MinimumVersion` in X.Y.Z form, and `PackageName`; dependency sources are compiler inputs only and never enter the dependent package output.
+- `NwnRequiredPackage` for cross-project NWScript includes and runtime dependencies. It must declare `ModId`, NuGet-style `Versions`, and `PackageName`; dependency sources are compiler inputs only and never enter the dependent package output.
 - `NwnIncludeDirectory` only for compiler include directories that are not mod-package dependencies.
 - `PackageDocument` and `NwnRequiredPackage` items for publishing metadata. Each `NwnRequiredPackage` points to an existing mod project and supplies its published name through `PackageName` metadata.
 - Steam Workshop metadata belongs in a separate `PropertyGroup` labeled `Steam Workshop`. `WorkshopTags` is a semicolon-separated property rather than an item because tags are labels, not file dependencies.

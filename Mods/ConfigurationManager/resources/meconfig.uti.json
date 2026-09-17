@@ -104,10 +104,10 @@
   },
   "Tag": {
     "type": "cexostring",
-    "value": "MEMORIA_CONFIGURATION_ITEM"
+    "value": "MECONFIG_ITEM"
   },
   "TemplateResRef": {
     "type": "resref",
-    "value": "memoria_config"
+    "value": "meconfig"
   }
 }

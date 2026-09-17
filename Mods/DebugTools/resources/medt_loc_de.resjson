@@ -1,0 +1,15 @@
+{
+  "mod_display_name": "Debug Tools",
+  "examine_action": "Objekt untersuchen",
+  "delete_action": "Objekt löschen",
+  "select_examine": "Wählt einen Inventargegenstand oder ein Objekt in der Welt zum Untersuchen aus.",
+  "select_delete": "Wählt einen Inventargegenstand oder ein Objekt in der Welt zum Löschen aus.",
+  "selection_cancelled": "Objektauswahl abgebrochen.",
+  "confirm_title": "Objekt löschen",
+  "confirm_question": "Soll {name} ({id}) wirklich gelöscht werden?",
+  "protected_warning": "Dies ist ein geschütztes oder vom Spiel verwendetes Objekt. Das Löschen kann Quests oder Mod-Integrationen dauerhaft beschädigen.",
+  "confirm_delete": "Löschen",
+  "confirm_cancel": "Abbrechen",
+  "target_missing": "Das ausgewählte Objekt existiert nicht mehr.",
+  "deleted": "{name} ({id}) wurde gelöscht."
+}

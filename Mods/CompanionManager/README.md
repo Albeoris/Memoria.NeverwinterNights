@@ -12,7 +12,7 @@ MECM lets companions, henchmen, familiars, animal companions, summons, and domin
 
 ## Installation
 
-Install Memoria, ESI, MEMORIA_CONFIG, and then MECM by copying each package's `override` contents into the NWN user `override` directory.
+Install Memoria, ESI, MECONFIG, and then MECM by copying each package's `override` contents into the NWN user `override` directory.
 
 ## Use
 

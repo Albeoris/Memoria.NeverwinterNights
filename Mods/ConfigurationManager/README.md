@@ -1,20 +1,21 @@
 # Memoria Configuration Manager
 
-MEMORIA_CONFIG provides one persistent configuration item and a NUI menu for installed Memoria mods. Configuration metadata lives in the optional `configuration` section of each package's `resources/*_memoria.json` manifest; the build emits that single manifest as a `.txt` resource for NWN.
+MECONFIG provides one persistent configuration item and a NUI menu for installed Memoria mods. Configuration metadata lives in the optional `configuration` section of each package's `resources/*_memoria.json` manifest; the build emits that single manifest as a `.txt` resource for NWN.
 
 ## Registration
 
-A shared schema-1 manifest has package-wide `id`, `version`, and `dependencies` fields. Memoria validates these once; the heartbeat dispatcher and Configuration Manager consume the same filtered package list. `version` and `dependencies` are generated from the mod project's `Version` and `NwnRequiredPackage` metadata:
+A shared schema-2 manifest has package-wide `id`, `name`, `version`, and `dependencies` fields. Memoria validates these once; the heartbeat dispatcher and Configuration Manager consume the same filtered package list. These fields are generated from the mod project's properties and `NwnRequiredPackage` metadata:
 
 ```json
 {
-  "schema": 1,
+  "schema": 2,
   "id": "ACME_PACKAGE",
+  "name": "Package Name",
   "version": "1.4.0",
   "dependencies": [
-    { "id": "MEMORIA", "version": "1.0.0" },
-    { "id": "esi", "version": "1.0.0" },
-    { "id": "MEMORIA_CONFIG", "version": "1.0.0" }
+    { "id": "MEMORIA", "versions": "[1.0,2.0)" },
+    { "id": "esi", "versions": "[2.0,3.0)" },
+    { "id": "MECONFIG", "versions": "[1.0,2.0)" }
   ],
   "bootstrapper": {
     "heartbeat": "acme_hb",
@@ -42,13 +43,13 @@ Package `id` values must be unique. Duplicate IDs disable that identity rather t
 
 ## Minimal configurable mod
 
-This example adds player boolean and integer settings, a module float setting, an action button, and localized labels using the shared `memoria_i18n` loader.
+This example adds player boolean and integer settings, a module float setting, an action button, and localized labels using the shared `memoria_loc` loader.
 
 `resources/acme_memoria.json`:
 
 ```json
 {
-  "schema": 1,
+  "schema": 2,
   "id": "ACME_TINY",
   "configuration": {
     "name": "Tiny Config Example",
@@ -103,4 +104,4 @@ override/
 
 ## Installation
 
-Install Memoria, ESI, and MEMORIA_CONFIG before any mod that declares them as dependencies. The manager automatically grants the configuration item to each player.
+Install Memoria, ESI, and MECONFIG before any mod that declares them as dependencies. The manager automatically grants the configuration item to each player.

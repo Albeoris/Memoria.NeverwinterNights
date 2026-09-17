@@ -4,10 +4,10 @@
 #include "memoria_core"
 #include "memoria_group"
 #include "memoria_locale"
-#include "memoria_i18n"
+#include "memoria_loc"
 
 const string MECM_VERSION = "1.2.7";
-const string MECM_I18N_PREFIX = "mecm";
+const string MECM_LOC_PREFIX = "mecm";
 const string MECM_LOCAL_INSTALLED = "MECM_INSTALLED";
 const string MECM_LOCAL_ENABLED = "MECM_MODE_ENABLED";
 const string MECM_LOCAL_PAUSED = "MECM_MODE_PAUSED";
@@ -155,7 +155,7 @@ string MECM_GetLanguage(object oPC)
 
 string MECM_GetText(string sKey, object oPC)
 {
-    return MEMORIA_I18N_GetText(MECM_I18N_PREFIX, MECM_GetLanguage(oPC), sKey);
+    return MEMORIA_LOC_GetText(MECM_LOC_PREFIX, MECM_GetLanguage(oPC), sKey);
 }
 
 int MECM_IsPartyInCombat(object oPC)

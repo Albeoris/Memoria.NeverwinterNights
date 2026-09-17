@@ -1,14 +1,14 @@
 <Project DefaultTargets="Build">
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
-        <ModId>MEMORIA_CONFIG</ModId>
+        <ModId>MECONFIG</ModId>
         <Version>1.0.0</Version>
-        <PackageId>memoria_config</PackageId>
-        <PackageDisplayName>Memoria Configuration Manager</PackageDisplayName>
+        <PackageId>meconfig</PackageId>
+        <PackageDisplayName>Memoria: Configuration Manager</PackageDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
         <WorkshopPublishedFileId />
-        <WorkshopTags>override</WorkshopTags>
+        <WorkshopTags>override;singleplayer;script</WorkshopTags>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\Tools\Toolset\Memoria.NeverwinterNights.Toolset.csproj" />
@@ -16,8 +16,8 @@
         <NwnResource Include="resources\**\*" Exclude="resources\layouts\**\*;resources\**\.gitkeep" />
         <NwnLayout Include="resources\layouts\**\*.json" />
         <PackageDocument Include="*.md" />
-        <NwnRequiredPackage Include="..\Memoria\Memoria.proj" ModId="MEMORIA" MinimumVersion="1.0.0" PackageName="Memoria" />
-        <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" ModId="esi" MinimumVersion="1.0.0" PackageName="Event Script Injector (Memoria Edition)" />
+        <NwnRequiredPackage Include="..\Memoria\Memoria.proj" ModId="MEMORIA" Versions="[1.0.0,2.0.0)" PackageName="Memoria" />
+        <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" ModId="esi" Versions="[2.0.0,3.0.0)" PackageName="Event Script Injector (Memoria Edition)" />
     </ItemGroup>
     <Import Project="..\..\Build\NwnModProject.targets" />
 </Project>
