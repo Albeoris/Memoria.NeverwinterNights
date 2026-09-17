@@ -109,7 +109,8 @@ jobs:
           Invoke-WebRequest 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip' -OutFile $archive
           Expand-Archive -LiteralPath $archive -DestinationPath 'artifacts/steamcmd/cache'
           $bootstrapSignature = Get-AuthenticodeSignature -LiteralPath 'artifacts/steamcmd/cache/steamcmd.exe'
-          if ($bootstrapSignature.Status -ne 'Valid' -or $bootstrapSignature.SignerCertificate.Subject -notmatch '(^|, )O=Valve(?: Corp\.)?(, |$)') { throw "SteamCMD bootstrap does not have a valid Valve signature: $($bootstrapSignature.Status); $($bootstrapSignature.SignerCertificate.Subject)" }
+          $bootstrapSignerName = if ($null -eq $bootstrapSignature.SignerCertificate) { '' } else { $bootstrapSignature.SignerCertificate.GetNameInfo([Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false) }
+          if ($bootstrapSignature.Status -ne 'Valid' -or $bootstrapSignerName -ne 'Valve') { throw "SteamCMD bootstrap does not have a valid Valve signature: $($bootstrapSignature.Status); signer=$bootstrapSignerName; subject=$($bootstrapSignature.SignerCertificate.Subject)" }
           Push-Location 'artifacts/steamcmd/cache'
           try {
             & .\steamcmd.exe +quit
@@ -125,7 +126,8 @@ jobs:
         shell: pwsh
         run: |
           $signature = Get-AuthenticodeSignature -LiteralPath 'artifacts/steamcmd/cache/steamcmd.exe'
-          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch '(^|, )O=Valve(?: Corp\.)?(, |$)') { throw "SteamCMD does not have a valid Valve signature: $($signature.Status); $($signature.SignerCertificate.Subject)" }
+          $signerName = if ($null -eq $signature.SignerCertificate) { '' } else { $signature.SignerCertificate.GetNameInfo([Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false) }
+          if ($signature.Status -ne 'Valid' -or $signerName -ne 'Valve') { throw "SteamCMD does not have a valid Valve signature: $($signature.Status); signer=$signerName; subject=$($signature.SignerCertificate.Subject)" }
 
       - name: Save clean SteamCMD
         if: steps.steamcmd-cache.outputs.cache-hit != 'true'
@@ -149,7 +151,8 @@ jobs:
             Pop-Location
           }
           $signature = Get-AuthenticodeSignature -LiteralPath 'artifacts/steamcmd/runtime/steamcmd.exe'
-          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch '(^|, )O=Valve(?: Corp\.)?(, |$)') { throw "Updated SteamCMD does not have a valid Valve signature: $($signature.Status); $($signature.SignerCertificate.Subject)" }
+          $signerName = if ($null -eq $signature.SignerCertificate) { '' } else { $signature.SignerCertificate.GetNameInfo([Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false) }
+          if ($signature.Status -ne 'Valid' -or $signerName -ne 'Valve') { throw "Updated SteamCMD does not have a valid Valve signature: $($signature.Status); signer=$signerName; subject=$($signature.SignerCertificate.Subject)" }
 
       - name: Upload Steam Workshop item
         shell: pwsh

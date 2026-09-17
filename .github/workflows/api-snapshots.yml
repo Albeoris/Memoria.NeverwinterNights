@@ -65,8 +65,18 @@ jobs:
 
               $tag = "api-$($modId.ToLowerInvariant())-v$version"
               $legacyTag = "$($modId.ToLowerInvariant())-api-v$version"
-              $tagExists = $null -ne (git tag --list --exact-match $tag)
-              $legacyTagExists = $null -ne (git tag --list --exact-match $legacyTag)
+              git show-ref --verify --quiet "refs/tags/$tag"
+              $tagLookupExitCode = $LASTEXITCODE
+              if ($tagLookupExitCode -notin 0, 1) {
+                  throw "Failed to check whether API snapshot tag $tag exists."
+              }
+              $tagExists = $tagLookupExitCode -eq 0
+              git show-ref --verify --quiet "refs/tags/$legacyTag"
+              $legacyTagLookupExitCode = $LASTEXITCODE
+              if ($legacyTagLookupExitCode -notin 0, 1) {
+                  throw "Failed to check whether legacy API snapshot tag $legacyTag exists."
+              }
+              $legacyTagExists = $legacyTagLookupExitCode -eq 0
               if ($tagExists) {
                   Write-Host "$tag already exists."
                   if ($legacyTagExists) {
