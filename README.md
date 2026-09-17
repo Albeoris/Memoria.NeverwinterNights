@@ -57,7 +57,9 @@ dotnet msbuild Memoria.NeverwinterNights.slnx -restore -t:Publish -p:Configurati
 
 ## Releases
 
-Push a tag in the form `<package>-v<X.Y.Z>`, for example `metact-v0.7.0` or `memoria-v1.0.0`. ESI retains `esi-v<X.Y.Z>`. GitHub Actions builds and publishes only that package, uploads the existing Steam Workshop item, and creates the GitHub release.
+Push a tag in the form `<package>-v<X.Y.Z>`, for example `metact-v0.7.0` or `memoria-v1.0.0`. ESI retains `esi-v<X.Y.Z>`. GitHub Actions builds that package once, then updates its existing Steam Workshop item and the single `stable` GitHub Release in parallel. Any publishing failure deletes the pushed package tag so the release can be retried.
+
+The GitHub Release is titled `Stable (YYYY-MM-DD)`. Each mod has one stable technical asset name, while its visible label contains the project `ModDisplayName`, version, and UTC update date. Updating a mod replaces only that mod's archive and the generated all-in-one archive; all other individual archives remain unchanged. The release description lists packages in solution order. The all-in-one archive merges every available package from oldest to newest, using solution order as the tie-breaker, so newer files replace older files.
 
 ### Steam Workshop setup
 
