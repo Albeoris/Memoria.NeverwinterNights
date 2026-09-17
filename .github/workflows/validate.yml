@@ -18,10 +18,5 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.0.x
-
       - name: Build, test, and validate
         run: dotnet build Memoria.NeverwinterNights.slnx --configuration Release
