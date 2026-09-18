@@ -5,22 +5,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+$repositoryRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $repositoryRoot
 
 if ($EnqueueTimeoutSeconds -le 0) {
     throw 'EnqueueTimeoutSeconds must be positive.'
 }
-
-foreach ($command in 'git', 'gh') {
-    if ($null -eq (Get-Command $command -ErrorAction SilentlyContinue)) {
-        throw "Required command '$command' was not found."
-    }
-}
-
-$null = & gh auth status
-if ($LASTEXITCODE -ne 0) {
-    throw 'GitHub CLI authentication is required. Run gh auth login first.'
+if ($null -eq (Get-Command git -ErrorAction SilentlyContinue)) {
+    throw "Required command 'git' was not found."
 }
 
 $workingChanges = @(& git status --porcelain=v1 --untracked-files=normal)
@@ -47,9 +39,37 @@ if ($LASTEXITCODE -ne 0 -or $headCommit -ne $remoteMainCommit) {
     throw "HEAD must match $Remote/main before release tags are created."
 }
 
-$repository = (& gh repo view --json nameWithOwner --jq '.nameWithOwner').Trim()
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($repository)) {
-    throw 'Failed to resolve the GitHub repository through gh.'
+$remoteUrl = (& git remote get-url $Remote).Trim()
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to read the URL for remote '$Remote'."
+}
+$repositoryMatch = [regex]::Match($remoteUrl, '(?:[:/])(?<owner>[^/:]+)/(?<name>[^/]+?)(?:\.git)?$')
+if (-not $repositoryMatch.Success) {
+    throw "Cannot determine the GitHub repository from remote URL '$remoteUrl'."
+}
+$repository = "$($repositoryMatch.Groups['owner'].Value)/$($repositoryMatch.Groups['name'].Value)"
+
+$apiHeaders = @{
+    Accept = 'application/vnd.github+json'
+    'User-Agent' = 'Memoria-PublishAllTags'
+    'X-GitHub-Api-Version' = '2022-11-28'
+}
+$apiToken = if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_TOKEN)) { $env:GITHUB_TOKEN } else { $env:GH_TOKEN }
+if (-not [string]::IsNullOrWhiteSpace($apiToken)) {
+    $apiHeaders.Authorization = "Bearer $apiToken"
+}
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+
+function Invoke-GitHubApi([string] $Path) {
+    try {
+        return Invoke-RestMethod -Method Get -Uri "https://api.github.com/repos/$repository/$Path" -Headers $apiHeaders
+    }
+    catch {
+        if ([string]::IsNullOrWhiteSpace($apiToken)) {
+            throw "GitHub API request failed. The public API requires no login, but GITHUB_TOKEN or GH_TOKEN can be set if the anonymous rate limit was exhausted. $($_.Exception.Message)"
+        }
+        throw
+    }
 }
 
 [xml] $solution = Get-Content -LiteralPath 'Memoria.NeverwinterNights.slnx' -Raw
@@ -95,6 +115,7 @@ if ($missingTags.Count -eq 0) {
     exit 0
 }
 
+$workflowPath = "actions/workflows/$([Uri]::EscapeDataString($Workflow))/runs?event=push&per_page=100"
 Write-Host "Creating $($missingTags.Count) release tag(s) at $headCommit."
 foreach ($release in $missingTags) {
     $tag = $release.Tag
@@ -114,11 +135,8 @@ foreach ($release in $missingTags) {
     $deadline = [DateTime]::UtcNow.AddSeconds($EnqueueTimeoutSeconds)
     $run = $null
     do {
-        $runJson = & gh run list --repo $repository --workflow $Workflow --event push --limit 100 --json databaseId,headBranch,headSha,status,conclusion
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to query release workflows after pushing $tag."
-        }
-        $run = @($runJson | ConvertFrom-Json | Where-Object { $_.headBranch -eq $tag -and $_.headSha -eq $headCommit } | Select-Object -First 1)
+        $runs = Invoke-GitHubApi $workflowPath
+        $run = @($runs.workflow_runs | Where-Object { $_.head_branch -eq $tag -and $_.head_sha -eq $headCommit } | Select-Object -First 1)
         if ($run.Count -eq 0) {
             Start-Sleep -Seconds 5
         }
@@ -128,9 +146,18 @@ foreach ($release in $missingTags) {
         throw "The release workflow for $tag did not appear within $EnqueueTimeoutSeconds seconds."
     }
 
-    & gh run watch $run[0].databaseId --repo $repository --exit-status
-    if ($LASTEXITCODE -ne 0) {
-        throw "The release workflow for $tag failed. Remaining tags were not pushed."
+    $runId = $run[0].id
+    Write-Host "Release workflow: $($run[0].html_url)"
+    do {
+        $runState = Invoke-GitHubApi "actions/runs/$runId"
+        if ($runState.status -ne 'completed') {
+            Write-Host "Workflow status for ${tag}: $($runState.status)."
+            Start-Sleep -Seconds 30
+        }
+    } while ($runState.status -ne 'completed')
+
+    if ($runState.conclusion -ne 'success') {
+        throw "The release workflow for $tag completed with conclusion '$($runState.conclusion)'. Remaining tags were not pushed."
     }
     Write-Host "$tag was published successfully."
 }
