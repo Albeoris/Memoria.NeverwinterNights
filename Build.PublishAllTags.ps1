@@ -120,8 +120,16 @@ Write-Host "Creating $($missingTags.Count) release tag(s) at $headCommit."
 foreach ($release in $missingTags) {
     $tag = $release.Tag
     Write-Host "Creating and pushing $tag for $($release.ProjectPath)."
-    $null = & git tag --delete $tag 2>$null
-    $global:LASTEXITCODE = 0
+    $localTag = @(& git tag --list $tag)
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to check whether local tag $tag exists."
+    }
+    if ($localTag.Count -gt 0) {
+        & git tag --delete $tag
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to delete local tag $tag."
+        }
+    }
     & git tag $tag $headCommit
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create $tag."
