@@ -184,8 +184,11 @@ jobs:
           $manifest = (Resolve-Path -LiteralPath 'artifacts/publish/${{ needs.prepare.outputs.id }}/${{ needs.prepare.outputs.version }}/steam-workshop.vdf').Path
           Push-Location $runtimeRoot
           try {
-            & .\steamcmd.exe '+@ShutdownOnFailedCommand' 1 '+@NoPromptForPassword' 1 +login $steamUsername +workshop_build_item $manifest +quit
-            if ($LASTEXITCODE -ne 0) { throw "Steam Workshop upload failed with exit code $LASTEXITCODE." }
+            $steamOutput = @(& .\steamcmd.exe '+@ShutdownOnFailedCommand' 1 '+@NoPromptForPassword' 1 +login $steamUsername +workshop_build_item $manifest +quit 2>&1)
+            $steamExitCode = $LASTEXITCODE
+            $sanitizedSteamOutput = [regex]::Replace(($steamOutput -join [Environment]::NewLine), '\[U:(?<universe>\d+):\d+\]', '[U:${universe}:***]')
+            if (-not [string]::IsNullOrWhiteSpace($sanitizedSteamOutput)) { Write-Output $sanitizedSteamOutput }
+            if ($steamExitCode -ne 0) { throw "Steam Workshop upload failed with exit code $steamExitCode." }
           }
           finally {
             Pop-Location
