@@ -2,7 +2,7 @@ param(
     [string] $Remote = 'origin',
     [string] $Workflow = 'release.yml',
     [int] $EnqueueTimeoutSeconds = 300,
-    [int] $WorkflowPollSeconds = 5
+    [int] $WorkflowPollSeconds = 30
 )
 
 $ErrorActionPreference = 'Stop'
