@@ -6,7 +6,7 @@
 #include "memoria_locale"
 #include "memoria_loc"
 
-const string MECM_VERSION = "1.2.8";
+const string MECM_VERSION = "1.2.9";
 const string MECM_LOC_PREFIX = "mecm";
 const string MECM_LOCAL_INSTALLED = "MECM_INSTALLED";
 const string MECM_LOCAL_ENABLED = "MECM_MODE_ENABLED";

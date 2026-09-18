@@ -2,7 +2,7 @@
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
         <ModId>MEDT</ModId>
-        <Version>2.0.1</Version>
+        <Version>2.0.2</Version>
         <ModDisplayName>Memoria: Debug Tools</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
@@ -15,7 +15,7 @@
         <NwnResource Include="resources\**\*" Exclude="resources\layouts\**\*;resources\**\.gitkeep" />
         <NwnLayout Include="resources\layouts\**\*.json" />
         <PackageDocument Include="*.md" />
-        <NwnRequiredPackage Include="..\Memoria\Memoria.proj" ModId="MEMORIA" Versions="[1.0.0,2.0.0)" PackageName="Memoria" />
+        <NwnRequiredPackage Include="..\Memoria\Memoria.proj" ModId="MEMORIA" Versions="[1.0.2,2.0.0)" PackageName="Memoria" />
         <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" ModId="esi" Versions="[2.0.0,3.0.0)" PackageName="Event Script Injector (Memoria Edition)" />
         <NwnRequiredPackage Include="..\ConfigurationManager\ConfigurationManager.proj" ModId="MECONFIG" Versions="[1.0.0,2.0.0)" PackageName="Memoria Configuration Manager" />
     </ItemGroup>

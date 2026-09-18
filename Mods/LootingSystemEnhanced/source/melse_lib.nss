@@ -108,7 +108,6 @@ string MELSE_GetLanguage()
 void MELSE_DetectLanguage(object oPC)
 {
     object oModule = GetModule();
-    if (GetLocalString(oModule, MELSE_LOCAL_LANGUAGE) != "") return;
     SetLocalString(oModule, MELSE_LOCAL_LANGUAGE, MEMORIA_GetLanguage(oPC, MELSE_LOCAL_LANGUAGE));
 }
 
