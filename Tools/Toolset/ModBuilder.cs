@@ -15,6 +15,7 @@ internal static partial class ModBuilder
         mutable.RemoveAt(0);
         string? outputOption = ToolsetApp.TakeOption(mutable, "-o", "--output");
         string? layoutsOutputOption = ToolsetApp.TakeOption(mutable, "--layouts-output");
+        bool verifyScripts = mutable.RemoveAll(argument => argument.Equals("--skip-verification", StringComparison.OrdinalIgnoreCase)) == 0;
         if (mutable.Count > 0) return Fail($"build: unknown arguments: {string.Join(' ', mutable)}");
         if (outputOption is null) return Fail("build: --output is required.");
 
@@ -106,7 +107,21 @@ internal static partial class ModBuilder
             layouts++;
         }
 
-        Console.WriteLine($"Built {inputs.ModDisplayName} {inputs.ModVersion}: {compiled} compiled, {includes} skipped, {gffConverted} GFF, {resJsonConverted} ResJSON, {jsonTextConverted} JSON, {copied} copied, {layouts} layouts -> {ToolsetLog.RepositoryPath(context, outputDirectory)}");
+        int verified = 0;
+        if (verifyScripts)
+        {
+            VerificationResult verification = await ToolsetApp.VerifyNcsAsync(context, outputDirectory);
+            if (verification.Failures > 0)
+            {
+                string failure = verification.Files == 0 ? "no NCS files were produced" : $"NCS verification failed for {verification.Failures} of {verification.Files} files";
+                Console.Error.WriteLine($"Failed {inputs.ModDisplayName} {inputs.ModVersion}: {failure}.");
+                return 1;
+            }
+            verified = verification.Files;
+        }
+
+        string verificationSummary = verifyScripts ? $"{verified} verified" : "verification skipped";
+        Console.WriteLine($"Built {inputs.ModDisplayName} {inputs.ModVersion}: {compiled} compiled, {verificationSummary}, {includes} skipped, {gffConverted} GFF, {resJsonConverted} ResJSON, {jsonTextConverted} JSON, {copied} copied, {layouts} layouts -> {ToolsetLog.RepositoryPath(context, outputDirectory)}");
         return 0;
     }
 

@@ -10,6 +10,7 @@
     <RestoreProjectStyle>None</RestoreProjectStyle>
     <ToolsetAssembly>$(RepositoryRoot)artifacts\msbuild\Memoria.NeverwinterNights.Toolset\bin\$(Configuration)\net10.0\Memoria.NeverwinterNights.Toolset.dll</ToolsetAssembly>
     <ToolsetLogArgument Condition="'$(ToolsetVerbosity)' == 'verbose'">--verbose</ToolsetLogArgument>
+    <ToolsetVerificationArgument Condition="'$(VerifyScripts)' == 'false'">--skip-verification</ToolsetVerificationArgument>
     <NwnInputsFile>$(RepositoryRoot)artifacts\inputs\$(ModId).inputs</NwnInputsFile>
     <BuildOutput>$(RepositoryRoot)artifacts\build\$(ModId)</BuildOutput>
   </PropertyGroup>
@@ -54,8 +55,7 @@
   </Target>
 
   <Target Name="BuildNwnMod" DependsOnTargets="GenerateNwnModInputs" Condition="'$(DesignTimeBuild)' != 'true'">
-    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; $(ToolsetLogArgument) build &quot;$(NwnInputsFile)&quot; --output &quot;$(BuildOutput)&quot; --layouts-output &quot;$(RepositoryRoot)artifacts\layouts\$(ModId)&quot;" />
-    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; $(ToolsetLogArgument) verify &quot;$(BuildOutput)&quot;" Condition="Exists('$(BuildOutput)') and '$(VerifyScripts)' != 'false'" />
+    <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; $(ToolsetLogArgument) build &quot;$(NwnInputsFile)&quot; --output &quot;$(BuildOutput)&quot; --layouts-output &quot;$(RepositoryRoot)artifacts\layouts\$(ModId)&quot; $(ToolsetVerificationArgument)" />
     <Exec Command="dotnet &quot;$(ToolsetAssembly)&quot; merge-output &quot;$(BuildOutput)&quot; --output &quot;$(CommonOutputPath)&quot; --manifests &quot;$(CommonOutputManifestPath)&quot; --lock-file &quot;$(CommonOutputLockFile)&quot; --owner &quot;$(ModId)&quot;" Condition="'$(CommonOutput)' == 'true'" />
   </Target>
 

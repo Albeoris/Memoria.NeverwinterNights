@@ -2,6 +2,8 @@ using System.Text;
 
 namespace Memoria.NeverwinterNights.Toolset;
 
+internal sealed record VerificationResult(int Files, int Failures);
+
 internal static class ToolsetApp
 {
     public static async Task<int> RunAsync(string[] arguments)
@@ -154,8 +156,18 @@ internal static class ToolsetApp
     {
         if (arguments.Length != 1) return Fail("verify: specify an .ncs file or directory.");
         string path = Path.GetFullPath(arguments[0]);
+        VerificationResult result = await VerifyNcsAsync(context, path);
+        return result.Failures == 0 ? 0 : 1;
+    }
+
+    internal static async Task<VerificationResult> VerifyNcsAsync(ProjectContext context, string path)
+    {
         string[] files = File.Exists(path) ? [path] : Directory.Exists(path) ? Directory.GetFiles(path, "*.ncs", SearchOption.AllDirectories) : [];
-        if (files.Length == 0) return Fail($"No NCS files found: {path}");
+        if (files.Length == 0)
+        {
+            Console.Error.WriteLine($"No NCS files found: {path}");
+            return new VerificationResult(0, 1);
+        }
         int failures = 0;
         foreach (string file in files.Order())
         {
@@ -168,8 +180,10 @@ internal static class ToolsetApp
             }
         }
 
-        Console.WriteLine($"Verified: {files.Length}; failures: {failures}.");
-        return failures == 0 ? 0 : 1;
+        string summary = $"Verified {files.Length} NCS files in {ToolsetLog.RepositoryPath(context, path)}: {failures} failed.";
+        if (failures == 0) ToolsetLog.Verbose(summary);
+        else Console.Error.WriteLine(summary);
+        return new VerificationResult(files.Length, failures);
     }
 
     private static async Task<int> GffCommandAsync(ProjectContext context, string[] arguments, string inputFormat, string outputFormat)
