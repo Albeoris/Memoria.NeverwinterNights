@@ -37,7 +37,7 @@ internal static partial class MarkdownToSteam
 
             if (FenceRegex().IsMatch(line))
             {
-                result.AppendLine(inCodeBlock ? "[/noparse]" : "[noparse]");
+                result.AppendLine(inCodeBlock ? "[/code]" : "[code]");
                 inCodeBlock = !inCodeBlock;
                 continue;
             }
@@ -73,12 +73,12 @@ internal static partial class MarkdownToSteam
             result.AppendLine(ConvertInline(line));
         }
 
-        if (inCodeBlock) result.AppendLine("[/noparse]");
+        if (inCodeBlock) result.AppendLine("[/code]");
         string description = result.ToString().Trim();
         if (description.Length == 0) throw new InvalidDataException("README.md produced an empty Workshop description.");
         DateTime generatedAt = DateTime.UtcNow;
         string updateDate = $"{generatedAt.Year:D4}-{generatedAt.Month:D2}-{generatedAt.Day:D2}";
-        return $"{description}{Environment.NewLine}{Environment.NewLine}[hr][/hr]{Environment.NewLine}[i]Last updated: {updateDate}[/i]{Environment.NewLine}[url={readmeUrl}]README.md on GitHub[/url]";
+        return $"{description}{Environment.NewLine}{Environment.NewLine}[hr][/hr]{Environment.NewLine}[i]Last updated: {updateDate}[/i]{Environment.NewLine}[url={readmeUrl}]Sources on GitHub[/url]";
     }
 
     private static string ConvertInline(string text)
@@ -91,7 +91,7 @@ internal static partial class MarkdownToSteam
             return token;
         }
 
-        text = InlineCodeRegex().Replace(text, match => Protect($"[noparse]{match.Groups[1].Value}[/noparse]"));
+        text = InlineCodeRegex().Replace(text, match => Protect(match.Groups[1].Value));
         text = LinkRegex().Replace(text, match => Protect($"[url={match.Groups[2].Value}]{ConvertInline(match.Groups[1].Value)}[/url]"));
         text = BoldAsteriskRegex().Replace(text, "[b]$1[/b]");
         text = BoldUnderscoreRegex().Replace(text, "[b]$1[/b]");
