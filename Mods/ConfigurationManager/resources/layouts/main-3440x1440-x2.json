@@ -44,6 +44,21 @@
             "height": 28
           },
           {
+            "id": "inline-heading",
+            "type": "control",
+            "height": 26
+          },
+          {
+            "id": "inline-options",
+            "type": "row",
+            "height": 28,
+            "children": [
+              { "id": "inline-a", "width": 150 },
+              { "id": "inline-b", "width": 150 },
+              { "id": "inline-c", "width": 150 }
+            ]
+          },
+          {
             "id": "number-option",
             "type": "control",
             "height": 30

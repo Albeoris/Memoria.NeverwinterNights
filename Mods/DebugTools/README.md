@@ -1,21 +1,26 @@
 # Memoria Debug Tools (MEDT)
 
-MEDT adds opt-in object inspection and removal tools to the Memoria Configuration Manager.
+Memoria Debug Tools adds object inspection and removal tools to the Memoria Configuration Manager.
 
 ## Features
 
-- **Examine object** targets an inventory item or world object and prints its identity, state, type-specific properties, effects, and item properties to chat.
-- **Delete object** targets an inventory item or world object, shows a confirmation dialog, and removes it only after explicit confirmation.
-- Plot, cursed, non-droppable, player, and DM objects receive an additional red warning because removing them may permanently break quests or mod integrations.
+- Examines inventory items and world objects, including their identity, state, effects, and type-specific properties.
+- Deletes a selected object after confirmation and shows an extra warning for protected or service objects.
+
+## Compatibility
+
+MEDT works alongside other Memoria mods and changes nothing until you explicitly delete an object.
+
+The [original LSE](https://steamcommunity.com/sharedfiles/filedetails/?id=2307769974) is incompatible with Memoria and its mods. Use the [Memoria edition](https://steamcommunity.com/sharedfiles/filedetails/?id=3803404663) instead.
 
 ## Installation
 
 Install Memoria, ESI, MECONFIG, and then MEDT by copying each package's `override` contents into the NWN user `override` directory.
 
-## Use
+## Localization
 
-Open **Memoria Configuration** from the inventory, select **Debug Tools**, and choose a tool. The configuration window closes while you select an inventory item or an object in the world.
+English, Russian, French, German, Italian, and Spanish are included. Other languages fall back to English.
 
-## Languages
+## Usage
 
-Russian, English, French, Italian, German, and Spanish are included. Other clients fall back to English.
+Open **Memoria Configuration** from the inventory, select **Debug Tools**, and choose a tool. Deleted objects cannot be restored by MEDT and may be required by quests or other mods.

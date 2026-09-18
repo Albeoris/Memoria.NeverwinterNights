@@ -1,5 +1,5 @@
 {
-  "schema": 2,
+  "schema": 1,
   "id": "METACT",
   "bootstrapper": {
     "heartbeat": "metact_hb",
@@ -16,6 +16,7 @@
         "type": "action",
         "label": "Open tactics editor",
         "label_key": "open_tactics_editor_label",
+        "width": 300,
         "script": "metact_open"
       }
     ]

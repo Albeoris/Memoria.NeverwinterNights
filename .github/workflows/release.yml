@@ -15,6 +15,7 @@ permissions:
   contents: write
 
 concurrency:
+  # Build.PublishAllTags.cmd waits for each run before pushing the next tag. This lock also protects Stable and all-in-one from independently pushed tags.
   group: stable-release
   cancel-in-progress: false
 

@@ -106,7 +106,7 @@ json METACT_AddItemCandidate(json jCandidates, object oItem, itemproperty ip)
     jCandidate = JsonObjectSet(jCandidate, "name", JsonString(MEMORIA_GetSpellName(iSpell)));
     jCandidate = JsonObjectSet(jCandidate, "alias", JsonString(METACT_GetSpellAlias(iSpell)));
     int iBaseItem = GetBaseItemType(oItem);
-    string sIcon = METACT_GetItemIcon(oItem);
+    string sIcon = iBaseItem == BASE_ITEM_SCROLL || iBaseItem == BASE_ITEM_SPELLSCROLL ? METACT_GetSpellIcon(iSpell) : METACT_GetItemIcon(oItem);
     if (sIcon == "" || sIcon == "****") sIcon = METACT_GetSpellIcon(iSpell);
     jCandidate = JsonObjectSet(jCandidate, "icon", JsonString(sIcon));
     int iWidth = StringToInt(Get2DAString("baseitems", "InvSlotWidth", iBaseItem));

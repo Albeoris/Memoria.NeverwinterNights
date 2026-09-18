@@ -1,25 +1,29 @@
-# Looting System Enhanced - Memoria Edition
+# Looting System Enhanced - Memoria Edition (MELSE)
 
-MELSE automates looting and adds configurable lootable corpses, container handling, treasure notifications, and item filters.
+Looting System Enhanced automates looting and adds configurable treasure tracking, lootable corpses, and item filters.
 
 ## Features
 
-- Automatic looting from defeated creatures and containers.
-- Configurable item value and weight limits.
-- Lootable corpses with configurable decay time.
-- Treasure notifications and container tracking.
-- Item descriptions with acquisition details.
-- Event hooks are restored from the transient ESI registry on the first heartbeat of each loaded game, and each area's static objects are registered once per runtime session.
-
-## Installation
-
-Remove any legacy LSE installation, then install Memoria, ESI, MECONFIG, and MELSE by copying each package's `override` contents into the NWN user `override` directory.
-
-Open **Memoria Configuration** from the inventory and select Looting System Enhanced to change its options.
+- Finds, tracks, and automatically loots treasure from defeated creatures and containers.
+- Filters automatic looting by item value and weight.
+- Makes corpses lootable and optionally raiseable, then removes them after looting or a chosen delay.
+- Reports important drops and records where acquired items came from in their descriptions.
 
 ## Compatibility
 
-Do not combine MELSE with legacy LSE. Logical conflicts are possible with other mods that automate looting, preserve corpses, or change container behavior.
+Remove the [original LSE](https://steamcommunity.com/sharedfiles/filedetails/?id=2307769974) before installing MELSE; it is incompatible with Memoria. Use this version as its replacement.
+
+MELSE works with most modules and override mods. Mods that also automate looting, preserve corpses, or change container behavior may interfere with it.
+
+## Installation
+
+After removing the original LSE, install Memoria, ESI, MECONFIG, and then MELSE by copying each package's `override` contents into the NWN user `override` directory.
+
+Open **Memoria Configuration** from the inventory and select **Looting System Enhanced** to configure it.
+
+## Localization
+
+English, Russian, French, German, Italian, and Spanish are included. Other languages fall back to English.
 
 ## Credits
 

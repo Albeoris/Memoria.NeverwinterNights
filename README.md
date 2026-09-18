@@ -25,6 +25,25 @@ Memoria-owned mod identifiers and resources use package-specific `ME<PACKAGE>_` 
 
 Each directory under `Mods` is a self-contained project with its project file, `README.md`, sources, and resources. Shared build definitions live in `Build`, the Toolset and vendored build dependencies live in `Tools`, and generated files go to the ignored `artifacts` directory.
 
+## Developing integrated packages
+
+Packages developed in this repository register with Memoria through a schema-1 `resources/<package>_memoria.json` source. The checked-in manifest contains the package `id` and optional subsystem sections; the Toolset adds `name`, `version`, and `dependencies` from the project during the build and emits the runtime `<package>_memoria.txt` resource.
+
+A package that needs periodic execution declares a uniquely named compiled entry point in its manifest:
+
+```json
+{
+  "schema": 1,
+  "id": "ACME",
+  "bootstrapper": {
+    "heartbeat": "acme_hb",
+    "priority": 200
+  }
+}
+```
+
+Place the corresponding `acme_hb.nss` beneath the package's `source` directory with a normal `void main()` entry point. Declare cross-package APIs and runtime requirements with `NwnRequiredPackage`; dependency sources are compiler inputs and are not copied into the consumer package. Only MEMORIA may ship `default.ncs`.
+
 ## Build
 
 Requirements: Windows and the .NET 10 SDK. A local NWN installation is not required.
@@ -35,7 +54,7 @@ dotnet build Memoria.NeverwinterNights.slnx -c Release
 
 The build compiles every entry-point script, converts UTI and ResJSON resources, verifies generated NCS files, and runs every MECONFIG and METACT NUI layout through the layout emulator.
 
-Mod projects use wildcard items for `source`, `resources`, documentation, and layouts. MSBuild writes the evaluated inputs to `artifacts/inputs`; there are no hand-maintained file manifests. Each package owns one `<package>_memoria.json` manifest. `ModId` is the mod's single identity and `ModDisplayName` is its player-facing name. `NwnRequiredPackage` provides compile-time includes without copying dependency files into the current build or publish output. Its `Versions` range must have a bounded, inclusive minimum; compilation uses that version's immutable [API snapshot](Docs/ApiSnapshots.md), or local sources when the minimum equals the dependency's current version. The dependency metadata is also emitted into the package's schema-2 manifest together with the mod `Version` and display name.
+Mod projects use wildcard items for `source`, `resources`, documentation, and layouts. MSBuild writes the evaluated inputs to `artifacts/inputs`; there are no hand-maintained file manifests. Each package owns one `<package>_memoria.json` manifest. `ModId` is the mod's single identity and `ModDisplayName` is its player-facing name. `NwnRequiredPackage` provides compile-time includes without copying dependency files into the current build or publish output. Its `Versions` range must have a bounded, inclusive minimum; compilation uses that version's immutable [API snapshot](Docs/ApiSnapshots.md), or local sources when the minimum equals the dependency's current version. The dependency metadata is also emitted into the package's schema-1 manifest together with the mod `Version` and display name.
 
 NWScript sources and `.resjson` resources remain UTF-8 in the repository. The Toolset detects executable entry points, converts a temporary compiler copy to Windows-1251 when Cyrillic is present or Windows-1252 otherwise, and leaves the source unchanged. It also validates each `.resjson` file and emits a `.txt` resource in Windows-1251 when Cyrillic is present or Windows-1252 otherwise, matching the game-local encoding expected by `JsonParse`. Plain `.json` resources are validated as non-localized English ASCII and emitted as `.txt`.
 
@@ -70,7 +89,7 @@ Before the first tagged release:
 1. Set `WorkshopPublishedFileId` in the mod project's `Steam Workshop` property group to the public ID of the existing Workshop item. The pipeline deliberately refuses `0` or an empty value so it cannot create duplicate items.
 2. Log in once with SteamCMD using the Steam account that owns the Workshop items, encode SteamCMD's authenticated `config/config.vdf` as Base64, and add it as the `STEAM_CONFIG_VDF_BASE64` Actions secret. Refresh this secret when Steam expires the cached session.
 
-The project display name supplies the Workshop title. Publish converts the mod's `README.md` to Steam formatting, excludes its `Installation` section, appends the UTC generation date and a link to the repository copy, and writes the result to the `description` field in `steam-workshop.vdf`. The manifest contains only `appid`, `publishedfileid`, `contentfolder`, `title`, and `description`.
+The project display name supplies the Workshop title. Publish converts the mod's `README.md` to Steam formatting, excludes its `Installation` section, appends the UTC generation date, a link for reporting feedback and issues, and a link to the repository copy, then writes the result to the `description` field in `steam-workshop.vdf`. The manifest contains only `appid`, `publishedfileid`, `contentfolder`, `title`, and `description`.
 
 `WorkshopTags` is a semicolon-separated property and currently records the intended Workshop categories in the generated package's `tags.txt`. SteamCMD does not apply Workshop tags, so select the matching category on the Workshop page manually. All current packages use NWN:EE's `override` category.
 

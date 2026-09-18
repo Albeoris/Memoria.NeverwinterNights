@@ -6,7 +6,7 @@
 #include "memoria_locale"
 #include "memoria_loc"
 
-const string MECM_VERSION = "1.2.7";
+const string MECM_VERSION = "1.2.8";
 const string MECM_LOC_PREFIX = "mecm";
 const string MECM_LOCAL_INSTALLED = "MECM_INSTALLED";
 const string MECM_LOCAL_ENABLED = "MECM_MODE_ENABLED";
@@ -101,6 +101,7 @@ void MECM_InitializeSettings(object oPC)
     if (GetLocalInt(oPC, MECM_LOCAL_SETTINGS_INITIALIZED))
         return;
     SetLocalInt(oPC, MECM_LOCAL_SETTINGS_INITIALIZED, TRUE);
+    SetLocalInt(oPC, MECM_LOCAL_ENABLED, TRUE);
     SetLocalFloat(oPC, MECM_LOCAL_SEARCH_RADIUS, MECM_DEFAULT_SEARCH_RADIUS);
     SetLocalFloat(oPC, MECM_LOCAL_LOCK_INTERVAL, MECM_DEFAULT_LOCK_INTERVAL);
     SetLocalInt(oPC, MECM_LOCAL_REQUIRE_LOS, TRUE);

@@ -2,7 +2,7 @@
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
         <ModId>esi</ModId>
-        <Version>2.0.0</Version>
+        <Version>2.0.1</Version>
         <ModDisplayName>Memoria: Event Script Injector</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">

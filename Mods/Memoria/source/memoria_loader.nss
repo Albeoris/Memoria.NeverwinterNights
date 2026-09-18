@@ -8,7 +8,7 @@ const string MEMORIA_CACHE_OWNER_LOCAL = "MEMORIA_CACHE_OWNER";
 const string MEMORIA_CACHE_WINDOW = "memoria_cache";
 const string MEMORIA_ERRORS_LOCAL = "MEMORIA_ERRORS";
 const string MEMORIA_ERRORS_REPORTED_LOCAL = "MEMORIA_ERRORS_REPORTED";
-const int MEMORIA_MANIFEST_SCHEMA = 2;
+const int MEMORIA_MANIFEST_SCHEMA = 1;
 
 int MEMORIA_IdEquals(string sLeft, string sRight)
 {
@@ -221,7 +221,7 @@ void MEMORIA_ReportPackageErrors(object oPlayer, json jPackages)
     else
     {
         string sMod = nLoaded == 1 ? " mod" : " mods";
-        SendMessageToPC(oPlayer, StringToRGBString("All " + IntToString(nLoaded) + sMod + " loaded successfully.", STRING_COLOR_GREEN));
+        SendMessageToPC(oPlayer, StringToRGBString("Memoria: All " + IntToString(nLoaded) + sMod + " loaded successfully.", STRING_COLOR_GREEN));
     }
 }
 

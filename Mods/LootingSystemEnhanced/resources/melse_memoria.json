@@ -1,5 +1,5 @@
 {
-  "schema": 2,
+  "schema": 1,
   "id": "MELSE",
   "bootstrapper": {
     "heartbeat": "melse_hb",
@@ -17,77 +17,134 @@
         "scope": "module",
         "local": "MELSE_FEATURE_TREASURE_SCANNING",
         "label": "Scan for treasure",
-        "label_key": "feature_treasure_scanning_label"
+        "label_key": "feature_treasure_scanning_label",
+        "tooltip": "Periodically scans the current area and reports whether unopened treasure containers remain. Disabled by default.",
+        "tooltip_key": "feature_treasure_scanning_tooltip"
       },
       {
         "type": "bool",
         "scope": "module",
         "local": "MELSE_FEATURE_TREASURE_TRACKING",
         "label": "Track found treasure",
-        "label_key": "feature_treasure_tracking_label"
+        "label_key": "feature_treasure_tracking_label",
+        "tooltip": "Tracks discovered containers after they are examined so treasure notifications reflect what remains unlooted.",
+        "tooltip_key": "feature_treasure_tracking_tooltip"
       },
       {
         "type": "bool",
         "scope": "module",
         "local": "MELSE_FEATURE_TREASURE_LOOTING",
         "label": "Automatically loot treasure",
-        "label_key": "feature_treasure_looting_label"
+        "label_key": "feature_treasure_looting_label",
+        "tooltip": "Automatically transfers eligible items and gold from examined treasure containers to the player.",
+        "tooltip_key": "feature_treasure_looting_tooltip"
       },
       {
         "type": "bool",
         "scope": "module",
         "local": "MELSE_FEATURE_CORPSE_LOOTABLE",
         "label": "Make corpses lootable",
-        "label_key": "feature_lootable_corpses_label"
+        "label_key": "feature_lootable_corpses_label",
+        "tooltip": "Keeps defeated creatures available as containers so their inventory can be examined and looted.",
+        "tooltip_key": "feature_lootable_corpses_tooltip"
       },
       {
         "type": "bool",
         "scope": "module",
         "local": "MELSE_FEATURE_CORPSE_DECAYING_LOOTED",
         "label": "Remove looted corpses",
-        "label_key": "feature_corpse_decay_looted_label"
+        "label_key": "feature_corpse_decay_looted_label",
+        "tooltip": "Allows a corpse to disappear after all physical items and gold have been removed from it.",
+        "tooltip_key": "feature_corpse_decay_looted_tooltip"
       },
       {
         "type": "bool",
         "scope": "module",
         "local": "MELSE_FEATURE_CORPSE_DECAYING_TIMED",
         "label": "Remove corpses over time",
-        "label_key": "feature_corpse_decay_timed_label"
+        "label_key": "feature_corpse_decay_timed_label",
+        "tooltip": "Schedules lootable corpses for removal after the configured corpse decay time.",
+        "tooltip_key": "feature_corpse_decay_timed_tooltip"
       },
       {
         "type": "bool",
         "scope": "module",
         "local": "MELSE_FEATURE_CORPSE_RAISEABLE",
         "label": "Allow Raise Dead on corpses",
-        "label_key": "feature_corpse_raiseable_label"
+        "label_key": "feature_corpse_raiseable_label",
+        "tooltip": "Keeps lootable corpses valid targets for resurrection effects while they remain in the area.",
+        "tooltip_key": "feature_corpse_raiseable_tooltip"
       },
       {
         "type": "bool",
         "scope": "module",
         "local": "MELSE_FEATURE_CORPSE_LOOTING_EXAMINED",
         "label": "Loot examined corpses",
-        "label_key": "feature_corpse_loot_examined_label"
+        "label_key": "feature_corpse_loot_examined_label",
+        "tooltip": "Automatically transfers eligible contents after the player examines and closes a corpse inventory.",
+        "tooltip_key": "feature_corpse_loot_examined_tooltip"
       },
       {
         "type": "bool",
         "scope": "module",
         "local": "MELSE_FEATURE_CORPSE_LOOTING_KILLED",
         "label": "Loot creatures killed by player",
-        "label_key": "feature_corpse_loot_killed_label"
+        "label_key": "feature_corpse_loot_killed_label",
+        "tooltip": "Automatically transfers eligible loot when the player character deals the killing blow.",
+        "tooltip_key": "feature_corpse_loot_killed_tooltip"
       },
       {
         "type": "bool",
         "scope": "module",
         "local": "MELSE_FEATURE_CORPSE_LOOTING_KILLED_BY_HENCH",
         "label": "Loot creatures killed by companions",
-        "label_key": "feature_corpse_loot_killed_by_companion_label"
+        "label_key": "feature_corpse_loot_killed_by_companion_label",
+        "tooltip": "Automatically transfers eligible loot when a companion or another party-controlled creature deals the killing blow.",
+        "tooltip_key": "feature_corpse_loot_killed_by_companion_tooltip"
       },
       {
         "type": "bool",
         "scope": "module",
         "local": "MELSE_FEATURE_ITEM_DESCRIPTION_ACQUIRED",
         "label": "Show item acquisition details",
-        "label_key": "feature_item_description_acquired_label"
+        "label_key": "feature_item_description_acquired_label",
+        "tooltip": "Adds the previous owner and area of acquisition to the descriptions of items looted by MELSE.",
+        "tooltip_key": "feature_item_description_acquired_tooltip"
+      },
+      {
+        "type": "bool",
+        "scope": "module",
+        "local": "MELSE_FEATURE_LOOT_ALL_ARROWS",
+        "label": "Arrows",
+        "label_key": "feature_loot_all_arrows_label",
+        "tooltip": "Always picks up arrows, ignoring the configured item price and weight filters.",
+        "tooltip_key": "feature_loot_all_arrows_tooltip",
+        "heading": "Pick up all:",
+        "heading_key": "feature_loot_all_heading",
+        "layout": "inline",
+        "width": 150
+      },
+      {
+        "type": "bool",
+        "scope": "module",
+        "local": "MELSE_FEATURE_LOOT_ALL_BOLTS",
+        "label": "Bolts",
+        "label_key": "feature_loot_all_bolts_label",
+        "tooltip": "Always picks up bolts, ignoring the configured item price and weight filters.",
+        "tooltip_key": "feature_loot_all_bolts_tooltip",
+        "layout": "inline",
+        "width": 150
+      },
+      {
+        "type": "bool",
+        "scope": "module",
+        "local": "MELSE_FEATURE_LOOT_ALL_BULLETS",
+        "label": "Bullets",
+        "label_key": "feature_loot_all_bullets_label",
+        "tooltip": "Always picks up sling bullets, ignoring the configured item price and weight filters.",
+        "tooltip_key": "feature_loot_all_bullets_tooltip",
+        "layout": "inline",
+        "width": 150
       },
       {
         "type": "int",
@@ -95,6 +152,8 @@
         "local": "MELSE_PARAM_DELAY_CORPSE_DECAY",
         "label": "Corpse decay time (seconds)",
         "label_key": "param_corpse_decay_seconds_label",
+        "tooltip": "Sets how many seconds a timed lootable corpse remains before it can be removed.",
+        "tooltip_key": "param_corpse_decay_seconds_tooltip",
         "minimum": 0,
         "maximum": 86400
       },
@@ -104,6 +163,8 @@
         "local": "MELSE_PARAM_THRESHOLD_ITEM_PRICE",
         "label": "Minimum item value",
         "label_key": "param_min_item_price_label",
+        "tooltip": "Leaves identified non-plot items below this base value behind. Zero disables the price filter; keys and quest items are always kept, while ammunition is filtered normally.",
+        "tooltip_key": "param_min_item_price_tooltip",
         "minimum": 0,
         "maximum": 1000000
       },
@@ -113,6 +174,8 @@
         "local": "MELSE_PARAM_THRESHOLD_ITEM_WEIGHT",
         "label": "Maximum item weight",
         "label_key": "param_max_item_weight_label",
+        "tooltip": "Leaves identified non-plot items heavier than this base weight behind. Zero disables the weight filter.",
+        "tooltip_key": "param_max_item_weight_tooltip",
         "minimum": 0,
         "maximum": 1000000
       }

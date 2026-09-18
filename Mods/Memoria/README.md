@@ -1,32 +1,50 @@
 # Memoria
 
-Memoria combines the universal heartbeat bootstrapper with the shared NWScript framework. It owns `default.ncs`, discovers schema-2 `*_memoria.txt` manifests in `OVERRIDE:`, validates package versions and dependency graphs, and dispatches only compatible mod heartbeats. Memoria has no gameplay heartbeat or configuration entry of its own.
+Memoria is the shared loader and framework that lets multiple Neverwinter Nights: Enhanced Edition override mods run together through one heartbeat script. It has no gameplay effects on its own.
 
-## Compatibility model
+## Features
 
-Every package manifest has an X.Y.Z `version` and a `dependencies` array. Dependencies use NuGet-style intervals; multiple intervals separated by `;` form a union, for example `[1.0,3.5];[3.7,4.0)`. Missing, malformed, duplicate, incompatible, and transitively disabled packages are excluded from both heartbeat dispatch and the Configuration Manager.
+- Loads compatible Memoria mods through a single `default.ncs` instead of letting them overwrite one another.
+- Checks package versions and dependencies, disables incompatible packages, and keeps the remaining mods running.
+- Provides shared NWScript helpers for mod authors.
 
-Manifests are discovered once per loaded game or module and cached in a hidden server-side NUI window. Loading a save or changing modules invalidates the cache naturally. ESI is always dispatched before other compatible heartbeat packages.
+## Compatibility
 
-## Includes
+Mods that do not provide their own `default.ncs` generally work with Memoria without changes. A mod that relies on `default.ncs` must register with Memoria instead of replacing or merging that file. Only Memoria may provide `default.ncs`.
 
-- `memoria_core.nss`: player, party, possession, and hit-point helpers.
-- `memoria_group.nss`: associate caches.
-- `memoria_loc.nss`: shared per-mod localization table loader.
-- `memoria_item.nss`: spells, classes, item properties, and equipment helpers.
-- `memoria_loader.nss`: manifest discovery and SemVer dependency filtering.
-- `memoria_locale.nss`: language detection and localized script dispatch.
-- `memoria_math.nss`: two-dimensional geometry.
-- `memoria_string.nss`: decimal and JSON search-text helpers.
+An external mod that needs a heartbeat registers a unique package manifest named `<package>_memoria.txt` and moves its periodic entry point into a separate script with its own non-`default` resource name. Memoria discovers the manifest, validates its version and dependencies, and invokes the compatible heartbeat at the declared priority.
 
-These include sources are distributed by Memoria for mod authors. Dependent repository projects consume them through `NwnRequiredPackage`; they are compiler inputs and are not copied into dependent build or publish outputs.
-
-## Localization tables
-
-`memoria_loc.nss` loads a mod's UTF-8 `<prefix>_loc_<language>.resjson` source after the Toolset validates and converts it to a game-local `<prefix>_loc_<language>.txt` resource. Tables are cached per module and language, missing languages fall back to English, and missing keys return an empty string.
-
-`memoria_locale.nss` dispatches the shared `memoria_is_ru.ncs` probe. Its checked-in source stays UTF-8 while the Toolset compiles a temporary Windows-1251 copy.
+The [original LSE](https://steamcommunity.com/sharedfiles/filedetails/?id=2307769974) is incompatible with Memoria and its mods. Use the [Memoria edition](https://steamcommunity.com/sharedfiles/filedetails/?id=3803404663) instead.
 
 ## Installation
 
-Install Memoria before every dependent package by copying its `override` contents into the NWN user `override` directory. Memoria conflicts by filename with any other package that provides `default.ncs`; such a package is compatible only when its default script calls `memoria_boot`.
+Copy Memoria's `override` contents into the NWN user `override` directory before installing any dependent package.
+
+## Integrating an external mod
+
+This integration does not require the external mod to be added to the Memoria repository or built with its Toolset. Compile the mod's periodic code as a uniquely named entry point such as `mymod_hb.nss`/`mymod_hb.ncs`, then place the compiled `.ncs` in the NWN user `override` directory alongside the manifest.
+
+Create `override/mymod_memoria.txt` as a complete runtime manifest:
+
+```json
+{
+  "schema": 1,
+  "id": "MYMOD",
+  "name": "My External Mod",
+  "version": "1.0.0",
+  "dependencies": [
+    {
+      "id": "MEMORIA",
+      "versions": "[1.0.0,2.0.0)"
+    }
+  ],
+  "bootstrapper": {
+    "heartbeat": "mymod_hb",
+    "priority": 200
+  }
+}
+```
+
+The manifest filename and heartbeat are NWN resource names and must be unique and respect the game's resref length limit. Lower numeric priorities run earlier; ESI is always forced to priority `0`. Implement the heartbeat as a normal compiled entry point containing `void main()`; Memoria invokes it with the player character as `OBJECT_SELF`.
+
+Distribute `mymod_memoria.txt` and `mymod_hb.ncs` with the external mod. Do not distribute `default.nss` or `default.ncs`; the installed Memoria package dispatches the registered heartbeat through its own `default.ncs`.

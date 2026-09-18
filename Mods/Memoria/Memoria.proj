@@ -2,7 +2,7 @@
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
         <ModId>MEMORIA</ModId>
-        <Version>1.0.0</Version>
+        <Version>1.0.1</Version>
         <ModDisplayName>Memoria</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">

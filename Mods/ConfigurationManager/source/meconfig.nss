@@ -22,7 +22,6 @@ const string MECONFIG_TEXT_ITEM_DESCRIPTION = "item_description";
 const string MECONFIG_TEXT_WINDOW_TITLE = "window_title";
 const string MECONFIG_TEXT_NO_MODULES = "no_modules";
 const string MECONFIG_TEXT_SAVE = "save";
-const string MECONFIG_TEXT_CLOSE = "close";
 const string MECONFIG_TEXT_RANGE_ERROR = "range_error";
 
 string MECONFIG_GetLanguage(object oPC)
@@ -81,6 +80,8 @@ json MECONFIG_LocalizeModules(object oPC, json jModules)
         {
             json jOption = JsonArrayGet(jOptions, nOption);
             jOption = JsonObjectSet(jOption, "label", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jOption, "label", "label_key")));
+            jOption = JsonObjectSet(jOption, "tooltip", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jOption, "tooltip", "tooltip_key")));
+            jOption = JsonObjectSet(jOption, "heading", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jOption, "heading", "heading_key")));
             jOptions = JsonArraySet(jOptions, nOption, jOption);
         }
         jModule = JsonObjectSet(jModule, "options", jOptions);
@@ -165,6 +166,13 @@ json MECONFIG_BuildModuleList()
     return NuiList(jTemplate, NuiBind("module_count"), 32.0f, TRUE, NUI_SCROLLBARS_Y);
 }
 
+json MECONFIG_BuildBoolOption(json jOption, int nIndex)
+{
+    json jCheck = NuiCheck(JsonString(JsonGetString(JsonObjectGet(jOption, "label"))), NuiBind(MECONFIG_OptionBind(nIndex)));
+    string sTooltip = JsonGetString(JsonObjectGet(jOption, "tooltip"));
+    return sTooltip == "" ? jCheck : NuiTooltip(jCheck, JsonString(sTooltip));
+}
+
 json MECONFIG_BuildOptions(object oPC, json jModule)
 {
     json jColumn = JsonArray();
@@ -182,23 +190,57 @@ json MECONFIG_BuildOptions(object oPC, json jModule)
         json jOption = JsonArrayGet(jOptions, nIndex);
         string sType = JsonGetString(JsonObjectGet(jOption, "type"));
         string sLabel = JsonGetString(JsonObjectGet(jOption, "label"));
+        string sTooltip = JsonGetString(JsonObjectGet(jOption, "tooltip"));
         string sBind = MECONFIG_OptionBind(nIndex);
+        string sHeading = JsonGetString(JsonObjectGet(jOption, "heading"));
+        if (sHeading != "")
+            jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiLabel(JsonString(sHeading), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), 26.0f));
         if (sType == "bool")
-            jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiCheck(JsonString(sLabel), NuiBind(sBind)), 28.0f));
+        {
+            if (JsonGetString(JsonObjectGet(jOption, "layout")) == "inline")
+            {
+                json jInline = JsonArray();
+                while (nIndex < JsonGetLength(jOptions))
+                {
+                    json jInlineOption = JsonArrayGet(jOptions, nIndex);
+                    if (JsonGetString(JsonObjectGet(jInlineOption, "type")) != "bool" || JsonGetString(JsonObjectGet(jInlineOption, "layout")) != "inline")
+                        break;
+                    float fInlineWidth = JsonGetFloat(JsonObjectGet(jInlineOption, "width"));
+                    if (fInlineWidth <= 0.0f)
+                        fInlineWidth = 150.0f;
+                    jInline = JsonArrayInsert(jInline, NuiWidth(MECONFIG_BuildBoolOption(jInlineOption, nIndex), fInlineWidth));
+                    nIndex++;
+                }
+                nIndex--;
+                jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiRow(jInline), 28.0f));
+            }
+            else
+                jColumn = JsonArrayInsert(jColumn, NuiHeight(MECONFIG_BuildBoolOption(jOption, nIndex), 28.0f));
+        }
         else if (sType == "int" || sType == "float")
         {
             json jRow = JsonArray();
             jRow = JsonArrayInsert(jRow, NuiWidth(NuiLabel(JsonString(sLabel), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), 340.0f));
             jRow = JsonArrayInsert(jRow, NuiWidth(NuiTextEdit(JsonString(""), NuiBind(sBind), 12, FALSE), 140.0f));
-            jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiRow(jRow), 30.0f));
+            json jOptionRow = NuiRow(jRow);
+            if (sTooltip != "")
+                jOptionRow = NuiTooltip(jOptionRow, JsonString(sTooltip));
+            jColumn = JsonArrayInsert(jColumn, NuiHeight(jOptionRow, 30.0f));
         }
         else if (sType == "action")
-            jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiId(NuiButton(JsonString(sLabel)), "action_" + IntToString(nIndex)), 32.0f));
+        {
+            json jAction = NuiId(NuiButton(JsonString(sLabel)), "action_" + IntToString(nIndex));
+            if (sTooltip != "")
+                jAction = NuiTooltip(jAction, JsonString(sTooltip));
+            float fWidth = JsonGetFloat(JsonObjectGet(jOption, "width"));
+            if (fWidth > 0.0f)
+                jAction = NuiWidth(jAction, fWidth);
+            jColumn = JsonArrayInsert(jColumn, NuiHeight(jAction, 32.0f));
+        }
     }
     json jButtons = JsonArray();
     jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_SAVE))), "save"), 130.0f));
     jButtons = JsonArrayInsert(jButtons, NuiSpacer());
-    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_CLOSE))), "close"), 130.0f));
     jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiRow(jButtons), 36.0f));
     return NuiCol(jColumn);
 }

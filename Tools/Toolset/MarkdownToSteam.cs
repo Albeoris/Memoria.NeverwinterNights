@@ -5,6 +5,8 @@ namespace Memoria.NeverwinterNights.Toolset;
 
 internal static partial class MarkdownToSteam
 {
+    private const string FeedbackUrl = "https://github.com/Albeoris/Memoria.NeverwinterNights/issues";
+
     public static string Convert(string markdown, string readmeUrl)
     {
         string[] lines = markdown.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n');
@@ -78,7 +80,7 @@ internal static partial class MarkdownToSteam
         if (description.Length == 0) throw new InvalidDataException("README.md produced an empty Workshop description.");
         DateTime generatedAt = DateTime.UtcNow;
         string updateDate = $"{generatedAt.Year:D4}-{generatedAt.Month:D2}-{generatedAt.Day:D2}";
-        return $"{description}{Environment.NewLine}{Environment.NewLine}[hr][/hr]{Environment.NewLine}[i]Last updated: {updateDate}[/i]{Environment.NewLine}[url={readmeUrl}]Sources on GitHub[/url]";
+        return $"{description}{Environment.NewLine}{Environment.NewLine}[hr][/hr]{Environment.NewLine}[i]Last updated: {updateDate}[/i]{Environment.NewLine}[url={FeedbackUrl}]Report feedback and issues[/url]{Environment.NewLine}[url={readmeUrl}]Sources on GitHub[/url]";
     }
 
     private static string ConvertInline(string text)

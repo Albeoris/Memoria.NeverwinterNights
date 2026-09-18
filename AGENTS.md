@@ -9,13 +9,15 @@
 
 ## Public package versioning
 
-MEMORIA, ESI, and MECONFIG expose public NWScript APIs through their shipped or dependency-consumed `.nss` files. Whenever one of these public functions changes, update that package's `Version` in the same change according to SemVer:
+Every mod project's `Version` tracks its public package API, not its user-facing feature set or internal behavior. Public APIs include shipped or dependency-consumed `.nss` functions and public identifiers, resource contracts, and manifest schemas. Update a changed package's `Version` in the same change according to SemVer:
 
-- Increment PATCH for an implementation fix that preserves every public function name, parameter list, return value contract, observable behavior, and side effect.
-- Increment MINOR and reset PATCH to zero for a backward-compatible addition, such as a new public function or a new optional parameter whose default preserves existing calls and behavior.
-- Increment MAJOR and reset MINOR and PATCH to zero for a breaking change: removing or renaming a public function; changing required parameters, parameter types/order, return type, established behavior, or side effects; or changing public identifiers, resource contracts, or manifest schema incompatibly.
+- Increment PATCH for packaged runtime changes that preserve the public API. This includes implementation fixes, changed defaults, and added or changed user-configurable options when existing consumers and installation contracts remain compatible.
+- Increment MINOR and reset PATCH to zero for a backward-compatible public API addition, such as a new public function, a new optional parameter whose default preserves existing calls and behavior, or an optional manifest capability.
+- Increment MAJOR and reset MINOR and PATCH to zero only for an incompatible public API change: removing or renaming a public function; changing required parameters, parameter types/order, return type, established function behavior, or side effects; or changing public identifiers, resource contracts, or manifest schema incompatibly. Do not increment MAJOR solely because runtime behavior, defaults, or user-configurable options changed.
 
-After a MAJOR increment, update every dependent project's `Versions` range so the build accepts the new version only when that dependency has been reviewed for compatibility. Do not increment a version merely for documentation, tests, or private implementation changes with no packaged runtime effect.
+After a MAJOR increment, update every dependent project's `Versions` range so the build accepts the new version only when that dependency has been reviewed for compatibility.
+
+Every change within `Mods/<Project>` must increment that project's `Version` by at least PATCH so the change receives a new release tag and is delivered to Steam Workshop. This includes documentation, tests, private implementation changes, and package metadata. A required MINOR or MAJOR increment already satisfies this rule; do not increment the version a second time merely because several kinds of changes are included in the same unreleased working-tree change.
 
 ## Repository layout
 

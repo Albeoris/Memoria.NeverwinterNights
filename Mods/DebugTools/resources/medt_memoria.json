@@ -1,5 +1,5 @@
 {
-  "schema": 2,
+  "schema": 1,
   "id": "MEDT",
   "bootstrapper": {
     "heartbeat": "medt_hb",

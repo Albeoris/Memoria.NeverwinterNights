@@ -196,7 +196,7 @@ internal static partial class ModBuilder
             bool isManifest = Path.GetFileNameWithoutExtension(source).EndsWith("_memoria", StringComparison.OrdinalIgnoreCase);
             if (isManifest)
             {
-                if (root["schema"]?.GetValue<int>() != 2) throw new InvalidDataException($"Runtime manifest schema must be 2: {source}");
+                if (root["schema"]?.GetValue<int>() != 1) throw new InvalidDataException($"Runtime manifest schema must be 1: {source}");
                 string? id = root["id"]?.GetValue<string>();
                 if (!string.Equals(id, inputs.ModId, StringComparison.Ordinal)) throw new InvalidDataException($"Runtime manifest id '{id}' does not match project ModId '{inputs.ModId}': {source}");
                 root["name"] = inputs.ModDisplayName;

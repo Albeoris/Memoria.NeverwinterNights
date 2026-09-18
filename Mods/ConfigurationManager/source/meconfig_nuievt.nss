@@ -7,9 +7,7 @@ void main()
     if (NuiGetEventType() != "click")
         return;
     string sElement = NuiGetEventElement();
-    if (sElement == "close")
-        NuiDestroy(oPC, nToken);
-    else if (sElement == "save")
+    if (sElement == "save")
         MECONFIG_Save(oPC, nToken);
     else if (sElement == "module_select")
     {

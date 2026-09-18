@@ -1,10 +1,19 @@
-# Event Script Injector — Memoria Edition
+# Event Script Injector - Memoria Edition (ESI)
 
-ESI lets override mods add behavior to module, area, creature, and placeable events without replacing the module's original scripts. This package preserves Ravick's original `ESI_InjectToObject` API and resource names.
+Event Script Injector lets multiple override mods add behavior to game events without replacing the module's original scripts or one another's handlers.
 
-The union script and the remembered original event script remain on the object and can be serialized by a saved game. Active hooks live only in a server-side NUI user-data registry. ESI creates a new empty registry for every loaded runtime, and consumer mods register their hooks again on their first heartbeat. Until that happens, a saved union script executes only the remembered original script.
+## Features
 
-Injection keys are exact, namespaced strings. Legacy numeric-key locals are discarded lazily when an event is registered under the new storage schema. Existing saved games keep their original event handlers because the `esi_uni_*` resource names and original-script local names have not changed.
+- Injects scripts into module, area, creature, and placeable events.
+- Preserves the original event script and supports ordered handlers from multiple mods.
+- Retains Ravick's original `ESI_InjectToObject` API and resource names for existing integrations and saved games.
+- Rebuilds runtime registrations after a game or module is loaded.
+
+## Compatibility
+
+ESI supports mods written for Ravick's original API. Do not install it alongside another ESI distribution; mods that replace event handlers at runtime instead of using ESI may bypass injected scripts.
+
+The [original LSE](https://steamcommunity.com/sharedfiles/filedetails/?id=2307769974) is incompatible with Memoria and includes legacy ESI files. Use the [Memoria edition](https://steamcommunity.com/sharedfiles/filedetails/?id=3803404663) instead.
 
 ## Installation
 
@@ -14,13 +23,13 @@ Install Memoria first, then copy ESI's `override` contents into the NWN user `ov
 
 This example registers an `OnActivateItem` handler without replacing the module's original event script or handlers installed by other mods.
 
-`override/acme_evt_memoria.txt`:
+`override/mymod_evt_memoria.txt`:
 
 ```json
-{"schema":1,"id":"ACME_TINY_EVT","version":"1.0.0","dependencies":[{"id":"MEMORIA","version":"1.0.0"},{"id":"esi","version":"1.0.0"}],"bootstrapper":{"heartbeat":"acme_evt_hb","priority":200}}
+{"schema":1,"id":"mymod_TINY_EVT","version":"1.0.0","dependencies":[{"id":"MEMORIA","versions":"[1.0.0,2.0.0)"},{"id":"esi","versions":"[2.0.0,3.0.0)"}],"bootstrapper":{"heartbeat":"mymod_evt_hb","priority":200}}
 ```
 
-`acme_evt_hb.nss`, compiled as `override/acme_evt_hb.ncs`:
+`mymod_evt_hb.nss`, compiled as `override/mymod_evt_hb.ncs`:
 
 ```c
 #include "esi_lib"
@@ -28,18 +37,18 @@ This example registers an `OnActivateItem` handler without replacing the module'
 void main()
 {
     object oModule = GetModule();
-    ESI_InjectToObject(oModule, "acme.module.activate", EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, "acme_evt_act", ESI_INJECTION_PLACEMENT_LAST);
+    ESI_InjectToObject(oModule, "mymod.module.activate", EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, "mymod_evt_act", ESI_INJECTION_PLACEMENT_LAST);
 }
 ```
 
-`acme_evt_act.nss`, compiled as `override/acme_evt_act.ncs`:
+`mymod_evt_act.nss`, compiled as `override/mymod_evt_act.ncs`:
 
 ```c
 void main()
 {
     object oPC = GetItemActivator();
     object oItem = GetItemActivated();
-    if (GetIsPC(oPC)) SendMessageToPC(oPC, "[ACME_TINY_EVT] activated " + GetName(oItem) + ".");
+    if (GetIsPC(oPC)) SendMessageToPC(oPC, "[mymod_TINY_EVT] activated " + GetName(oItem) + ".");
 }
 ```
 
@@ -47,15 +56,13 @@ The finished mod contains:
 
 ```text
 override/
-├── acme_evt_memoria.txt
-├── acme_evt_act.ncs
-└── acme_evt_hb.ncs
+├── mymod_evt_memoria.txt
+├── mymod_evt_act.ncs
+└── mymod_evt_hb.ncs
 ```
 
-`ACME` stands for the mod author's own unique prefix. The `_memoria` filename suffix identifies the shared package manifest; Memoria reads its dependency and `bootstrapper` data. Use a namespaced injection key such as `acme.module.activate`. `ESI_InjectToObject` checks the current runtime registry internally, so repeated heartbeats are cheap while a newly loaded game registers the hook again automatically. Use `ESI_IsRegistered` directly only when its result lets the caller skip additional work beyond the registration call itself.
+`MYMOD` stands for the mod author's own unique prefix. The `_memoria` filename suffix identifies the shared package manifest; Memoria reads its dependency and `bootstrapper` data. Use a namespaced injection key such as `acme.module.activate`. `ESI_InjectToObject` checks the current runtime registry internally, so repeated heartbeats are cheap while a newly loaded game registers the hook again automatically. Use `ESI_IsRegistered` directly only when its result lets the caller skip additional work beyond the registration call itself.
 
-## Compatibility
-
-Do not install this package alongside another ESI distribution or a legacy LSE package that contains ESI files. Mods that replace module event handlers at runtime instead of using ESI may bypass registered injections. Runtime hooks require at least one player because the transient registry belongs to a hidden player NUI window; if its owner leaves, ESI recreates the registry and consumers register again on the next heartbeat.
+## Credits
 
 Original ESI scripts are by Ravick. See the repository's third-party notices for licensing details.
