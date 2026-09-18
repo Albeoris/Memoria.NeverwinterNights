@@ -6,7 +6,7 @@
 #include "memoria_locale"
 #include "memoria_loc"
 
-const string METACT_VERSION = "0.7.3";
+const string METACT_VERSION = "0.7.4";
 const string METACT_LOC_PREFIX = "metact";
 const string METACT_ESI_KEY_GUI = "metact.module.gui";
 const string METACT_ESI_KEY_TARGET = "metact.module.target";
@@ -151,6 +151,9 @@ const string METACT_TEXT_PRIORITY_RATING_HIGH = "priority_rating_high";
 const string METACT_TEXT_PRIORITY_RATING_LOW = "priority_rating_low";
 const string METACT_TEXT_PRIORITY_HEALTH_LOW = "priority_health_low";
 const string METACT_TEXT_PRIORITY_HEALTH_HIGH = "priority_health_high";
+const string METACT_TEXT_PRIORITY_ATTACKER = "priority_attacker";
+const string METACT_TEXT_PRIORITY_RATING = "priority_rating";
+const string METACT_TEXT_PRIORITY_HEALTH = "priority_health";
 const string METACT_TEXT_PRIORITY_DEFAULT = "priority_default";
 const string METACT_TEXT_PRIORITY_KIND = "priority_kind";
 const string METACT_TEXT_RULES = "rules";

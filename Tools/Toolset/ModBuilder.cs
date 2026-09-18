@@ -28,6 +28,7 @@ internal static partial class ModBuilder
 
         ModProjectInputs inputs = await ModProjectInputs.LoadAsync(inputsPath);
         ValidateOwnedInputs(inputs);
+        await ValidateLocalizationResourcesAsync(inputs.Resources);
         Console.WriteLine($"Building {inputs.ModDisplayName} {inputs.ModVersion}: {ToolsetLog.RepositoryPath(context, inputs.ProjectDirectory!)} -> {ToolsetLog.RepositoryPath(context, outputDirectory)}");
         string[] includeDirectories = (await ApiSnapshotResolver.ResolveIncludeDirectoriesAsync(context, inputs)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         HashSet<string> outputNames = new(StringComparer.OrdinalIgnoreCase);
@@ -183,6 +184,57 @@ internal static partial class ModBuilder
         {
             throw new InvalidDataException($"Invalid ResJSON resource: {source}", exception);
         }
+    }
+
+    private static async Task ValidateLocalizationResourcesAsync(IEnumerable<string> resources)
+    {
+        string[] languages = ["en", "de", "es", "fr", "it", "ru"];
+        Dictionary<string, Dictionary<string, string>> groups = new(StringComparer.OrdinalIgnoreCase);
+        foreach (string resource in resources.Where(IsResJson))
+        {
+            string stem = Path.GetFileNameWithoutExtension(resource);
+            int marker = stem.LastIndexOf("_loc_", StringComparison.OrdinalIgnoreCase);
+            if (marker <= 0) continue;
+            string language = stem[(marker + 5)..].ToLowerInvariant();
+            if (!languages.Contains(language, StringComparer.Ordinal)) continue;
+            string group = Path.Combine(Path.GetDirectoryName(resource)!, stem[..marker]);
+            if (!groups.TryGetValue(group, out Dictionary<string, string>? files))
+            {
+                files = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                groups.Add(group, files);
+            }
+            files.Add(language, resource);
+        }
+
+        foreach ((string group, Dictionary<string, string> files) in groups)
+        {
+            if (!files.TryGetValue("en", out string? englishPath)) throw new InvalidDataException($"Localization group is missing its English table: {group}");
+            JsonObject english = await ReadLocalizationObjectAsync(englishPath);
+            HashSet<string> englishKeys = english.Select(entry => entry.Key).ToHashSet(StringComparer.Ordinal);
+            foreach ((string language, string localizedPath) in files)
+            {
+                if (language.Equals("en", StringComparison.OrdinalIgnoreCase)) continue;
+                JsonObject localized = await ReadLocalizationObjectAsync(localizedPath);
+                HashSet<string> localizedKeys = localized.Select(entry => entry.Key).ToHashSet(StringComparer.Ordinal);
+                string[] missing = englishKeys.Except(localizedKeys, StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
+                string[] extra = localizedKeys.Except(englishKeys, StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
+                if (missing.Length > 0 || extra.Length > 0)
+                    throw new InvalidDataException($"Localization keys do not match English table for {localizedPath}. Missing: {string.Join(", ", missing)}. Extra: {string.Join(", ", extra)}.");
+            }
+        }
+    }
+
+    private static async Task<JsonObject> ReadLocalizationObjectAsync(string path)
+    {
+        string text = await File.ReadAllTextAsync(path, new UTF8Encoding(false, true));
+        JsonNode? node = JsonNode.Parse(text);
+        if (node is not JsonObject root) throw new InvalidDataException($"Localization resource must contain a JSON object: {path}");
+        foreach ((string key, JsonNode? value) in root)
+        {
+            if (value is not JsonValue jsonValue || !jsonValue.TryGetValue(out string? textValue) || string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(textValue))
+                throw new InvalidDataException($"Localization entry '{key}' must contain non-empty text: {path}");
+        }
+        return root;
     }
 
     private static async Task<bool> ConvertJsonTextResourceAsync(string source, string output, ModProjectInputs inputs)

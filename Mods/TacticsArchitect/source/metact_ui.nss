@@ -1,5 +1,6 @@
 #include "metact_picker"
 #include "metact_meta"
+#include "memoria_nui"
 #include "nw_inc_nui"
 
 const string METACT_WINDOW_MAIN = "metact_main_74c2";
@@ -51,7 +52,7 @@ json METACT_Header(string sText)
 
 json METACT_IconButton(string sIcon, string sId, string sTooltip)
 {
-    return NuiTooltip(NuiId(NuiButtonImage(JsonString(sIcon)), sId), JsonString(sTooltip));
+    return MEMORIA_NUI_Help(NuiId(NuiButtonImage(JsonString(sIcon)), sId), JsonString(sTooltip));
 }
 
 json METACT_ComboEntries2(object oPC, string sKeyA, string sKeyB)
@@ -144,12 +145,19 @@ json METACT_NewRule()
 
 string METACT_PriorityKindFromIndex(int iKind)
 {
-    return iKind == 0 ? "caster" : iKind == 1 ? "rating_high" : iKind == 2 ? "rating_low" : iKind == 3 ? "health_low" : "health_high";
+    return iKind == 0 ? "caster" : iKind == 1 ? "attacker" : iKind == 2 ? "rating" : "health";
 }
 
 int METACT_PriorityKindToIndex(string sKind)
 {
-    return sKind == "caster" ? 0 : sKind == "rating_high" ? 1 : sKind == "rating_low" ? 2 : sKind == "health_low" ? 3 : 4;
+    return sKind == "caster" ? 0 : sKind == "attacker" ? 1 : sKind == "rating" || sKind == "rating_high" || sKind == "rating_low" ? 2 : 3;
+}
+
+string METACT_PriorityCategory(string sKind)
+{
+    if (sKind == "rating_high" || sKind == "rating_low") return "rating";
+    if (sKind == "health_high" || sKind == "health_low") return "health";
+    return sKind;
 }
 
 int METACT_HasPriorityKind(json jPriorities, string sKind, int iExcept)
@@ -158,7 +166,7 @@ int METACT_HasPriorityKind(json jPriorities, string sKind, int iExcept)
     for (iIndex = 0; iIndex < JsonGetLength(jPriorities); iIndex++)
     {
         json jPriority = JsonArrayGet(jPriorities, iIndex);
-        if (iIndex != iExcept && JsonGetString(JsonObjectGet(jPriority, "kind")) == sKind) return TRUE;
+        if (iIndex != iExcept && METACT_PriorityCategory(JsonGetString(JsonObjectGet(jPriority, "kind"))) == METACT_PriorityCategory(sKind)) return TRUE;
     }
     return FALSE;
 }
@@ -167,29 +175,72 @@ json METACT_NewPriority(json jPriorities)
 {
     if (JsonGetType(jPriorities) != JSON_TYPE_ARRAY) jPriorities = JsonArray();
     int iKind;
-    for (iKind = 0; iKind < 5 && METACT_HasPriorityKind(jPriorities, METACT_PriorityKindFromIndex(iKind), -1); iKind++);
-    if (iKind >= 5) iKind = 0;
+    for (iKind = 0; iKind < 4 && METACT_HasPriorityKind(jPriorities, METACT_PriorityKindFromIndex(iKind), -1); iKind++);
+    if (iKind >= 4) iKind = 0;
     json jPriority = JsonObject();
     jPriority = JsonObjectSet(jPriority, "kind", JsonString(METACT_PriorityKindFromIndex(iKind)));
+    jPriority = JsonObjectSet(jPriority, "comparison", JsonString(iKind == 3 ? "max" : "min"));
+    jPriority = JsonObjectSet(jPriority, "value", JsonInt(iKind == 3 ? 50 : 3));
+    jPriority = JsonObjectSet(jPriority, "subject", JsonString("pc"));
+    jPriority = JsonObjectSet(jPriority, "subject_name", JsonString(""));
     return JsonObjectSet(jPriority, "enabled", JsonBool(TRUE));
 }
 
 string METACT_PriorityLabel(object oPC, json jPriority)
 {
     string sKind = JsonGetString(JsonObjectGet(jPriority, "kind"));
-    string sKey = sKind == "caster" ? METACT_TEXT_PRIORITY_CASTER : sKind == "rating_high" ? METACT_TEXT_PRIORITY_RATING_HIGH : sKind == "rating_low" ? METACT_TEXT_PRIORITY_RATING_LOW : sKind == "health_low" ? METACT_TEXT_PRIORITY_HEALTH_LOW : METACT_TEXT_PRIORITY_HEALTH_HIGH;
-    return METACT_GetText(sKey, oPC);
+    if (sKind == "rating_high") return METACT_GetText(METACT_TEXT_PRIORITY_RATING_HIGH, oPC);
+    if (sKind == "rating_low") return METACT_GetText(METACT_TEXT_PRIORITY_RATING_LOW, oPC);
+    if (sKind == "health_high") return METACT_GetText(METACT_TEXT_PRIORITY_HEALTH_HIGH, oPC);
+    if (sKind == "health_low") return METACT_GetText(METACT_TEXT_PRIORITY_HEALTH_LOW, oPC);
+    if (sKind == "caster") return METACT_GetText(METACT_TEXT_PRIORITY_CASTER, oPC);
+    if (sKind == "attacker")
+    {
+        string sName = JsonGetString(JsonObjectGet(jPriority, "subject")) == "pc" ? METACT_GetText(METACT_TEXT_PROFILE_PC, oPC) : JsonGetString(JsonObjectGet(jPriority, "subject_name"));
+        return METACT_GetText(METACT_TEXT_PRIORITY_ATTACKER, oPC) + ": " + sName;
+    }
+    string sComparison = METACT_GetText(JsonGetString(JsonObjectGet(jPriority, "comparison")) == "max" ? METACT_TEXT_AT_MOST : METACT_TEXT_AT_LEAST, oPC);
+    int iValue = JsonGetInt(JsonObjectGet(jPriority, "value"));
+    if (sKind == "rating") return METACT_GetText(METACT_TEXT_PRIORITY_RATING, oPC) + ": " + sComparison + " " + GetStringByStrRef(6416 + iValue);
+    return METACT_GetText(METACT_TEXT_PRIORITY_HEALTH, oPC) + ": " + sComparison + " " + IntToString(iValue) + "%";
 }
 
 json METACT_PriorityEntries(object oPC)
 {
     json jEntries = JsonArray();
     jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_CASTER, oPC), 0));
-    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_RATING_HIGH, oPC), 1));
-    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_RATING_LOW, oPC), 2));
-    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_HEALTH_LOW, oPC), 3));
-    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_HEALTH_HIGH, oPC), 4));
+    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_ATTACKER, oPC), 1));
+    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_RATING, oPC), 2));
+    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_PRIORITY_HEALTH, oPC), 3));
     return jEntries;
+}
+
+json METACT_PriorityTargetEntries(object oPC)
+{
+    json jEntries = JsonArrayInsert(JsonArray(), NuiComboEntry(METACT_GetText(METACT_TEXT_PROFILE_PC, oPC), 0));
+    int iIndex;
+    for (iIndex = 1; iIndex <= METACT_GetGroupCount(oPC); iIndex++)
+    {
+        object oMember = METACT_GetGroupMember(oPC, iIndex);
+        if (GetIsObjectValid(oMember) && oMember != oPC)
+            jEntries = JsonArrayInsert(jEntries, NuiComboEntry(GetName(oMember), iIndex));
+    }
+    return jEntries;
+}
+
+int METACT_GetPriorityTargetIndex(object oPC, json jPriority)
+{
+    string sSubject = JsonGetString(JsonObjectGet(jPriority, "subject"));
+    if (sSubject == "pc" || sSubject == "")
+        return 0;
+    int iIndex;
+    for (iIndex = 1; iIndex <= METACT_GetGroupCount(oPC); iIndex++)
+    {
+        object oMember = METACT_GetGroupMember(oPC, iIndex);
+        if (GetIsObjectValid(oMember) && GetObjectUUID(oMember) == sSubject)
+            return iIndex;
+    }
+    return 0;
 }
 
 json METACT_GetSelectedProfile(object oPC)
@@ -294,13 +345,13 @@ json METACT_BuildRulesPanel(object oPC, float fHeight)
     json jPanel = JsonArray();
     jPanel = JsonArrayInsert(jPanel, NuiHeight(METACT_Header(METACT_GetText(METACT_TEXT_RULES, oPC)), 24.0f));
     json jRuleTemplate = JsonArray();
-    jRuleTemplate = JsonArrayInsert(jRuleTemplate, NuiListTemplateCell(NuiTooltip(NuiId(NuiButtonSelect(NuiBind("rule_summary"), NuiBind("rule_selected")), "rule_select"), NuiBind("rule_tooltip")), 0.0f, TRUE));
+    jRuleTemplate = JsonArrayInsert(jRuleTemplate, NuiListTemplateCell(MEMORIA_NUI_Help(NuiId(NuiButtonSelect(NuiBind("rule_summary"), NuiBind("rule_selected")), "rule_select"), NuiBind("rule_tooltip")), 0.0f, TRUE));
     jRuleTemplate = JsonArrayInsert(jRuleTemplate, NuiListTemplateCell(METACT_IconButton("ir_action", "rule_edit", METACT_GetText(METACT_TEXT_EDIT, oPC)), 28.0f, FALSE));
     jRuleTemplate = JsonArrayInsert(jRuleTemplate, NuiListTemplateCell(METACT_IconButton("gui_spl_btn_up", "rule_up", METACT_GetText(METACT_TEXT_UP, oPC)), 28.0f, FALSE));
     jRuleTemplate = JsonArrayInsert(jRuleTemplate, NuiListTemplateCell(METACT_IconButton("gui_spl_btn_down", "rule_down", METACT_GetText(METACT_TEXT_DOWN, oPC)), 28.0f, FALSE));
     jPanel = JsonArrayInsert(jPanel, NuiHeight(NuiList(jRuleTemplate, NuiBind("rule_count"), 32.0f, TRUE, NUI_SCROLLBARS_Y), fHeight - 54.0f));
     json jBottom = JsonArray();
-    jBottom = JsonArrayInsert(jBottom, NuiWidth(NuiTooltip(NuiId(NuiButton(JsonString("+")), "rule_add"), JsonString(METACT_GetText(METACT_TEXT_ADD_RULE, oPC))), 30.0f));
+    jBottom = JsonArrayInsert(jBottom, NuiWidth(MEMORIA_NUI_Help(NuiId(NuiButton(JsonString("+")), "rule_add"), JsonString(METACT_GetText(METACT_TEXT_ADD_RULE, oPC))), 30.0f));
     jBottom = JsonArrayInsert(jBottom, NuiSpacer());
     jPanel = JsonArrayInsert(jPanel, NuiHeight(NuiRow(jBottom), 30.0f));
     return NuiCol(jPanel);
@@ -311,7 +362,7 @@ json METACT_BuildActionsPanel(object oPC, float fHeight)
     json jPanel = JsonArray();
     jPanel = JsonArrayInsert(jPanel, NuiHeight(METACT_Header(METACT_GetText(METACT_TEXT_ACTIONS, oPC)), 24.0f));
     json jActionTemplate = JsonArray();
-    jActionTemplate = JsonArrayInsert(jActionTemplate, NuiListTemplateCell(NuiTooltip(NuiId(NuiButton(NuiBind("action_summary")), "action_edit"), NuiBind("action_tooltip")), 0.0f, TRUE));
+    jActionTemplate = JsonArrayInsert(jActionTemplate, NuiListTemplateCell(MEMORIA_NUI_Help(NuiId(NuiButton(NuiBind("action_summary")), "action_edit"), NuiBind("action_tooltip")), 0.0f, TRUE));
     jActionTemplate = JsonArrayInsert(jActionTemplate, NuiListTemplateCell(METACT_IconButton("gui_spl_btn_up", "action_up", METACT_GetText(METACT_TEXT_UP, oPC)), 28.0f, FALSE));
     jActionTemplate = JsonArrayInsert(jActionTemplate, NuiListTemplateCell(METACT_IconButton("gui_spl_btn_down", "action_down", METACT_GetText(METACT_TEXT_DOWN, oPC)), 28.0f, FALSE));
     jPanel = JsonArrayInsert(jPanel, NuiHeight(NuiList(jActionTemplate, NuiBind("action_count"), 32.0f, TRUE, NUI_SCROLLBARS_Y), fHeight - 54.0f));
@@ -332,13 +383,13 @@ json METACT_BuildPrioritiesPanel(object oPC, float fHeight)
     jPanel = JsonArrayInsert(jPanel, NuiHeight(METACT_Header(METACT_GetText(METACT_TEXT_TARGET_PRIORITIES, oPC)), 24.0f));
     jPanel = JsonArrayInsert(jPanel, NuiHeight(NuiStyleForegroundColor(NuiLabel(NuiBind("priority_scope_label"), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), NuiColor(150, 150, 150)), 30.0f));
     json jPriorityTemplate = JsonArray();
-    jPriorityTemplate = JsonArrayInsert(jPriorityTemplate, NuiListTemplateCell(NuiTooltip(NuiId(NuiButtonSelect(NuiBind("priority_summary"), NuiBind("priority_selected")), "priority_edit"), NuiBind("priority_tooltip")), 0.0f, TRUE));
+    jPriorityTemplate = JsonArrayInsert(jPriorityTemplate, NuiListTemplateCell(MEMORIA_NUI_Help(NuiId(NuiButton(NuiBind("priority_summary")), "priority_edit"), NuiBind("priority_tooltip")), 0.0f, TRUE));
     jPriorityTemplate = JsonArrayInsert(jPriorityTemplate, NuiListTemplateCell(METACT_IconButton("gui_spl_btn_up", "priority_up", METACT_GetText(METACT_TEXT_UP, oPC)), 28.0f, FALSE));
     jPriorityTemplate = JsonArrayInsert(jPriorityTemplate, NuiListTemplateCell(METACT_IconButton("gui_spl_btn_down", "priority_down", METACT_GetText(METACT_TEXT_DOWN, oPC)), 28.0f, FALSE));
     jPanel = JsonArrayInsert(jPanel, NuiHeight(NuiList(jPriorityTemplate, NuiBind("priority_count"), 32.0f, TRUE, NUI_SCROLLBARS_Y), fHeight - 114.0f));
     jPanel = JsonArrayInsert(jPanel, NuiHeight(NuiStyleForegroundColor(NuiLabel(NuiBind("priority_fallback_label"), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), NuiColor(150, 150, 150)), 30.0f));
     json jBottom = JsonArray();
-    jBottom = JsonArrayInsert(jBottom, NuiWidth(NuiTooltip(NuiId(NuiButton(JsonString("+")), "priority_add"), JsonString(METACT_GetText(METACT_TEXT_ADD_PRIORITY, oPC))), 30.0f));
+    jBottom = JsonArrayInsert(jBottom, NuiWidth(MEMORIA_NUI_Help(NuiId(NuiButton(JsonString("+")), "priority_add"), JsonString(METACT_GetText(METACT_TEXT_ADD_PRIORITY, oPC))), 30.0f));
     jBottom = JsonArrayInsert(jBottom, NuiSpacer());
     jPanel = JsonArrayInsert(jPanel, NuiHeight(NuiRow(jBottom), 30.0f));
     return NuiCol(jPanel);
@@ -352,7 +403,6 @@ void METACT_RefreshPrioritiesPanel(object oPC, int iToken, int iScope)
     NuiSetBind(oPC, iToken, "priority_fallback_label", JsonString(METACT_GetText(sFallbackKey, oPC)));
     json jPriorities = METACT_GetPrioritiesForScope(oPC, iScope);
     json jPrioritySummaries = JsonArray();
-    json jPrioritySelected = JsonArray();
     json jPriorityTooltips = JsonArray();
     int iIndex;
     for (iIndex = 0; iIndex < JsonGetLength(jPriorities); iIndex++)
@@ -360,11 +410,9 @@ void METACT_RefreshPrioritiesPanel(object oPC, int iToken, int iScope)
         json jPriority = JsonArrayGet(jPriorities, iIndex);
         string sPriority = METACT_PriorityLabel(oPC, jPriority);
         jPrioritySummaries = JsonArrayInsert(jPrioritySummaries, JsonString((JsonGetInt(JsonObjectGet(jPriority, "enabled")) ? "[x] " : "[ ] ") + IntToString(iIndex + 1) + ".  " + sPriority));
-        jPrioritySelected = JsonArrayInsert(jPrioritySelected, JsonBool(FALSE));
         jPriorityTooltips = JsonArrayInsert(jPriorityTooltips, JsonString(METACT_GetText(METACT_TEXT_EDIT, oPC) + ": " + sPriority));
     }
     NuiSetBind(oPC, iToken, "priority_summary", jPrioritySummaries);
-    NuiSetBind(oPC, iToken, "priority_selected", jPrioritySelected);
     NuiSetBind(oPC, iToken, "priority_tooltip", jPriorityTooltips);
     NuiSetBind(oPC, iToken, "priority_count", JsonInt(JsonGetLength(jPriorities)));
 }
@@ -392,7 +440,7 @@ json METACT_BuildMainWindow(object oPC)
     json jTacticRow = JsonArray();
     jTacticRow = JsonArrayInsert(jTacticRow, NuiWidth(METACT_Label(METACT_GetText(METACT_TEXT_TACTIC, oPC)), 120.0f));
     jTacticRow = JsonArrayInsert(jTacticRow, NuiWidth(NuiCombo(NuiBind("tactic_entries"), NuiBind("tactic_sel")), 320.0f));
-    jTacticRow = JsonArrayInsert(jTacticRow, NuiWidth(NuiTooltip(NuiId(NuiButton(JsonString("+")), "tactic_new"), JsonString(METACT_GetText(METACT_TEXT_NEW, oPC))), 28.0f));
+    jTacticRow = JsonArrayInsert(jTacticRow, NuiWidth(MEMORIA_NUI_Help(NuiId(NuiButton(JsonString("+")), "tactic_new"), JsonString(METACT_GetText(METACT_TEXT_NEW, oPC))), 28.0f));
     jTacticRow = JsonArrayInsert(jTacticRow, NuiWidth(METACT_IconButton("nui_close", "tactic_delete", METACT_GetText(METACT_TEXT_DELETE, oPC)), 28.0f));
     jTacticRow = JsonArrayInsert(jTacticRow, NuiWidth(NuiCheck(JsonString(METACT_GetText(METACT_TEXT_ENABLED, oPC)), NuiBind("tactic_enabled")), 120.0f));
     jTacticRow = JsonArrayInsert(jTacticRow, NuiSpacer());
@@ -528,7 +576,7 @@ void METACT_OpenMain(object oPC)
     SetLocalInt(oPC, METACT_LOCAL_TACTIC, -1);
     SetLocalInt(oPC, METACT_LOCAL_RULE, -1);
     SetLocalInt(oPC, METACT_LOCAL_RULE_PAGE, 0);
-    int iToken = NuiCreate(oPC, METACT_BuildMainWindow(oPC), METACT_WINDOW_MAIN, "metact_nuievt");
+    int iToken = MEMORIA_NUI_Create(oPC, METACT_BuildMainWindow(oPC), METACT_WINDOW_MAIN, "metact_nuievt");
     if (iToken <= 0) return;
     METACT_RefreshMain(oPC, iToken);
     NuiSetBindWatch(oPC, iToken, "actor_sel", TRUE);
@@ -538,15 +586,42 @@ void METACT_OpenMain(object oPC)
     NuiSetBindWatch(oPC, iToken, "debug_enabled", TRUE);
 }
 
+json METACT_BuildPriorityDetails(object oPC, int iKind)
+{
+    json jDetails = JsonArray();
+    if (iKind == 1)
+    {
+        jDetails = JsonArrayInsert(jDetails, NuiWidth(METACT_Label(METACT_GetText(METACT_TEXT_TARGET, oPC)), 120.0f));
+        jDetails = JsonArrayInsert(jDetails, NuiWidth(NuiCombo(METACT_PriorityTargetEntries(oPC), NuiBind("priority_target")), 390.0f));
+    }
+    else if (iKind == 2)
+    {
+        jDetails = JsonArrayInsert(jDetails, NuiWidth(METACT_Label(METACT_GetText(METACT_TEXT_COMPARISON, oPC)), 95.0f));
+        jDetails = JsonArrayInsert(jDetails, NuiWidth(NuiCombo(METACT_ComboEntries2(oPC, METACT_TEXT_AT_LEAST, METACT_TEXT_AT_MOST), NuiBind("priority_comparison")), 135.0f));
+        jDetails = JsonArrayInsert(jDetails, NuiWidth(METACT_Label(METACT_GetText(METACT_TEXT_THRESHOLD, oPC)), 85.0f));
+        jDetails = JsonArrayInsert(jDetails, NuiWidth(NuiCombo(METACT_RatingEntries(), NuiBind("priority_rating")), 195.0f));
+    }
+    else if (iKind == 3)
+    {
+        jDetails = JsonArrayInsert(jDetails, NuiWidth(METACT_Label(METACT_GetText(METACT_TEXT_COMPARISON, oPC)), 95.0f));
+        jDetails = JsonArrayInsert(jDetails, NuiWidth(NuiCombo(METACT_ComboEntries2(oPC, METACT_TEXT_AT_LEAST, METACT_TEXT_AT_MOST), NuiBind("priority_health_comparison")), 135.0f));
+        jDetails = JsonArrayInsert(jDetails, NuiWidth(METACT_Label(METACT_GetText(METACT_TEXT_THRESHOLD, oPC)), 85.0f));
+        jDetails = JsonArrayInsert(jDetails, NuiWidth(NuiTextEdit(JsonString("50"), NuiBind("priority_health"), 3, FALSE), 70.0f));
+        jDetails = JsonArrayInsert(jDetails, NuiWidth(METACT_Label("%"), 25.0f));
+    }
+    return NuiRow(jDetails);
+}
+
 json METACT_BuildPriorityWindow(object oPC)
 {
     float fWidth = 560.0f;
-    float fHeight = 180.0f;
+    float fHeight = 224.0f;
     json jRoot = JsonArray();
     json jKind = JsonArray();
     jKind = JsonArrayInsert(jKind, NuiWidth(METACT_Label(METACT_GetText(METACT_TEXT_PRIORITY_KIND, oPC)), 120.0f));
-    jKind = JsonArrayInsert(jKind, NuiWidth(NuiCombo(NuiBind("priority_entries"), NuiBind("priority_kind")), fWidth - 145.0f));
+    jKind = JsonArrayInsert(jKind, NuiWidth(NuiCombo(NuiBind("priority_entries"), NuiBind("priority_kind")), 390.0f));
     jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiRow(jKind), 30.0f));
+    jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiId(NuiGroup(METACT_BuildPriorityDetails(oPC, 0), FALSE, NUI_SCROLLBARS_NONE), "priority_details"), 36.0f));
     jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiCheck(JsonString(METACT_GetText(METACT_TEXT_ENABLED, oPC)), NuiBind("priority_enabled")), 28.0f));
     json jOperations = JsonArray();
     jOperations = JsonArrayInsert(jOperations, NuiWidth(NuiVisible(METACT_IconButton("gui_spl_btn_up", "priority_move_up", METACT_GetText(METACT_TEXT_UP, oPC)), NuiBind("priority_existing")), 32.0f));
@@ -562,19 +637,38 @@ json METACT_BuildPriorityWindow(object oPC)
     return NuiWindow(NuiCol(jRoot), JsonString(METACT_GetText(METACT_TEXT_PRIORITY_EDITOR, oPC)), NuiRect(-1.0f, -1.0f, fWidth, fHeight), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
 }
 
+void METACT_RefreshPriorityMode(object oPC, int iToken)
+{
+    int iKind = JsonGetInt(NuiGetBind(oPC, iToken, "priority_kind"));
+    NuiSetGroupLayout(oPC, iToken, "priority_details", METACT_BuildPriorityDetails(oPC, iKind));
+}
+
 void METACT_RefreshPriorityEditor(object oPC, int iToken)
 {
     json jPriority = GetLocalJson(oPC, METACT_LOCAL_PRIORITY_TEMP);
+    string sKind = JsonGetString(JsonObjectGet(jPriority, "kind"));
+    string sComparison = JsonGetString(JsonObjectGet(jPriority, "comparison"));
+    if (sComparison == "") sComparison = sKind == "rating_low" || sKind == "health_low" ? "max" : "min";
+    int iRating = JsonGetInt(JsonObjectGet(jPriority, "value"));
+    if (METACT_PriorityCategory(sKind) != "rating" || JsonGetType(JsonObjectGet(jPriority, "value")) != JSON_TYPE_INTEGER || iRating < 0 || iRating > 6) iRating = 3;
+    int iHealth = JsonGetInt(JsonObjectGet(jPriority, "value"));
+    if (METACT_PriorityCategory(sKind) != "health" || iHealth < 1 || iHealth > 100) iHealth = 50;
     NuiSetBind(oPC, iToken, "priority_entries", METACT_PriorityEntries(oPC));
-    NuiSetBind(oPC, iToken, "priority_kind", JsonInt(METACT_PriorityKindToIndex(JsonGetString(JsonObjectGet(jPriority, "kind")))));
+    NuiSetBind(oPC, iToken, "priority_kind", JsonInt(METACT_PriorityKindToIndex(sKind)));
+    NuiSetBind(oPC, iToken, "priority_target", JsonInt(METACT_GetPriorityTargetIndex(oPC, jPriority)));
+    NuiSetBind(oPC, iToken, "priority_comparison", JsonInt(sComparison == "max" ? 1 : 0));
+    NuiSetBind(oPC, iToken, "priority_health_comparison", JsonInt(sComparison == "max" ? 1 : 0));
+    NuiSetBind(oPC, iToken, "priority_rating", JsonInt(iRating));
+    NuiSetBind(oPC, iToken, "priority_health", JsonString(IntToString(iHealth)));
     NuiSetBind(oPC, iToken, "priority_enabled", JsonBool(JsonGetInt(JsonObjectGet(jPriority, "enabled"))));
     NuiSetBind(oPC, iToken, "priority_existing", JsonBool(GetLocalInt(oPC, METACT_LOCAL_PRIORITY) >= 0));
+    METACT_RefreshPriorityMode(oPC, iToken);
 }
 
 void METACT_OpenPriorityEditor(object oPC, int iPriority)
 {
     json jPriorities = METACT_GetEditablePriorities(oPC);
-    if (iPriority < 0 && JsonGetLength(jPriorities) >= 5)
+    if (iPriority < 0 && JsonGetLength(jPriorities) >= 4)
     {
         SendMessageToPC(oPC, METACT_GetText(METACT_TEXT_INVALID, oPC));
         return;
@@ -584,8 +678,12 @@ void METACT_OpenPriorityEditor(object oPC, int iPriority)
     SetLocalJson(oPC, METACT_LOCAL_PRIORITY_TEMP, jPriority);
     int iOld = NuiFindWindow(oPC, METACT_WINDOW_PRIORITY);
     if (iOld > 0) NuiDestroy(oPC, iOld);
-    int iToken = NuiCreate(oPC, METACT_BuildPriorityWindow(oPC), METACT_WINDOW_PRIORITY, "metact_nuievt");
-    if (iToken > 0) METACT_RefreshPriorityEditor(oPC, iToken);
+    int iToken = MEMORIA_NUI_Create(oPC, METACT_BuildPriorityWindow(oPC), METACT_WINDOW_PRIORITY, "metact_nuievt");
+    if (iToken > 0)
+    {
+        METACT_RefreshPriorityEditor(oPC, iToken);
+        NuiSetBindWatch(oPC, iToken, "priority_kind", TRUE);
+    }
 }
 
 json METACT_BuildActionPanel(object oPC, float fPanelWidth)
@@ -593,7 +691,7 @@ json METACT_BuildActionPanel(object oPC, float fPanelWidth)
     json jAction = JsonArray();
     jAction = JsonArrayInsert(jAction, NuiHeight(METACT_Header(METACT_GetText(METACT_TEXT_ACTION, oPC)), 24.0f));
     json jActionRow = JsonArray();
-    jActionRow = JsonArrayInsert(jActionRow, NuiWidth(NuiTooltip(NuiImage(NuiBind("action_icon"), JsonInt(NUI_ASPECT_FIT), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE)), NuiBind("action_label")), 40.0f));
+    jActionRow = JsonArrayInsert(jActionRow, NuiWidth(MEMORIA_NUI_Help(NuiImage(NuiBind("action_icon"), JsonInt(NUI_ASPECT_FIT), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE)), NuiBind("action_label")), 40.0f));
     jActionRow = JsonArrayInsert(jActionRow, NuiWidth(METACT_Label(""), 8.0f));
     jActionRow = JsonArrayInsert(jActionRow, NuiWidth(NuiLabel(NuiBind("action_label"), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), fPanelWidth - 65.0f));
     jAction = JsonArrayInsert(jAction, NuiHeight(NuiRow(jActionRow), 40.0f));
@@ -836,7 +934,7 @@ void METACT_OpenRuleEditor(object oPC, int iRule)
     SetLocalInt(oPC, METACT_LOCAL_PRIORITY_SCOPE, METACT_PRIORITY_SCOPE_RULE);
     int iOld = NuiFindWindow(oPC, METACT_WINDOW_RULE);
     if (iOld > 0) NuiDestroy(oPC, iOld);
-    int iToken = NuiCreate(oPC, METACT_BuildRuleWindow(oPC), METACT_WINDOW_RULE, "metact_nuievt");
+    int iToken = MEMORIA_NUI_Create(oPC, METACT_BuildRuleWindow(oPC), METACT_WINDOW_RULE, "metact_nuievt");
     if (iToken > 0)
     {
         METACT_RefreshRuleEditor(oPC, iToken);
@@ -850,7 +948,7 @@ void METACT_ShowActionEditor(object oPC)
     DeleteLocalInt(oPC, METACT_LOCAL_ACTION_HIDDEN);
     int iOld = NuiFindWindow(oPC, METACT_WINDOW_ACTION);
     if (iOld > 0) NuiDestroy(oPC, iOld);
-    int iToken = NuiCreate(oPC, METACT_BuildActionWindow(oPC), METACT_WINDOW_ACTION, "metact_nuievt");
+    int iToken = MEMORIA_NUI_Create(oPC, METACT_BuildActionWindow(oPC), METACT_WINDOW_ACTION, "metact_nuievt");
     if (iToken > 0)
     {
         METACT_RefreshActionEditor(oPC, iToken);
@@ -871,7 +969,7 @@ void METACT_OpenActionEditor(object oPC, int iAction)
 json METACT_PickerSlot(int iSlot, float fWidth)
 {
     string sSlot = IntToString(iSlot);
-    json jButton = NuiTooltip(NuiId(NuiButtonImage(NuiBind("pick_icon_" + sSlot)), "pick_slot_" + sSlot), NuiBind("pick_tip_" + sSlot));
+    json jButton = MEMORIA_NUI_Help(NuiId(NuiButtonImage(NuiBind("pick_icon_" + sSlot)), "pick_slot_" + sSlot), NuiBind("pick_tip_" + sSlot));
     return NuiWidth(NuiVisible(jButton, NuiBind("pick_visible_" + sSlot)), fWidth);
 }
 
@@ -939,7 +1037,7 @@ json METACT_BuildPickerWindow(object oPC)
     jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiRow(jModes), 40.0f));
     string sPickerMode = GetLocalString(oPC, METACT_LOCAL_PICKER_MODE);
     json jGrid = sPickerMode == "item" || sPickerMode == "equip" ? METACT_BuildItemGrid(oPC, fWidth - 32.0f) : METACT_BuildSpellGrid();
-    jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiGroup(jGrid, TRUE, sPickerMode == "item" || sPickerMode == "equip" ? NUI_SCROLLBARS_Y : NUI_SCROLLBARS_NONE), fHeight - 145.0f));
+    jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiGroup(jGrid, TRUE, sPickerMode == "item" || sPickerMode == "equip" ? NUI_SCROLLBARS_Y : NUI_SCROLLBARS_NONE), fHeight - 157.0f));
     json jPager = JsonArray();
     jPager = JsonArrayInsert(jPager, NuiWidth(METACT_IconButton("nui_cnt_left", "pick_prev", METACT_GetText(METACT_TEXT_PREVIOUS, oPC)), 30.0f));
     jPager = JsonArrayInsert(jPager, NuiSpacer());
@@ -1007,7 +1105,7 @@ void METACT_OpenPicker(object oPC, string sMode)
     SetLocalJson(oPC, METACT_LOCAL_PICKER_FILTERED, METACT_FilterCandidates(GetLocalJson(oPC, METACT_LOCAL_PICKER), JsonString(""), GetLocalString(oPC, METACT_LOCAL_PICKER_MODE)));
     int iOld = NuiFindWindow(oPC, METACT_WINDOW_PICKER);
     if (iOld > 0) NuiDestroy(oPC, iOld);
-    int iToken = NuiCreate(oPC, METACT_BuildPickerWindow(oPC), METACT_WINDOW_PICKER, "metact_nuievt");
+    int iToken = MEMORIA_NUI_Create(oPC, METACT_BuildPickerWindow(oPC), METACT_WINDOW_PICKER, "metact_nuievt");
     if (iToken <= 0)
     {
         DeleteLocalJson(oPC, METACT_LOCAL_PICKER);
@@ -1033,7 +1131,7 @@ void METACT_RecreatePicker(object oPC, int iOldToken)
     if (iPage < 0) iPage = 0;
     SetLocalInt(oPC, METACT_LOCAL_PICKER_PAGE, iPage);
     NuiDestroy(oPC, iOldToken);
-    int iToken = NuiCreate(oPC, METACT_BuildPickerWindow(oPC), METACT_WINDOW_PICKER, "metact_nuievt");
+    int iToken = MEMORIA_NUI_Create(oPC, METACT_BuildPickerWindow(oPC), METACT_WINDOW_PICKER, "metact_nuievt");
     if (iToken <= 0) return;
     NuiSetBind(oPC, iToken, "picker_search", jSearch);
     METACT_RefreshPicker(oPC, iToken);

@@ -5,6 +5,7 @@ Companion Manager automatically sends companions and other allied creatures to u
 ## Features
 
 - Uses the best available companion with the right key or a trained Open Lock skill.
+- Chooses either the nearest available target or the hardest target a companion can handle, while prioritizing detected traps.
 - Avoids traps, unreachable locks, busy companions, and targets already assigned to someone else.
 - Prevents companions from attacking locked doors and containers that should be unlocked or disarmed instead.
 - Supports henchmen, familiars, animal companions, summons, and dominated creatures.

@@ -8,3 +8,5 @@ Short, single-topic docs for architecture decisions and conventions that aren't 
 | [localization.md](localization.md) | Shared per-mod localization table loader (`memoria_loc.nss`): resource naming, key naming, and caching. |
 | [PackageManifests.md](PackageManifests.md) | Shared `*_memoria.txt` package envelope and subsystem-owned sections. |
 | [ApiSnapshots.md](ApiSnapshots.md) | Compile-time validation against each dependency's minimum supported NWScript API. |
+| [NuiHelp.md](NuiHelp.md) | Shared right-click contextual help for Memoria-owned NUI windows. |
+| [NuiLayouts.md](NuiLayouts.md) | Content insets, conditional groups, and safety margins used by NUI layout validation. |

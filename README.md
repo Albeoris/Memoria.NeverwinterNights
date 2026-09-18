@@ -69,6 +69,8 @@ Build logging is minimal by default: each mod reports what is being built, its o
 
 Publish output contains a Workshop-ready directory and a Nexus-ready ZIP under `artifacts/publish`.
 
+Run `Build.PublishAllToLocalWorkshop.cmd` to publish every package and mirror each result into its existing local Steam Workshop directory under `C:\Steam\steamapps\workshop\content\704450`. Packages that are not currently installed are skipped and their directories are not created.
+
 For local testing, enable the common-output mode on either build or publish. It merges every package's flat override output into `artifacts/common_output` and fails if two packages produce the same resource:
 
 ```powershell

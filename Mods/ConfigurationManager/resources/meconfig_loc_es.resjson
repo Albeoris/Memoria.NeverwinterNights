@@ -6,5 +6,6 @@
   "no_modules": "No hay mods de Memoria registrados.",
   "save": "Guardar",
   "close": "Cerrar",
+  "help_hint": "Haz clic derecho en una opción para ver su ayuda.",
   "range_error": "debe estar entre"
 }

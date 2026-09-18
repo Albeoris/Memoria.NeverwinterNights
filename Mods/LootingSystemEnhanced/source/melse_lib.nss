@@ -23,7 +23,7 @@
 #include "memoria_loc"
 
 const string MELSE_VERSION = "1.1";
-const string MELSE_VERSION_BUILD = "1011";
+const string MELSE_VERSION_BUILD = "1012";
 
 const string MELSE_SOUND_TAKE_GOLD = "it_coins";
 const string MELSE_SOUND_TAKE_ITEM = "it_generictiny";
@@ -33,6 +33,7 @@ const string MELSE_SOUND_LEAVE_ITEM = "as_sw_x2gong2";
 const string MELSE_LOCAL_FEATURE_TREASURE_SCANNING = "MELSE_FEATURE_TREASURE_SCANNING";
 const string MELSE_LOCAL_FEATURE_TREASURE_TRACKING = "MELSE_FEATURE_TREASURE_TRACKING";
 const string MELSE_LOCAL_FEATURE_TREASURE_LOOTING = "MELSE_FEATURE_TREASURE_LOOTING";
+const string MELSE_LOCAL_FEATURE_PARTY_IDENTIFICATION = "MELSE_FEATURE_PARTY_IDENTIFICATION";
 const string MELSE_LOCAL_FEATURE_CORPSE_LOOTABLE = "MELSE_FEATURE_CORPSE_LOOTABLE";
 const string MELSE_LOCAL_FEATURE_CORPSE_DECAYING_LOOTED = "MELSE_FEATURE_CORPSE_DECAYING_LOOTED";
 const string MELSE_LOCAL_FEATURE_CORPSE_DECAYING_TIMED = "MELSE_FEATURE_CORPSE_DECAYING_TIMED";
@@ -98,6 +99,7 @@ const string MELSE_STRREF_ITEM_LOOTED_FROM = "item_looted_from_label";
 const string MELSE_STRREF_ITEM_LOOTED_FROM_AREA = "item_looted_from_area_label";
 const string MELSE_STRREF_ITEM_NAME_UNIDENTIFIED = "item_name_unidentified";
 const string MELSE_STRREF_ITEM_IGNORED = "item_ignored_suffix";
+const string MELSE_STRREF_ITEM_IDENTIFIED = "item_identified_infix";
 
 string MELSE_GetLanguage()
 {
@@ -420,6 +422,80 @@ int MELSE_GetIsLootingExcluded(object oObject)
     return bResult;
 }
 
+int MELSE_GetMaxIdentifiableItemValue(object oCreature)
+{
+    int nLore = GetSkillRank(SKILL_LORE, oCreature);
+    if (nLore < 0)
+        return -1;
+
+    string sMaxValue = Get2DAString("skillvsitemcost", "DeviceCostMax", nLore);
+    if (sMaxValue == STRING_EMPTY)
+        return 120000000;
+
+    return StringToInt(sMaxValue);
+}
+
+object MELSE_GetBetterItemIdentifier(object oCandidate, object oBest, int nItemValue, object oArea)
+{
+    if (!GetIsObjectValid(oCandidate) || GetObjectType(oCandidate) != OBJECT_TYPE_CREATURE || GetIsDead(oCandidate) || GetArea(oCandidate) != oArea)
+        return oBest;
+
+    int nCandidateMaxValue = MELSE_GetMaxIdentifiableItemValue(oCandidate);
+    if (nCandidateMaxValue < nItemValue)
+        return oBest;
+
+    if (!GetIsObjectValid(oBest) || nCandidateMaxValue > MELSE_GetMaxIdentifiableItemValue(oBest))
+        return oCandidate;
+
+    return oBest;
+}
+
+object MELSE_GetPartyItemIdentifier(object oPC, object oItem)
+{
+    SetIdentified(oItem, TRUE);
+    int nItemValue = GetGoldPieceValue(oItem);
+    SetIdentified(oItem, FALSE);
+
+    object oBest;
+    object oArea = GetArea(oPC);
+    object oPartyPC = GetFirstFactionMember(oPC, TRUE);
+    while (GetIsObjectValid(oPartyPC))
+    {
+        oBest = MELSE_GetBetterItemIdentifier(oPartyPC, oBest, nItemValue, oArea);
+
+        int nAssociateType;
+        for (nAssociateType = ASSOCIATE_TYPE_HENCHMAN; nAssociateType <= ASSOCIATE_TYPE_DOMINATED; nAssociateType++)
+        {
+            int nAssociate = 1;
+            object oAssociate = GetAssociate(nAssociateType, oPartyPC, nAssociate);
+            while (GetIsObjectValid(oAssociate))
+            {
+                oBest = MELSE_GetBetterItemIdentifier(oAssociate, oBest, nItemValue, oArea);
+                nAssociate++;
+                oAssociate = GetAssociate(nAssociateType, oPartyPC, nAssociate);
+            }
+        }
+
+        oPartyPC = GetNextFactionMember(oPC, TRUE);
+    }
+
+    return oBest;
+}
+
+void MELSE_TryIdentifyItem(object oItem, object oPC)
+{
+    if (!MELSE_GetConfigInt(MELSE_LOCAL_FEATURE_PARTY_IDENTIFICATION) || GetIdentified(oItem))
+        return;
+
+    object oIdentifier = MELSE_GetPartyItemIdentifier(oPC, oItem);
+    if (!GetIsObjectValid(oIdentifier))
+        return;
+
+    SetIdentified(oItem, TRUE);
+    string sMessage = GetName(oIdentifier) + MELSE_GetLocalizedText(MELSE_STRREF_ITEM_IDENTIFIED) + GetName(oItem);
+    FloatingTextStringOnCreature(StringToRGBString(sMessage, STRING_COLOR_GREEN), oPC);
+}
+
 void MELSE_ConfirmItemTaken(object oItem, object oTakeFrom, object oGiveTo)
 {
     if (GetItemPossessor(oItem) != oGiveTo)
@@ -444,6 +520,7 @@ int MELSE_TakeItem(object oItem, object oTakeFrom, object oGiveTo, int bIfNotExc
 {
     if (!bIfNotExcludedByConfig || !MELSE_GetIsLootingExcluded(oItem))
     {
+        MELSE_TryIdentifyItem(oItem, oGiveTo);
         ActionGiveItem(oItem, oGiveTo);
         ActionDoCommand(MELSE_ConfirmItemTaken(oItem, oTakeFrom, oGiveTo));
 
@@ -817,6 +894,7 @@ void MELSE_MAINTENANCE_SetDefaultConfig(object oModule)
     MELSE_SetConfigInt(MELSE_LOCAL_FEATURE_TREASURE_SCANNING, FALSE);
     MELSE_SetConfigInt(MELSE_LOCAL_FEATURE_TREASURE_TRACKING, TRUE);
     MELSE_SetConfigInt(MELSE_LOCAL_FEATURE_TREASURE_LOOTING, TRUE);
+    MELSE_SetConfigInt(MELSE_LOCAL_FEATURE_PARTY_IDENTIFICATION, TRUE);
     MELSE_SetConfigInt(MELSE_LOCAL_FEATURE_CORPSE_LOOTABLE, TRUE);
     MELSE_SetConfigInt(MELSE_LOCAL_FEATURE_CORPSE_DECAYING_LOOTED, FALSE);
     MELSE_SetConfigInt(MELSE_LOCAL_FEATURE_CORPSE_DECAYING_TIMED, TRUE);
@@ -841,6 +919,8 @@ void MELSE_MAINTENANCE_Build(object oModule, object oPC, string sNewBuild, strin
     // Initialize default config after first install or update from initial release build
     if (sOldBuild == STRING_EMPTY || sOldBuild == "1001")
         MELSE_MAINTENANCE_SetDefaultConfig(oModule);
+    else if (StringToInt(sOldBuild) < 1012)
+        MELSE_SetConfigInt(MELSE_LOCAL_FEATURE_PARTY_IDENTIFICATION, TRUE);
 
     if (sOldBuild == STRING_EMPTY)
         DelayCommand(8.0f, AssignCommand(oPC, ActionSpeakString(StringToRGBString(MELSE_GetLocalizedText(MELSE_STRREF_MAINTENANCE_INSTALL) + " " + 

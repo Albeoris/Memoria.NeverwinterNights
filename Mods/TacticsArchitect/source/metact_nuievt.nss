@@ -128,7 +128,8 @@ void METACT_OpenScopedPriorityEditor(object oPC, int iScope, int iPriority)
 void METACT_SavePriority(object oPC, int iToken)
 {
     int iPriority = GetLocalInt(oPC, METACT_LOCAL_PRIORITY);
-    string sKind = METACT_PriorityKindFromIndex(JsonGetInt(NuiGetBind(oPC, iToken, "priority_kind")));
+    int iKind = JsonGetInt(NuiGetBind(oPC, iToken, "priority_kind"));
+    string sKind = METACT_PriorityKindFromIndex(iKind);
     json jPriorities = METACT_GetEditablePriorities(oPC);
     if (METACT_HasPriorityKind(jPriorities, sKind, iPriority))
     {
@@ -137,6 +138,48 @@ void METACT_SavePriority(object oPC, int iToken)
     }
     json jPriority = GetLocalJson(oPC, METACT_LOCAL_PRIORITY_TEMP);
     jPriority = JsonObjectSet(jPriority, "kind", JsonString(sKind));
+    int iComparison = JsonGetInt(NuiGetBind(oPC, iToken, iKind == 3 ? "priority_health_comparison" : "priority_comparison"));
+    jPriority = JsonObjectSet(jPriority, "comparison", JsonString(iComparison == 1 ? "max" : "min"));
+    if (iKind == 2)
+        jPriority = JsonObjectSet(jPriority, "value", NuiGetBind(oPC, iToken, "priority_rating"));
+    else if (iKind == 3)
+    {
+        string sHealth = JsonGetString(NuiGetBind(oPC, iToken, "priority_health"));
+        int iHealth = StringToInt(sHealth);
+        if (JsonGetLength(RegExpMatch("^[0-9]+$", sHealth)) == 0 || iHealth < 1 || iHealth > 100)
+        {
+            SendMessageToPC(oPC, METACT_GetText(METACT_TEXT_INVALID, oPC));
+            return;
+        }
+        jPriority = JsonObjectSet(jPriority, "value", JsonInt(iHealth));
+    }
+    if (iKind == 1)
+    {
+        int iTarget = JsonGetInt(NuiGetBind(oPC, iToken, "priority_target"));
+        object oTarget = iTarget == 0 ? oPC : METACT_GetGroupMember(oPC, iTarget);
+        if (!GetIsObjectValid(oTarget))
+        {
+            SendMessageToPC(oPC, METACT_GetText(METACT_TEXT_INVALID, oPC));
+            return;
+        }
+        string sSubject = "pc";
+        if (oTarget != oPC)
+        {
+            sSubject = GetObjectUUID(oTarget);
+            if (sSubject == "")
+            {
+                ForceRefreshObjectUUID(oTarget);
+                sSubject = GetObjectUUID(oTarget);
+            }
+            if (sSubject == "")
+            {
+                SendMessageToPC(oPC, METACT_GetText(METACT_TEXT_INVALID, oPC));
+                return;
+            }
+        }
+        jPriority = JsonObjectSet(jPriority, "subject", JsonString(sSubject));
+        jPriority = JsonObjectSet(jPriority, "subject_name", JsonString(oTarget == oPC ? "" : GetName(oTarget)));
+    }
     jPriority = JsonObjectSet(jPriority, "enabled", JsonBool(JsonGetInt(NuiGetBind(oPC, iToken, "priority_enabled"))));
     jPriorities = iPriority >= 0 && iPriority < JsonGetLength(jPriorities) ? JsonArraySet(jPriorities, iPriority, jPriority) : JsonArrayInsert(jPriorities, jPriority);
     METACT_SaveEditablePriorities(oPC, jPriorities);
@@ -377,6 +420,7 @@ void METACT_HandleWatch(object oPC, int iToken, string sWindow, string sElement)
         METACT_RefreshPicker(oPC, iToken);
     }
     else if (sWindow == METACT_WINDOW_RULE && sElement == "condition_sel") METACT_RefreshConditionMode(oPC, iToken);
+    else if (sWindow == METACT_WINDOW_PRIORITY && sElement == "priority_kind") METACT_RefreshPriorityMode(oPC, iToken);
     else if (sWindow == METACT_WINDOW_ACTION && sElement == "friendly_fire_policy")
     {
         int iPolicy = JsonGetInt(NuiGetBind(oPC, iToken, "friendly_fire_policy"));
@@ -465,6 +509,7 @@ void METACT_HandleClick(object oPC, int iToken, string sWindow, string sElement)
 
 void main()
 {
+    if (MEMORIA_NUI_HandleHelpEvent()) return;
     object oPC = NuiGetEventPlayer();
     int iToken = NuiGetEventWindow();
     string sWindow = NuiGetWindowId(oPC, iToken);

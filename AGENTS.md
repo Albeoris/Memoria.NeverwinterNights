@@ -94,8 +94,6 @@ To validate publishing for all packages, run:
 dotnet msbuild Memoria.NeverwinterNights.slnx -restore -t:Publish -p:Configuration=Release -p:Version=0.0.0-validation -m:1
 ```
 
-Confirm that every package contains its README, no package contains obsolete RTF documentation, and only MEMORIA contains `override/default.ncs`.
-
 Build or publish one mod through its project:
 
 ```powershell

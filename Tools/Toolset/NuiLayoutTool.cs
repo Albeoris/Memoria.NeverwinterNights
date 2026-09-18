@@ -29,12 +29,14 @@ internal static class NuiLayoutTool
         double coverage = Number(window, "coverage", 0.9);
         double titleHeight = Number(window, "titleHeight", 24.0);
         double padding = Number(window, "padding", 8.0);
-        if (screenWidth <= 0.0 || screenHeight <= 0.0 || scale <= 0.0 || coverage <= 0.0 || coverage > 1.0) throw new InvalidDataException("Invalid screen, uiScale, or window.coverage value.");
+        double horizontalInset = Number(window, "horizontalInset", 24.0);
+        double verticalInset = Number(window, "verticalInset", 49.0);
+        if (screenWidth <= 0.0 || screenHeight <= 0.0 || scale <= 0.0 || coverage <= 0.0 || coverage > 1.0 || horizontalInset < 0.0 || verticalInset < 0.0) throw new InvalidDataException("Invalid screen, uiScale, window coverage, or content inset value.");
         double logicalWidth = window["logicalWidth"] is null ? Math.Floor(screenWidth * coverage / scale) : Number(window, "logicalWidth", Math.Floor(screenWidth * coverage / scale));
         double logicalHeight = window["logicalHeight"] is null ? Math.Floor(screenHeight * coverage / scale) : Number(window, "logicalHeight", Math.Floor(screenHeight * coverage / scale));
-        if (logicalWidth <= 0.0 || logicalHeight <= 0.0 || logicalWidth * scale > screenWidth || logicalHeight * scale > screenHeight) throw new InvalidDataException("Invalid NUI window dimensions.");
+        if (logicalWidth <= horizontalInset || logicalHeight <= verticalInset || logicalWidth * scale > screenWidth || logicalHeight * scale > screenHeight) throw new InvalidDataException("Invalid NUI window dimensions.");
         Rect physicalWindow = new((screenWidth - logicalWidth * scale) / 2.0, (screenHeight - logicalHeight * scale) / 2.0, logicalWidth * scale, logicalHeight * scale);
-        Rect logicalContent = new(padding, titleHeight + padding, logicalWidth - padding * 2.0, logicalHeight - titleHeight - padding * 2.0);
+        Rect logicalContent = new(horizontalInset / 2.0, titleHeight + padding, logicalWidth - horizontalInset, logicalHeight - verticalInset);
         List<Element> elements = [];
         List<string> diagnostics = [];
         LayoutNode(RequireObject(config, "root"), logicalContent, scale, physicalWindow, elements, diagnostics, "root");
@@ -137,6 +139,8 @@ internal static class NuiLayoutTool
         double remaining = Math.Max(0.0, availableMain - fixedMain);
         bool scroll = node["scroll"]?.GetValue<bool>() ?? false;
         if (!scroll && fixedMain > availableMain + 0.01) diagnostics.Add($"{Text(node, "id", horizontal ? "row" : "column")}: fixed children consume {fixedMain:0.##} of {availableMain:0.##}.");
+        double minimumSlack = Number(node, "minimumSlack", 0.0);
+        if (!scroll && growTotal <= 0.0 && fixedMain <= availableMain + 0.01 && availableMain - fixedMain + 0.01 < minimumSlack) diagnostics.Add($"{Text(node, "id", horizontal ? "row" : "column")}: leaves {availableMain - fixedMain:0.##} of required {minimumSlack:0.##} layout slack.");
         double cursor = horizontal ? bounds.X : bounds.Y;
         for (int index = 0; index < children.Count; index++)
         {

@@ -6,74 +6,66 @@
   },
   "window": {
     "coverage": 0.9,
+    "logicalWidth": 830,
+    "logicalHeight": 500,
     "titleHeight": 24,
     "padding": 8
   },
   "root": {
     "id": "configuration-manager",
-    "type": "row",
-    "height": 420,
-    "gap": 8,
+    "type": "column",
+    "minimumSlack": 8,
     "children": [
       {
-        "id": "modules",
-        "type": "list",
-        "width": 250,
-        "rowHeight": 32,
-        "sampleRows": 8,
-        "cells": [
+        "id": "main",
+        "type": "row",
+        "height": 414,
+        "gap": 8,
+        "minimumSlack": 8,
+        "children": [
           {
-            "id": "module",
-            "grow": 1
+            "id": "modules",
+            "type": "list",
+            "width": 250,
+            "rowHeight": 32,
+            "sampleRows": 8,
+            "cells": [
+              {
+                "id": "module",
+                "grow": 1
+              }
+            ]
+          },
+          {
+            "id": "options",
+            "type": "column",
+            "width": 540,
+            "children": [
+              { "id": "title", "type": "control", "height": 30 },
+              { "id": "boolean-option", "type": "control", "height": 28 },
+              { "id": "inline-heading", "type": "control", "height": 26 },
+              {
+                "id": "inline-options",
+                "type": "row",
+                "height": 28,
+                "children": [
+                  { "id": "inline-a", "width": 150 },
+                  { "id": "inline-b", "width": 150 },
+                  { "id": "inline-c", "width": 150 }
+                ]
+              },
+              { "id": "number-option", "type": "control", "height": 30 },
+              { "id": "choice-option", "type": "control", "height": 30 },
+              { "id": "action", "type": "control", "height": 32 },
+              { "id": "buttons", "type": "control", "height": 36 }
+            ]
           }
         ]
       },
       {
-        "id": "options",
-        "type": "column",
-        "width": 540,
-        "children": [
-          {
-            "id": "title",
-            "type": "control",
-            "height": 30
-          },
-          {
-            "id": "boolean-option",
-            "type": "control",
-            "height": 28
-          },
-          {
-            "id": "inline-heading",
-            "type": "control",
-            "height": 26
-          },
-          {
-            "id": "inline-options",
-            "type": "row",
-            "height": 28,
-            "children": [
-              { "id": "inline-a", "width": 150 },
-              { "id": "inline-b", "width": 150 },
-              { "id": "inline-c", "width": 150 }
-            ]
-          },
-          {
-            "id": "number-option",
-            "type": "control",
-            "height": 30
-          },
-          {
-            "id": "action",
-            "type": "control",
-            "height": 32
-          },
-          {
-            "id": "buttons",
-            "type": "control",
-            "height": 36
-          }
-        ]
+        "id": "help-hint",
+        "type": "control",
+        "height": 28
       }
     ]
   }

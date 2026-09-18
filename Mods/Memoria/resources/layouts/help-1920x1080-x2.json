@@ -1,0 +1,27 @@
+{
+  "screen": {
+    "width": 1920,
+    "height": 1080,
+    "uiScale": 2.0
+  },
+  "window": {
+    "logicalWidth": 420,
+    "logicalHeight": 224,
+    "titleHeight": 24,
+    "padding": 8
+  },
+  "root": {
+    "id": "help",
+    "type": "column",
+    "minimumSlack": 8,
+    "children": [
+      {
+        "id": "help-text",
+        "type": "group",
+        "height": 160,
+        "scrollbars": "auto",
+        "borderInset": 2
+      }
+    ]
+  }
+}

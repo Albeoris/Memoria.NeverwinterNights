@@ -1,7 +1,7 @@
 {
   "screen": {
-    "width": 3440,
-    "height": 1440,
+    "width": 1920,
+    "height": 1080,
     "uiScale": 2.0
   },
   "window": {
@@ -22,16 +22,8 @@
         "type": "row",
         "height": 30,
         "children": [
-          {
-            "id": "criterion-label",
-            "type": "control",
-            "width": 120
-          },
-          {
-            "id": "criterion-combo",
-            "type": "control",
-            "width": 390
-          }
+          { "id": "criterion-label", "width": 120 },
+          { "id": "criterion-combo", "width": 390 }
         ]
       },
       {
@@ -52,21 +44,9 @@
           ]
         }
       },
-      {
-        "id": "enabled",
-        "type": "control",
-        "height": 28
-      },
-      {
-        "id": "operations",
-        "type": "control",
-        "height": 32
-      },
-      {
-        "id": "save-cancel",
-        "type": "control",
-        "height": 32
-      }
+      { "id": "enabled", "type": "control", "height": 28 },
+      { "id": "operations", "type": "control", "height": 32 },
+      { "id": "save-cancel", "type": "control", "height": 32 }
     ]
   }
 }

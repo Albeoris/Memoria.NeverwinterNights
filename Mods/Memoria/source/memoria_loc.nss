@@ -3,10 +3,15 @@
 // "<prefix>_loc_<language>.resjson". The build emits it in the matching
 // game-local encoding as "<prefix>_loc_<language>.txt" (RESTYPE_TXT),
 // mapping short, self-documenting keys to that language's text.
-// Tables are parsed once per module load and cached on the module, since the same
-// mod+language table is identical for every player.
+// Tables are parsed once per session and cached in transient NUI user data, since
+// module locals persist in save games and would retain obsolete localization files.
 // Note: the parameter is named sLang, not sLanguage, because nwscript.nss already
 // declares a global string variable called sLanguage.
+
+#include "nw_inc_nui"
+
+const string MEMORIA_LOC_CACHE_OWNER_LOCAL = "MEMORIA_LOC_CACHE_OWNER";
+const string MEMORIA_LOC_CACHE_WINDOW = "memoria_loc_cache";
 
 string MEMORIA_LOC_GetResRef(string sPrefix, string sLang)
 {
@@ -30,12 +35,29 @@ json MEMORIA_LOC_LoadTable(string sPrefix, string sLang)
 json MEMORIA_LOC_GetTable(string sPrefix, string sLang)
 {
     object oModule = GetModule();
-    string sCacheLocal = "MEMORIA_LOC_" + sPrefix + "_" + sLang;
-    json jTable = GetLocalJson(oModule, sCacheLocal);
+    string sCacheKey = sPrefix + "_" + sLang;
+    DeleteLocalJson(oModule, "MEMORIA_LOC_" + sCacheKey);
+    object oCacheOwner = GetLocalObject(oModule, MEMORIA_LOC_CACHE_OWNER_LOCAL);
+    int nToken = GetIsObjectValid(oCacheOwner) ? NuiFindWindow(oCacheOwner, MEMORIA_LOC_CACHE_WINDOW) : 0;
+    json jTables = nToken > 0 ? NuiGetUserData(oCacheOwner, nToken) : JsonNull();
+    json jTable = JsonObjectGet(jTables, sCacheKey);
     if (JsonGetType(jTable) == JSON_TYPE_OBJECT) return jTable;
 
     jTable = MEMORIA_LOC_LoadTable(sPrefix, sLang);
-    SetLocalJson(oModule, sCacheLocal, jTable);
+    if (nToken <= 0)
+    {
+        oCacheOwner = GetFirstPC();
+        if (!GetIsObjectValid(oCacheOwner)) return jTable;
+        json jWindow = NuiWindow(NuiVisible(NuiSpacer(), JsonBool(FALSE)), JsonString(""), NuiRect(-100.0f, -100.0f, 1.0f, 1.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(FALSE));
+        nToken = NuiCreate(oCacheOwner, jWindow, MEMORIA_LOC_CACHE_WINDOW, "memoria_noop");
+        jTables = JsonObject();
+        if (nToken > 0) SetLocalObject(oModule, MEMORIA_LOC_CACHE_OWNER_LOCAL, oCacheOwner);
+    }
+    if (nToken > 0)
+    {
+        if (JsonGetType(jTables) != JSON_TYPE_OBJECT) jTables = JsonObject();
+        NuiSetUserData(oCacheOwner, nToken, JsonObjectSet(jTables, sCacheKey, jTable));
+    }
     return jTable;
 }
 

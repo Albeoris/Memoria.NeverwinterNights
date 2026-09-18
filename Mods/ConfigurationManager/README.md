@@ -5,8 +5,9 @@ Memoria Configuration Manager provides one persistent inventory item and a share
 ## Features
 
 - Collects the settings of all compatible Memoria mods in one NUI menu.
-- Supports player-specific and module-wide options, validation, action buttons, and mod diagnostics.
+- Supports player-specific and module-wide booleans, numbers, choices, action buttons, validation, and mod diagnostics.
 - Stores settings on the character or module so they persist in saved games and during the transition between modules.
+- Opens contextual help for an option with the right mouse button instead of showing unsolicited hover tooltips.
 
 ## Compatibility
 
@@ -53,13 +54,14 @@ A shared schema-1 manifest has package-wide `id`, `name`, `version`, and `depend
     "diagnostic": "mymod_diag",
     "options": [
       { "type": "bool", "scope": "player", "local": "MYMOD_ENABLED", "label": "Enabled", "label_key": "enabled_label" },
+      { "type": "choice", "scope": "player", "local": "MYMOD_MODE", "label": "Mode", "choices": [{ "value": 0, "label": "Nearest" }, { "value": 1, "label": "Hardest" }] },
       { "type": "action", "label": "Open editor", "script": "MYMOD_open" }
     ]
   }
 }
 ```
 
-`scope` is `player` or `module`; `int` and `float` options must also declare inclusive `minimum` and `maximum` values. An action may declare `width` to override its button width. Consecutive boolean options with `"layout": "inline"` share one row; the first may provide a separate `heading` and `heading_key`, and each may set its row-cell `width`. `apply` runs after settings are saved, and `diagnostic` runs when the shared item targets an object. `localization`, `name_key`, `label_key`, and `tooltip_key` are optional; localized keys name entries in the mod's own `<prefix>_loc_<language>.txt` table. An option's `tooltip` is its plain-text fallback when `tooltip_key` or its table is missing; omit both when the label is already sufficiently descriptive.
+`scope` is `player` or `module`; `int` and `float` options must also declare inclusive `minimum` and `maximum` values. A `choice` stores the integer `value` of one entry from its `choices` array; every choice supports `label` and optional `label_key`. An action may declare `width` to override its button width. Consecutive boolean options with `"layout": "inline"` share one row; the first may provide a separate `heading` and `heading_key`, and each may set its row-cell `width`. `apply` runs after settings are saved, and `diagnostic` runs when the shared item targets an object. `localization`, `name_key`, `label_key`, and `tooltip_key` are optional; localized keys name entries in the mod's own `<prefix>_loc_<language>.txt` table. An option's `tooltip` is its plain-text fallback when `tooltip_key` or its table is missing; omit both when the label is already sufficiently descriptive.
 
 Memoria discovers `*_memoria.txt` resources once per loaded game or module. A missing subsystem section is valid and is ignored by the consumer that does not use it.
 

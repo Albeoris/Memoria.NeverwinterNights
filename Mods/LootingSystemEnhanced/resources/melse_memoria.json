@@ -42,6 +42,15 @@
       {
         "type": "bool",
         "scope": "module",
+        "local": "MELSE_FEATURE_PARTY_IDENTIFICATION",
+        "label": "Identify loot using party Lore",
+        "label_key": "feature_party_identification_label",
+        "tooltip": "Before auto-looting an unidentified item, lets the player or a nearby party member identify it when their current Lore skill is sufficient. Enabled by default.",
+        "tooltip_key": "feature_party_identification_tooltip"
+      },
+      {
+        "type": "bool",
+        "scope": "module",
         "local": "MELSE_FEATURE_CORPSE_LOOTABLE",
         "label": "Make corpses lootable",
         "label_key": "feature_lootable_corpses_label",

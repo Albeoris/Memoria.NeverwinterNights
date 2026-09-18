@@ -123,6 +123,23 @@ int METACT_IsEnemySpellcaster(object oEnemy)
     return FALSE;
 }
 
+object METACT_GetPrioritySubject(object oActor, json jPriority)
+{
+    object oPC = MEMORIA_GetRootPlayer(oActor);
+    string sSubject = JsonGetString(JsonObjectGet(jPriority, "subject"));
+    if (sSubject == "pc" || sSubject == "")
+        return oPC;
+
+    int iIndex;
+    for (iIndex = 1; iIndex <= METACT_GetGroupCount(oPC); iIndex++)
+    {
+        object oMember = METACT_GetGroupMember(oPC, iIndex);
+        if (GetIsObjectValid(oMember) && GetObjectUUID(oMember) == sSubject)
+            return oMember;
+    }
+    return OBJECT_INVALID;
+}
+
 int METACT_CompareEnemyPriority(object oActor, object oCandidate, object oCurrent, json jPriorities)
 {
     if (!GetIsObjectValid(oCurrent)) return 1;
@@ -140,6 +157,30 @@ int METACT_CompareEnemyPriority(object oActor, object oCandidate, object oCurren
         {
             iCandidate = METACT_IsEnemySpellcaster(oCandidate);
             iCurrent = METACT_IsEnemySpellcaster(oCurrent);
+        }
+        else if (sKind == "attacker")
+        {
+            object oSubject = METACT_GetPrioritySubject(oActor, jPriority);
+            iCandidate = GetIsObjectValid(oSubject) && GetAttackTarget(oCandidate) == oSubject;
+            iCurrent = GetIsObjectValid(oSubject) && GetAttackTarget(oCurrent) == oSubject;
+        }
+        else if (sKind == "rating")
+        {
+            int iThreshold = JsonGetInt(JsonObjectGet(jPriority, "value"));
+            int bAtMost = JsonGetString(JsonObjectGet(jPriority, "comparison")) == "max";
+            int iCandidateRating = METACT_GetRelativeEnemyRating(oActor, oCandidate);
+            int iCurrentRating = METACT_GetRelativeEnemyRating(oActor, oCurrent);
+            iCandidate = bAtMost ? iCandidateRating <= iThreshold : iCandidateRating >= iThreshold;
+            iCurrent = bAtMost ? iCurrentRating <= iThreshold : iCurrentRating >= iThreshold;
+        }
+        else if (sKind == "health")
+        {
+            int iThreshold = JsonGetInt(JsonObjectGet(jPriority, "value"));
+            int bAtMost = JsonGetString(JsonObjectGet(jPriority, "comparison")) == "max";
+            int iCandidateHealth = METACT_GetHealthPercent(oCandidate);
+            int iCurrentHealth = METACT_GetHealthPercent(oCurrent);
+            iCandidate = bAtMost ? iCandidateHealth <= iThreshold : iCandidateHealth >= iThreshold;
+            iCurrent = bAtMost ? iCurrentHealth <= iThreshold : iCurrentHealth >= iThreshold;
         }
         else if (sKind == "rating_high" || sKind == "rating_low")
         {

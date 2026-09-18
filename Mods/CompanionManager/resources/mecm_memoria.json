@@ -35,6 +35,27 @@
         "maximum": 100
       },
       {
+        "type": "choice",
+        "scope": "player",
+        "local": "MECM_CFG_TARGET_PRIORITY",
+        "label": "Lock target priority",
+        "label_key": "target_priority_label",
+        "tooltip": "Chooses the nearest available target or the hardest target a companion can handle. Detected active traps always take priority over untrapped locks.",
+        "tooltip_key": "target_priority_tooltip",
+        "choices": [
+          {
+            "value": 0,
+            "label": "Nearest",
+            "label_key": "target_priority_nearest"
+          },
+          {
+            "value": 1,
+            "label": "Hardest available",
+            "label_key": "target_priority_hardest"
+          }
+        ]
+      },
+      {
         "type": "float",
         "scope": "player",
         "local": "MECM_CFG_LOCK_INTERVAL",

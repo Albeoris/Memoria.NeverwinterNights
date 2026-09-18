@@ -6,5 +6,6 @@
   "no_modules": "Aucun mod Memoria enregistré.",
   "save": "Enregistrer",
   "close": "Fermer",
+  "help_hint": "Faites un clic droit sur une option pour afficher son aide.",
   "range_error": "doit être compris entre"
 }

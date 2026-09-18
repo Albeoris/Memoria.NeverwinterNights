@@ -2,7 +2,7 @@
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
         <ModId>MEMORIA</ModId>
-        <Version>1.0.2</Version>
+        <Version>1.1.0</Version>
         <ModDisplayName>Memoria</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
@@ -15,7 +15,8 @@
         <ProjectReference Include="..\..\Tools\Toolset\Memoria.NeverwinterNights.Toolset.csproj" />
         <NwnSource Include="source\**\*.nss" />
         <NwnPackageFile Include="source\memoria_*.nss" Exclude="source\memoria_boot.nss;source\memoria_is_ru.nss;source\memoria_noop.nss" />
-        <NwnResource Include="resources\**\*" Exclude="resources\**\.gitkeep" />
+        <NwnResource Include="resources\**\*" Exclude="resources\layouts\**\*;resources\**\.gitkeep" />
+        <NwnLayout Include="resources\layouts\**\*.json" />
         <PackageDocument Include="*.md" />
     </ItemGroup>
     <Import Project="..\..\Build\NwnModProject.targets" />

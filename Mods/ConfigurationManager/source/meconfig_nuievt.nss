@@ -2,6 +2,7 @@
 
 void main()
 {
+    if (MEMORIA_NUI_HandleHelpEvent()) return;
     object oPC = NuiGetEventPlayer();
     int nToken = NuiGetEventWindow();
     if (NuiGetEventType() != "click")

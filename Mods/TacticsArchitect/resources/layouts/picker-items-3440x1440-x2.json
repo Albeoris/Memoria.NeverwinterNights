@@ -13,6 +13,7 @@
     "id": "picker-items",
     "type": "column",
     "gap": 0,
+    "minimumSlack": 8,
     "children": [
       {
         "id": "search",
@@ -58,7 +59,7 @@
       {
         "id": "items",
         "type": "shelf",
-        "height": 503,
+        "height": 491,
         "unit": 40,
         "scroll": true,
         "items": [

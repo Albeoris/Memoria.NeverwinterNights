@@ -2,6 +2,7 @@
 #include "memoria_loader"
 #include "memoria_locale"
 #include "memoria_loc"
+#include "memoria_nui"
 
 const string MECONFIG_ITEM_RESREF = "meconfig";
 const string MECONFIG_ITEM_TAG = "MECONFIG_ITEM";
@@ -23,6 +24,7 @@ const string MECONFIG_TEXT_WINDOW_TITLE = "window_title";
 const string MECONFIG_TEXT_NO_MODULES = "no_modules";
 const string MECONFIG_TEXT_SAVE = "save";
 const string MECONFIG_TEXT_RANGE_ERROR = "range_error";
+const string MECONFIG_TEXT_HELP_HINT = "help_hint";
 
 string MECONFIG_GetLanguage(object oPC)
 {
@@ -82,6 +84,15 @@ json MECONFIG_LocalizeModules(object oPC, json jModules)
             jOption = JsonObjectSet(jOption, "label", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jOption, "label", "label_key")));
             jOption = JsonObjectSet(jOption, "tooltip", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jOption, "tooltip", "tooltip_key")));
             jOption = JsonObjectSet(jOption, "heading", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jOption, "heading", "heading_key")));
+            json jChoices = JsonObjectGet(jOption, "choices");
+            int nChoice;
+            for (nChoice = 0; nChoice < JsonGetLength(jChoices); nChoice++)
+            {
+                json jChoice = JsonArrayGet(jChoices, nChoice);
+                jChoice = JsonObjectSet(jChoice, "label", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jChoice, "label", "label_key")));
+                jChoices = JsonArraySet(jChoices, nChoice, jChoice);
+            }
+            jOption = JsonObjectSet(jOption, "choices", jChoices);
             jOptions = JsonArraySet(jOptions, nOption, jOption);
         }
         jModule = JsonObjectSet(jModule, "options", jOptions);
@@ -170,7 +181,20 @@ json MECONFIG_BuildBoolOption(json jOption, int nIndex)
 {
     json jCheck = NuiCheck(JsonString(JsonGetString(JsonObjectGet(jOption, "label"))), NuiBind(MECONFIG_OptionBind(nIndex)));
     string sTooltip = JsonGetString(JsonObjectGet(jOption, "tooltip"));
-    return sTooltip == "" ? jCheck : NuiTooltip(jCheck, JsonString(sTooltip));
+    return sTooltip == "" ? jCheck : MEMORIA_NUI_Help(jCheck, JsonString(sTooltip));
+}
+
+json MECONFIG_BuildChoiceEntries(json jOption)
+{
+    json jEntries = JsonArray();
+    json jChoices = JsonObjectGet(jOption, "choices");
+    int nChoice;
+    for (nChoice = 0; nChoice < JsonGetLength(jChoices); nChoice++)
+    {
+        json jChoice = JsonArrayGet(jChoices, nChoice);
+        jEntries = JsonArrayInsert(jEntries, NuiComboEntry(JsonGetString(JsonObjectGet(jChoice, "label")), JsonGetInt(JsonObjectGet(jChoice, "value"))));
+    }
+    return jEntries;
 }
 
 json MECONFIG_BuildOptions(object oPC, json jModule)
@@ -224,14 +248,24 @@ json MECONFIG_BuildOptions(object oPC, json jModule)
             jRow = JsonArrayInsert(jRow, NuiWidth(NuiTextEdit(JsonString(""), NuiBind(sBind), 12, FALSE), 140.0f));
             json jOptionRow = NuiRow(jRow);
             if (sTooltip != "")
-                jOptionRow = NuiTooltip(jOptionRow, JsonString(sTooltip));
+                jOptionRow = MEMORIA_NUI_Help(jOptionRow, JsonString(sTooltip));
+            jColumn = JsonArrayInsert(jColumn, NuiHeight(jOptionRow, 30.0f));
+        }
+        else if (sType == "choice")
+        {
+            json jRow = JsonArray();
+            jRow = JsonArrayInsert(jRow, NuiWidth(NuiLabel(JsonString(sLabel), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), 340.0f));
+            jRow = JsonArrayInsert(jRow, NuiWidth(NuiCombo(MECONFIG_BuildChoiceEntries(jOption), NuiBind(sBind)), 140.0f));
+            json jOptionRow = NuiRow(jRow);
+            if (sTooltip != "")
+                jOptionRow = MEMORIA_NUI_Help(jOptionRow, JsonString(sTooltip));
             jColumn = JsonArrayInsert(jColumn, NuiHeight(jOptionRow, 30.0f));
         }
         else if (sType == "action")
         {
             json jAction = NuiId(NuiButton(JsonString(sLabel)), "action_" + IntToString(nIndex));
             if (sTooltip != "")
-                jAction = NuiTooltip(jAction, JsonString(sTooltip));
+                jAction = MEMORIA_NUI_Help(jAction, JsonString(sTooltip));
             float fWidth = JsonGetFloat(JsonObjectGet(jOption, "width"));
             if (fWidth > 0.0f)
                 jAction = NuiWidth(jAction, fWidth);
@@ -250,7 +284,11 @@ json MECONFIG_BuildWindow(object oPC, json jModule)
     json jRow = JsonArray();
     jRow = JsonArrayInsert(jRow, NuiWidth(NuiGroup(MECONFIG_BuildModuleList(), TRUE, NUI_SCROLLBARS_NONE), 250.0f));
     jRow = JsonArrayInsert(jRow, NuiWidth(NuiGroup(MECONFIG_BuildOptions(oPC, jModule), TRUE, NUI_SCROLLBARS_Y), 540.0f));
-    return NuiWindow(NuiRow(jRow), JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_WINDOW_TITLE)), NuiRect(-1.0f, -1.0f, 830.0f, 500.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
+    json jRoot = JsonArray();
+    jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiRow(jRow), 414.0f));
+    json jHint = NuiLabel(JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_HELP_HINT)), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE));
+    jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiStyleForegroundColor(jHint, NuiColor(180, 180, 180)), 28.0f));
+    return NuiWindow(NuiCol(jRoot), JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_WINDOW_TITLE)), NuiRect(-1.0f, -1.0f, 830.0f, 500.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
 }
 
 void MECONFIG_SetOptionBinds(object oPC, int nToken, json jModule)
@@ -267,6 +305,7 @@ void MECONFIG_SetOptionBinds(object oPC, int nToken, json jModule)
         if (sType == "bool") NuiSetBind(oPC, nToken, sBind, JsonBool(GetLocalInt(oOwner, sLocal)));
         else if (sType == "int") NuiSetBind(oPC, nToken, sBind, JsonString(IntToString(GetLocalInt(oOwner, sLocal))));
         else if (sType == "float") NuiSetBind(oPC, nToken, sBind, JsonString(FloatToString(GetLocalFloat(oOwner, sLocal), 0, 1)));
+        else if (sType == "choice") NuiSetBind(oPC, nToken, sBind, JsonInt(GetLocalInt(oOwner, sLocal)));
     }
 }
 
@@ -277,7 +316,7 @@ void MECONFIG_Open(object oPC)
     int nOldToken = NuiFindWindow(oPC, MECONFIG_WINDOW_ID);
     if (nOldToken > 0)
         NuiDestroy(oPC, nOldToken);
-    int nToken = NuiCreate(oPC, MECONFIG_BuildWindow(oPC, jModule), MECONFIG_WINDOW_ID, "meconfig_nuievt");
+    int nToken = MEMORIA_NUI_Create(oPC, MECONFIG_BuildWindow(oPC, jModule), MECONFIG_WINDOW_ID, "meconfig_nuievt");
     if (nToken <= 0)
         return;
     json jNames = JsonArray();
@@ -301,6 +340,18 @@ int MECONFIG_IsValidNumber(string sValue, string sType)
     return JsonGetLength(RegExpMatch(sPattern, sValue)) > 0;
 }
 
+int MECONFIG_IsValidChoice(json jOption, int nValue)
+{
+    json jChoices = JsonObjectGet(jOption, "choices");
+    int nChoice;
+    for (nChoice = 0; nChoice < JsonGetLength(jChoices); nChoice++)
+    {
+        if (JsonGetInt(JsonObjectGet(JsonArrayGet(jChoices, nChoice), "value")) == nValue)
+            return TRUE;
+    }
+    return FALSE;
+}
+
 int MECONFIG_Save(object oPC, int nToken)
 {
     json jModule = MECONFIG_GetSelectedModule(oPC, MECONFIG_GetModules(oPC));
@@ -310,6 +361,8 @@ int MECONFIG_Save(object oPC, int nToken)
     {
         json jOption = JsonArrayGet(jOptions, nIndex);
         string sType = JsonGetString(JsonObjectGet(jOption, "type"));
+        if (sType == "choice" && !MECONFIG_IsValidChoice(jOption, JsonGetInt(NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex)))))
+            return FALSE;
         if (sType != "int" && sType != "float")
             continue;
         string sValue = RegExpReplace(",", JsonGetString(NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex))), ".");
@@ -332,6 +385,7 @@ int MECONFIG_Save(object oPC, int nToken)
         if (sType == "bool") SetLocalInt(oOwner, sLocal, JsonGetInt(NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex))));
         else if (sType == "int") SetLocalInt(oOwner, sLocal, StringToInt(sValue));
         else if (sType == "float") SetLocalFloat(oOwner, sLocal, StringToFloat(sValue));
+        else if (sType == "choice") SetLocalInt(oOwner, sLocal, JsonGetInt(NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex))));
     }
     string sApply = JsonGetString(JsonObjectGet(jModule, "apply"));
     if (sApply != "")

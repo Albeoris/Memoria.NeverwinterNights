@@ -13,6 +13,7 @@
     "id": "picker",
     "type": "column",
     "gap": 0,
+    "minimumSlack": 8,
     "children": [
       {
         "id": "search",
@@ -58,7 +59,7 @@
       {
         "id": "icons",
         "type": "grid",
-        "height": 503,
+        "height": 491,
         "columns": 16,
         "rows": 6,
         "cellWidth": 40,

@@ -6,7 +6,7 @@
 #include "memoria_locale"
 #include "memoria_loc"
 
-const string MECM_VERSION = "1.2.9";
+const string MECM_VERSION = "1.2.10";
 const string MECM_LOC_PREFIX = "mecm";
 const string MECM_LOCAL_INSTALLED = "MECM_INSTALLED";
 const string MECM_LOCAL_ENABLED = "MECM_MODE_ENABLED";
@@ -36,6 +36,7 @@ const string MECM_LOCAL_LOCKSMITH_MEMBER = "MECM_LOCKSMITH_MEMBER_";
 const string MECM_LOCAL_REPORT_PENDING = "MECM_REPORT_PENDING";
 const string MECM_LOCAL_SETTINGS_INITIALIZED = "MECM_SETTINGS_INITIALIZED";
 const string MECM_LOCAL_SEARCH_RADIUS = "MECM_CFG_SEARCH_RADIUS";
+const string MECM_LOCAL_TARGET_PRIORITY = "MECM_CFG_TARGET_PRIORITY";
 const string MECM_LOCAL_LOCK_INTERVAL = "MECM_CFG_LOCK_INTERVAL";
 const string MECM_LOCAL_REQUIRE_LOS = "MECM_CFG_REQUIRE_LOS";
 const string MECM_LOCAL_ATTACK_SAFETY = "MECM_CFG_ATTACK_SAFETY";
@@ -59,6 +60,8 @@ const string MECM_HIGHLIGHT_EFFECT_TAG = "MECM_LOCK_GLOW_9F31";
 const float MECM_BASE_HEARTBEAT_SECONDS = 6.0f;
 const float MECM_DEFAULT_SEARCH_RADIUS = 15.0f;
 const float MECM_DEFAULT_LOCK_INTERVAL = 1.0f;
+const int MECM_TARGET_PRIORITY_NEAREST = 0;
+const int MECM_TARGET_PRIORITY_HARDEST = 1;
 const int MECM_MAX_ASSIGNMENTS = 32;
 const float MECM_STALL_SECONDS = 3.0f;
 const int MECM_MAX_PATH_RETRIES = 2;
@@ -103,6 +106,7 @@ void MECM_InitializeSettings(object oPC)
     SetLocalInt(oPC, MECM_LOCAL_SETTINGS_INITIALIZED, TRUE);
     SetLocalInt(oPC, MECM_LOCAL_ENABLED, TRUE);
     SetLocalFloat(oPC, MECM_LOCAL_SEARCH_RADIUS, MECM_DEFAULT_SEARCH_RADIUS);
+    SetLocalInt(oPC, MECM_LOCAL_TARGET_PRIORITY, MECM_TARGET_PRIORITY_NEAREST);
     SetLocalFloat(oPC, MECM_LOCAL_LOCK_INTERVAL, MECM_DEFAULT_LOCK_INTERVAL);
     SetLocalInt(oPC, MECM_LOCAL_REQUIRE_LOS, TRUE);
     SetLocalInt(oPC, MECM_LOCAL_ATTACK_SAFETY, TRUE);
@@ -480,33 +484,57 @@ void MECM_UpdateCachedHighlights(object oPC, int iTick)
     }
 }
 
+int MECM_GetTargetDifficulty(object oTarget, object oPC)
+{
+    return MECM_IsDetectedActiveTrap(oTarget, oPC) ? GetTrapDisarmDC(oTarget) : GetLockUnlockDC(oTarget);
+}
+
+int MECM_IsBetterTargetPair(object oCandidate, object oCurrent, object oCandidateAssociate, object oCurrentAssociate, object oPC)
+{
+    if (!GetIsObjectValid(oCurrent))
+        return TRUE;
+
+    int bCandidateTrap = MECM_IsDetectedActiveTrap(oCandidate, oPC);
+    int bCurrentTrap = MECM_IsDetectedActiveTrap(oCurrent, oPC);
+    if (bCandidateTrap != bCurrentTrap)
+        return bCandidateTrap;
+
+    if (GetLocalInt(oPC, MECM_LOCAL_TARGET_PRIORITY) == MECM_TARGET_PRIORITY_HARDEST)
+    {
+        int iCandidateDifficulty = MECM_GetTargetDifficulty(oCandidate, oPC);
+        int iCurrentDifficulty = MECM_GetTargetDifficulty(oCurrent, oPC);
+        if (iCandidateDifficulty != iCurrentDifficulty)
+            return iCandidateDifficulty > iCurrentDifficulty;
+    }
+
+    float fCandidateDistance = GetDistanceBetween(oCandidateAssociate, oCandidate);
+    float fCurrentDistance = GetDistanceBetween(oCurrentAssociate, oCurrent);
+    if (fCandidateDistance != fCurrentDistance)
+        return fCandidateDistance < fCurrentDistance;
+
+    return GetSkillRank(SKILL_OPEN_LOCK, oCandidateAssociate) < GetSkillRank(SKILL_OPEN_LOCK, oCurrentAssociate);
+}
+
 object MECM_FindBestTarget(object oAssociate, object oPC, int iTick)
 {
     object oBest = OBJECT_INVALID;
-    float fBestDistance = 1000000.0f;
     int iIndex;
     for (iIndex = 1; iIndex <= MECM_GetVisibleLockCount(oPC); iIndex++)
     {
         object oTarget = MECM_GetVisibleLock(oPC, iIndex);
         if (MECM_IsLockCandidate(oTarget, oPC, iTick) && MECM_IsVisibleFromPlayer(oTarget, oPC) && !MECM_IsReservationValid(oTarget) && GetLocalInt(oTarget, MECM_LOCAL_MANUAL_TICK) != iTick)
         {
-            float fDistance = GetDistanceBetween(oAssociate, oTarget);
-            if (fDistance < fBestDistance && MECM_CanUnlock(oAssociate, oTarget) && MECM_IsRouteSafe(oAssociate, oTarget, oPC))
-            {
+            if (MECM_CanUnlock(oAssociate, oTarget) && MECM_IsRouteSafe(oAssociate, oTarget, oPC) && MECM_IsBetterTargetPair(oTarget, oBest, oAssociate, oAssociate, oPC))
                 oBest = oTarget;
-                fBestDistance = fDistance;
-            }
         }
     }
     return oBest;
 }
 
-object MECM_FindNearestAvailableTarget(object oPC, int iTick)
+object MECM_FindAvailableTarget(object oPC, int iTick)
 {
     object oBestTarget = OBJECT_INVALID;
     object oBestAssociate = OBJECT_INVALID;
-    float fBestDistance = 1000000.0f;
-    int iBestSkill = 1000000;
     int iTargetIndex;
     for (iTargetIndex = 1; iTargetIndex <= MECM_GetVisibleLockCount(oPC); iTargetIndex++)
     {
@@ -519,14 +547,10 @@ object MECM_FindNearestAvailableTarget(object oPC, int iTick)
                 object oAssociate = MECM_GetLocksmith(oPC, iAssociateIndex);
                 if (MECM_CanTakeTask(oAssociate, oPC))
                 {
-                    float fDistance = GetDistanceBetween(oAssociate, oTarget);
-                    int iSkill = GetSkillRank(SKILL_OPEN_LOCK, oAssociate);
-                    if ((fDistance < fBestDistance || (fDistance == fBestDistance && iSkill < iBestSkill)) && MECM_CanUnlock(oAssociate, oTarget) && MECM_IsRouteSafe(oAssociate, oTarget, oPC))
+                    if (MECM_CanUnlock(oAssociate, oTarget) && MECM_IsRouteSafe(oAssociate, oTarget, oPC) && MECM_IsBetterTargetPair(oTarget, oBestTarget, oAssociate, oBestAssociate, oPC))
                     {
                         oBestTarget = oTarget;
                         oBestAssociate = oAssociate;
-                        fBestDistance = fDistance;
-                        iBestSkill = iSkill;
                     }
                 }
             }
@@ -864,7 +888,7 @@ void MECM_AssignAvailableTasks(object oPC, int iTick)
     int iAssignment;
     for (iAssignment = 0; iAssignment < MECM_MAX_ASSIGNMENTS; iAssignment++)
     {
-        object oTarget = MECM_FindNearestAvailableTarget(oPC, iTick);
+        object oTarget = MECM_FindAvailableTarget(oPC, iTick);
         if (!GetIsObjectValid(oTarget))
             return;
         object oAssociate = GetLocalObject(oPC, MECM_LOCAL_NEXT_ASSOCIATE);
