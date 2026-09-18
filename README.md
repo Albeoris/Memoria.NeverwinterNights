@@ -78,13 +78,18 @@ dotnet msbuild Memoria.NeverwinterNights.slnx -restore -t:Publish -p:Configurati
 
 ## Releases
 
-Push a tag in the form `<package>-v<X.Y.Z>`, for example `metact-v0.7.0` or `memoria-v1.0.0`. ESI retains `esi-v<X.Y.Z>`. GitHub Actions builds that package once, then updates its existing Steam Workshop item and the single `stable` GitHub Release in parallel. Any publishing failure deletes the pushed package tag so the release can be retried.
+Move the single `latest` publishing tag to the commit that should be released:
 
-The GitHub Release is titled `Stable (YYYY-MM-DD)`. Each mod has one stable technical asset name, while its visible label contains the project `ModDisplayName`, version, and UTC update date. Updating a mod replaces only that mod's archive and the generated all-in-one archive; all other individual archives remain unchanged. The release description lists packages in solution order. The all-in-one archive merges every available package from oldest to newest, using solution order as the tie-breaker, so newer files replace older files.
+```powershell
+git tag --force latest HEAD
+git push origin refs/tags/latest --force
+```
+
+GitHub Actions reads every version from its mod project, builds and publishes all packages, updates every existing Steam Workshop item, and replaces all assets in the `latest` GitHub Release. The release title and asset labels include the UTC update time as `YYYY-MM-DD HH:mm UTC`. The release description lists packages in solution order. The all-in-one archive is rebuilt from all current packages in solution order, so later packages replace earlier files when their outputs overlap.
 
 ### Steam Workshop setup
 
-Before the first tagged release:
+Before the first `latest` release:
 
 1. Set `WorkshopPublishedFileId` in the mod project's `Steam Workshop` property group to the public ID of the existing Workshop item. The pipeline deliberately refuses `0` or an empty value so it cannot create duplicate items.
 2. Log in once with SteamCMD using the Steam account that owns the Workshop items, encode SteamCMD's authenticated `config/config.vdf` as Base64, and add it as the `STEAM_CONFIG_VDF_BASE64` Actions secret. Refresh this secret when Steam expires the cached session.

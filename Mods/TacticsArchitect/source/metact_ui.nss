@@ -612,9 +612,9 @@ json METACT_BuildActionPanel(object oPC, float fPanelWidth)
     jAction = JsonArrayInsert(jAction, NuiHeight(NuiCheck(JsonString(METACT_GetText(METACT_TEXT_ALLOW_MOVEMENT, oPC)), NuiBind("allow_move")), 26.0f));
     json jFriendlyFire = JsonArray();
     jFriendlyFire = JsonArrayInsert(jFriendlyFire, NuiHeight(METACT_Label(METACT_GetText(METACT_TEXT_FRIENDLY_FIRE, oPC)), 20.0f));
-    jFriendlyFire = JsonArrayInsert(jFriendlyFire, NuiHeight(NuiTooltip(NuiCombo(METACT_FriendlyFirePolicyEntries(oPC), NuiBind("friendly_fire_policy")), NuiBind("friendly_fire_policy_help")), 28.0f));
-    jFriendlyFire = JsonArrayInsert(jFriendlyFire, NuiHeight(NuiStyleForegroundColor(NuiLabel(NuiBind("friendly_fire_policy_help"), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_TOP)), NuiColor(150, 150, 150)), 44.0f));
-    jAction = JsonArrayInsert(jAction, NuiHeight(NuiVisible(NuiCol(jFriendlyFire), NuiBind("show_friendly_fire")), 92.0f));
+    jFriendlyFire = JsonArrayInsert(jFriendlyFire, NuiHeight(NuiCombo(METACT_FriendlyFirePolicyEntries(oPC), NuiBind("friendly_fire_policy")), 28.0f));
+    jFriendlyFire = JsonArrayInsert(jFriendlyFire, NuiHeight(NuiStyleForegroundColor(NuiLabel(NuiBind("friendly_fire_policy_help"), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_TOP)), NuiColor(150, 150, 150)), 68.0f));
+    jAction = JsonArrayInsert(jAction, NuiHeight(NuiVisible(NuiCol(jFriendlyFire), NuiBind("show_friendly_fire")), 116.0f));
     return NuiCol(jAction);
 }
 

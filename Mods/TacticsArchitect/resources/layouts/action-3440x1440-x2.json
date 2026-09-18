@@ -34,7 +34,7 @@
             "child": {
               "id": "action-fields",
               "type": "column",
-              "height": 314,
+              "height": 338,
               "children": [
                 {
                   "id": "action-header",
@@ -89,7 +89,7 @@
                 {
                   "id": "friendly-fire-help",
                   "type": "control",
-                  "height": 44
+                  "height": 68
                 }
               ]
             }

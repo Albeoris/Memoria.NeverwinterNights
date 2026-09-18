@@ -103,7 +103,7 @@ dotnet build Mods/TacticsArchitect/TacticsArchitect.proj --configuration Release
 dotnet msbuild Mods/TacticsArchitect/TacticsArchitect.proj -restore -t:Publish -p:Configuration=Release -p:Version=0.7.0
 ```
 
-Release tags use `<package>-v<version>`, for example `metact-v0.7.0`. ESI retains the compatibility tag form `esi-v<version>`.
+Publishing uses the single movable `latest` tag. Moving it publishes every mod using the `Version` declared by that mod's project. Immutable API snapshot tags remain separate and use `api-<mod-id>-v<version>`.
 
 ## Licensing and style
 

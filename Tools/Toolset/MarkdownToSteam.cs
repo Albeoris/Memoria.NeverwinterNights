@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -78,9 +79,8 @@ internal static partial class MarkdownToSteam
         if (inCodeBlock) result.AppendLine("[/code]");
         string description = result.ToString().Trim();
         if (description.Length == 0) throw new InvalidDataException("README.md produced an empty Workshop description.");
-        DateTime generatedAt = DateTime.UtcNow;
-        string updateDate = $"{generatedAt.Year:D4}-{generatedAt.Month:D2}-{generatedAt.Day:D2}";
-        return $"{description}{Environment.NewLine}{Environment.NewLine}[hr][/hr]{Environment.NewLine}[i]Last updated: {updateDate}[/i]{Environment.NewLine}[url={FeedbackUrl}]Report feedback and issues[/url]{Environment.NewLine}[url={readmeUrl}]Sources on GitHub[/url]";
+        string updateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm 'UTC'", CultureInfo.InvariantCulture);
+        return $"{description}{Environment.NewLine}{Environment.NewLine}[hr][/hr]{Environment.NewLine}[i]Last updated: {updateTime}[/i]{Environment.NewLine}[url={FeedbackUrl}]Report feedback and issues[/url]{Environment.NewLine}[url={readmeUrl}]Sources on GitHub[/url]";
     }
 
     private static string ConvertInline(string text)

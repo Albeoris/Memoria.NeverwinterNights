@@ -1,98 +1,66 @@
-name: Release package
+name: Release all packages
 
 on:
   push:
     tags:
-      - 'memoria-v*'
-      - 'esi-v*'
-      - 'meconfig-v*'
-      - 'melse-v*'
-      - 'mecm-v*'
-      - 'metact-v*'
-      - 'medt-v*'
+      - latest
 
 permissions:
   contents: write
 
-concurrency:
-  # Build.PublishAllTags.cmd waits for each run before pushing the next tag. This lock also protects Stable and all-in-one from independently pushed tags.
-  group: stable-release
-  cancel-in-progress: false
-
 jobs:
   prepare:
     runs-on: windows-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     outputs:
-      id: ${{ steps.package.outputs.id }}
-      project: ${{ steps.package.outputs.project }}
-      version: ${{ steps.version.outputs.version }}
-      display_name: ${{ steps.version.outputs.display_name }}
-      update_date: ${{ steps.version.outputs.update_date }}
+      update_time: ${{ steps.time.outputs.update_time }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Parse package tag
-        id: package
+      - name: Capture update time
+        id: time
         shell: pwsh
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          $tag = $env:RELEASE_TAG
-          if ($tag -notmatch '^(?<id>esi|meconfig|medt|melse|mecm|metact|memoria)-v(?<version>(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))$') { throw "Invalid release tag: $tag" }
-          $projects = @{ esi = 'EventScriptInjector'; meconfig = 'ConfigurationManager'; medt = 'DebugTools'; melse = 'LootingSystemEnhanced'; mecm = 'CompanionManager'; metact = 'TacticsArchitect'; memoria = 'Memoria' }
-          "id=$($Matches['id'])" >> $env:GITHUB_OUTPUT
-          "project=$($projects[$Matches['id']])" >> $env:GITHUB_OUTPUT
-          "tag_version=$($Matches['version'])" >> $env:GITHUB_OUTPUT
+          "update_time=$([DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm', [Globalization.CultureInfo]::InvariantCulture)) UTC" >> $env:GITHUB_OUTPUT
 
-      - name: Verify project version
-        id: version
+      - name: Build and publish all packages
         shell: pwsh
-        env:
-          PROJECT_FILE: Mods/${{ steps.package.outputs.project }}/${{ steps.package.outputs.project }}.proj
-          TAG_VERSION: ${{ steps.package.outputs.tag_version }}
-        run: |
-          $versionOutput = @(& dotnet msbuild $env:PROJECT_FILE -getProperty:Version -p:Configuration=Release -nologo | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-          if ($LASTEXITCODE -ne 0) { throw "Failed to read Version from '$env:PROJECT_FILE' through MSBuild." }
-          if ($versionOutput.Count -ne 1) { throw "Expected MSBuild to return exactly one Version value for '$env:PROJECT_FILE'; received $($versionOutput.Count)." }
-          $projectVersion = $versionOutput[0].Trim()
-          if ($projectVersion -ne $env:TAG_VERSION) { throw "Tag version '$env:TAG_VERSION' does not match project version '$projectVersion'." }
-          $displayNameOutput = @(& dotnet msbuild $env:PROJECT_FILE -getProperty:ModDisplayName -p:Configuration=Release -nologo | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-          if ($LASTEXITCODE -ne 0 -or $displayNameOutput.Count -ne 1) { throw "Failed to read ModDisplayName from '$env:PROJECT_FILE' through MSBuild." }
-          "version=$projectVersion" >> $env:GITHUB_OUTPUT
-          "display_name=$($displayNameOutput[0].Trim())" >> $env:GITHUB_OUTPUT
-          "update_date=$([DateTime]::UtcNow.ToString('yyyy-MM-dd'))" >> $env:GITHUB_OUTPUT
-
-      - name: Build and publish package
-        shell: pwsh
-        run: dotnet msbuild "Mods/${{ steps.package.outputs.project }}/${{ steps.package.outputs.project }}.proj" -restore -t:Publish -p:Configuration=Release -verbosity:minimal
+        run: dotnet msbuild Memoria.NeverwinterNights.slnx -restore -t:Publish -p:Configuration=Release -m:1 -verbosity:minimal
 
       - name: Validate publish output
         shell: pwsh
         run: |
-          $packageRoot = 'artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.version.outputs.version }}'
-          if (-not (Test-Path -LiteralPath (Join-Path $packageRoot 'steam-workshop.vdf') -PathType Leaf)) { throw 'Steam Workshop upload manifest was not generated.' }
-          if (@(Get-ChildItem -LiteralPath (Join-Path $packageRoot 'nexus') -Filter '*.zip' -File).Count -ne 1) { throw 'Publish must generate exactly one Nexus archive.' }
+          [xml] $solution = Get-Content -LiteralPath 'Memoria.NeverwinterNights.slnx' -Raw
+          $projects = @($solution.SelectNodes('/Solution/Folder/Project[starts-with(@Path, "Mods/")]'))
+          foreach ($solutionProject in $projects) {
+            $projectPath = $solutionProject.GetAttribute('Path')
+            [xml] $project = Get-Content -LiteralPath $projectPath -Raw
+            $modId = $project.SelectSingleNode('/Project/PropertyGroup[not(@Condition)]/ModId[not(@Condition)]').InnerText.Trim().ToLowerInvariant()
+            $version = $project.SelectSingleNode('/Project/PropertyGroup[not(@Condition)]/Version[not(@Condition)]').InnerText.Trim()
+            $packageRoot = "artifacts/publish/$modId/$version"
+            if (-not (Test-Path -LiteralPath (Join-Path $packageRoot 'steam-workshop.vdf') -PathType Leaf)) { throw "Steam Workshop manifest was not generated for $modId $version." }
+            if (@(Get-ChildItem -LiteralPath (Join-Path $packageRoot 'nexus') -Filter '*.zip' -File).Count -ne 1) { throw "Publish must generate exactly one Nexus archive for $modId $version." }
+          }
 
-      - name: Stage package for parallel publishing
+      - name: Stage all packages
         uses: actions/upload-artifact@v7
         with:
-          name: release-package
-          path: artifacts/publish/${{ steps.package.outputs.id }}/${{ steps.version.outputs.version }}
+          name: release-packages
+          path: artifacts/publish
           if-no-files-found: error
           retention-days: 1
 
   workshop:
     needs: prepare
     runs-on: windows-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
-      - name: Download prepared package
+      - name: Download prepared packages
         uses: actions/download-artifact@v7
         with:
-          name: release-package
-          path: artifacts/publish/${{ needs.prepare.outputs.id }}/${{ needs.prepare.outputs.version }}
+          name: release-packages
+          path: artifacts/publish
 
       - name: Restore clean SteamCMD
         id: steamcmd-cache
@@ -155,7 +123,7 @@ jobs:
           $signerName = if ($null -eq $signature.SignerCertificate) { '' } else { $signature.SignerCertificate.GetNameInfo([Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false) }
           if ($signature.Status -ne 'Valid' -or $signerName -notin @('Valve', 'Valve Corp.')) { throw "Updated SteamCMD does not have a valid Valve signature: $($signature.Status); signer=$signerName; subject=$($signature.SignerCertificate.Subject)" }
 
-      - name: Upload Steam Workshop item
+      - name: Upload all Steam Workshop items
         shell: pwsh
         env:
           STEAM_CONFIG_VDF_BASE64: ${{ secrets.STEAM_CONFIG_VDF_BASE64 }}
@@ -182,10 +150,17 @@ jobs:
           [IO.File]::WriteAllBytes((Join-Path $configDirectory 'config.vdf'), $configBytes)
           [Array]::Clear($configBytes, 0, $configBytes.Length)
           $configText = $null
-          $manifest = (Resolve-Path -LiteralPath 'artifacts/publish/${{ needs.prepare.outputs.id }}/${{ needs.prepare.outputs.version }}/steam-workshop.vdf').Path
+          $manifests = @(Get-ChildItem -LiteralPath 'artifacts/publish' -Filter 'steam-workshop.vdf' -File -Recurse | Sort-Object FullName)
+          if ($manifests.Count -eq 0) { throw 'No Steam Workshop manifests were downloaded.' }
+          $steamArguments = @('+@ShutdownOnFailedCommand', '1', '+@NoPromptForPassword', '1', '+login', $steamUsername)
+          foreach ($manifest in $manifests) {
+            $steamArguments += '+workshop_build_item'
+            $steamArguments += $manifest.FullName
+          }
+          $steamArguments += '+quit'
           Push-Location $runtimeRoot
           try {
-            $steamOutput = @(& .\steamcmd.exe '+@ShutdownOnFailedCommand' 1 '+@NoPromptForPassword' 1 +login $steamUsername +workshop_build_item $manifest +quit 2>&1)
+            $steamOutput = @(& .\steamcmd.exe @steamArguments 2>&1)
             $steamExitCode = $LASTEXITCODE
             $sanitizedSteamOutput = [regex]::Replace(($steamOutput -join [Environment]::NewLine), '\[U:(?<universe>\d+):\d+\]', '[U:${universe}:***]')
             if (-not [string]::IsNullOrWhiteSpace($sanitizedSteamOutput)) { Write-Output $sanitizedSteamOutput }
@@ -203,45 +178,22 @@ jobs:
   github_release:
     needs: prepare
     runs-on: windows-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Download prepared package
+      - name: Download prepared packages
         uses: actions/download-artifact@v7
         with:
-          name: release-package
-          path: artifacts/publish/${{ needs.prepare.outputs.id }}/${{ needs.prepare.outputs.version }}
+          name: release-packages
+          path: artifacts/publish
 
-      - name: Update Stable release
+      - name: Publish Latest release
         shell: pwsh
         env:
-          DISPLAY_NAME: ${{ needs.prepare.outputs.display_name }}
           GH_TOKEN: ${{ github.token }}
-          MOD_ID: ${{ needs.prepare.outputs.id }}
-          PACKAGE_ROOT: artifacts/publish/${{ needs.prepare.outputs.id }}/${{ needs.prepare.outputs.version }}
-          PACKAGE_VERSION: ${{ needs.prepare.outputs.version }}
           RELEASE_REPOSITORY: ${{ github.repository }}
-          UPDATE_DATE: ${{ needs.prepare.outputs.update_date }}
+          UPDATE_TIME: ${{ needs.prepare.outputs.update_time }}
         run: |
-          & ./.github/scripts/Update-StableRelease.ps1 -PackageRoot $env:PACKAGE_ROOT -ModId $env:MOD_ID -DisplayName $env:DISPLAY_NAME -Version $env:PACKAGE_VERSION -UpdateDate $env:UPDATE_DATE -Repository $env:RELEASE_REPOSITORY
-
-  cleanup:
-    needs:
-      - prepare
-      - workshop
-      - github_release
-    if: ${{ always() && (needs.prepare.result == 'failure' || needs.workshop.result == 'failure' || needs.github_release.result == 'failure') }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete failed release tag
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          Write-Output "Deleting remote tag '$env:RELEASE_TAG' after release failure."
-          $encodedTag = [Uri]::EscapeDataString($env:RELEASE_TAG)
-          gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/tags/$encodedTag"
-          if ($LASTEXITCODE -ne 0) { throw "Failed to delete release tag '$env:RELEASE_TAG' through the GitHub API." }
+          & ./.github/scripts/Publish-LatestRelease.ps1 -PublishRoot 'artifacts/publish' -UpdateTime $env:UPDATE_TIME -Repository $env:RELEASE_REPOSITORY
