@@ -91,7 +91,7 @@ internal static partial class MarkdownToSteam
             return token;
         }
 
-        text = InlineCodeRegex().Replace(text, match => Protect(match.Groups[1].Value));
+        text = InlineCodeRegex().Replace(text, match => Protect($"[b]{match.Groups[1].Value}[/b]"));
         text = LinkRegex().Replace(text, match => Protect($"[url={match.Groups[2].Value}]{ConvertInline(match.Groups[1].Value)}[/url]"));
         text = BoldAsteriskRegex().Replace(text, "[b]$1[/b]");
         text = BoldUnderscoreRegex().Replace(text, "[b]$1[/b]");
