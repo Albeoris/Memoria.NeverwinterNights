@@ -1,7 +1,8 @@
 param(
     [string] $Remote = 'origin',
     [string] $Workflow = 'release.yml',
-    [int] $EnqueueTimeoutSeconds = 300
+    [int] $EnqueueTimeoutSeconds = 300,
+    [int] $WorkflowPollSeconds = 5
 )
 
 $ErrorActionPreference = 'Stop'
@@ -10,6 +11,9 @@ Set-Location $repositoryRoot
 
 if ($EnqueueTimeoutSeconds -le 0) {
     throw 'EnqueueTimeoutSeconds must be positive.'
+}
+if ($WorkflowPollSeconds -le 0) {
+    throw 'WorkflowPollSeconds must be positive.'
 }
 if ($null -eq (Get-Command git -ErrorAction SilentlyContinue)) {
     throw "Required command 'git' was not found."
@@ -51,6 +55,7 @@ $repository = "$($repositoryMatch.Groups['owner'].Value)/$($repositoryMatch.Grou
 
 $apiHeaders = @{
     Accept = 'application/vnd.github+json'
+    'Cache-Control' = 'no-cache'
     'User-Agent' = 'Memoria-PublishAllTags'
     'X-GitHub-Api-Version' = '2022-11-28'
 }
@@ -62,7 +67,9 @@ if (-not [string]::IsNullOrWhiteSpace($apiToken)) {
 
 function Invoke-GitHubApi([string] $Path) {
     try {
-        return Invoke-RestMethod -Method Get -Uri "https://api.github.com/repos/$repository/$Path" -Headers $apiHeaders
+        $separator = if ($Path.Contains('?')) { '&' } else { '?' }
+        $cacheBuster = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+        return Invoke-RestMethod -Method Get -Uri "https://api.github.com/repos/$repository/$Path${separator}cache_bust=$cacheBuster" -Headers $apiHeaders
     }
     catch {
         if ([string]::IsNullOrWhiteSpace($apiToken)) {
@@ -119,6 +126,12 @@ $workflowPath = "actions/workflows/$([Uri]::EscapeDataString($Workflow))/runs?ev
 Write-Host "Creating $($missingTags.Count) release tag(s) at $headCommit."
 foreach ($release in $missingTags) {
     $tag = $release.Tag
+    $knownRunIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $knownRuns = Invoke-GitHubApi $workflowPath
+    foreach ($knownRun in @($knownRuns.workflow_runs | Where-Object { $_.head_branch -eq $tag -and $_.head_sha -eq $headCommit })) {
+        $knownRunIds.Add([string] $knownRun.id) | Out-Null
+    }
+
     Write-Host "Creating and pushing $tag for $($release.ProjectPath)."
     $localTag = @(& git tag --list $tag)
     if ($LASTEXITCODE -ne 0) {
@@ -139,12 +152,13 @@ foreach ($release in $missingTags) {
         throw "Failed to push $tag."
     }
 
-    Write-Host "Waiting for the $tag release workflow to start."
+    Write-Host "Waiting 30 seconds for the new $tag release workflow to start."
+    Start-Sleep -Seconds 30
     $deadline = [DateTime]::UtcNow.AddSeconds($EnqueueTimeoutSeconds)
     $run = $null
     do {
         $runs = Invoke-GitHubApi $workflowPath
-        $run = @($runs.workflow_runs | Where-Object { $_.head_branch -eq $tag -and $_.head_sha -eq $headCommit } | Select-Object -First 1)
+        $run = @($runs.workflow_runs | Where-Object { $_.head_branch -eq $tag -and $_.head_sha -eq $headCommit -and -not $knownRunIds.Contains([string] $_.id) } | Sort-Object created_at -Descending | Select-Object -First 1)
         if ($run.Count -eq 0) {
             Start-Sleep -Seconds 5
         }
@@ -160,7 +174,7 @@ foreach ($release in $missingTags) {
         $runState = Invoke-GitHubApi "actions/runs/$runId"
         if ($runState.status -ne 'completed') {
             Write-Host "Workflow status for ${tag}: $($runState.status)."
-            Start-Sleep -Seconds 30
+            Start-Sleep -Seconds $WorkflowPollSeconds
         }
     } while ($runState.status -ne 'completed')
 

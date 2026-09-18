@@ -102,7 +102,9 @@ internal static partial class Publisher
 
     private static string EscapeVdf(string value)
     {
-        return value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal).Replace("\t", "\\t", StringComparison.Ordinal);
+        // SteamCMD does not enable KeyValues escape sequences for Workshop manifests, so \" would terminate the quoted token instead of escaping it.
+        // Keep real line breaks in descriptions and replace embedded quotes with their display-safe Unicode equivalent.
+        return value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "＂", StringComparison.Ordinal).Replace("\t", "    ", StringComparison.Ordinal);
     }
 
     private static string SanitizeDirectoryName(string value)
