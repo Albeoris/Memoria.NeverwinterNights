@@ -196,4 +196,4 @@ jobs:
           RELEASE_REPOSITORY: ${{ github.repository }}
           UPDATE_TIME: ${{ needs.prepare.outputs.update_time }}
         run: |
-          & ./.github/scripts/Publish-LatestRelease.ps1 -PublishRoot 'artifacts/publish' -UpdateTime $env:UPDATE_TIME -Repository $env:RELEASE_REPOSITORY
+          & ./.github/scripts/Update-StableRelease.ps1 -PublishRoot 'artifacts/publish' -UpdateTime $env:UPDATE_TIME -Repository $env:RELEASE_REPOSITORY

@@ -2,6 +2,8 @@
 
 Looting System Enhanced automates looting and adds configurable treasure tracking, lootable corpses, and item filters.
 
+This edition fixes an original LSE bug that could remove corpses together with key items: a corpse now disappears only when its inventory is empty. Its temporary runtime hooks are rebuilt on every game start, so MELSE can be disabled without damaging saved games.
+
 ## Features
 
 - Finds, tracks, and automatically loots treasure from defeated creatures and containers.
