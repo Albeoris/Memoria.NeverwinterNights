@@ -13,6 +13,27 @@
     },
     "options": [
       {
+        "type": "choice",
+        "scope": "player",
+        "local": "METACT_CFG_EXECUTION_MODE",
+        "label": "Ability scheduling",
+        "label_key": "execution_mode_label",
+        "tooltip": "Recheck tactics immediately before committing an ability, or use the original immediate queueing behavior. Basic attacks are always queued immediately.",
+        "tooltip_key": "execution_mode_tooltip",
+        "choices": [
+          {
+            "value": 0,
+            "label": "Recheck before use",
+            "label_key": "execution_mode_recheck"
+          },
+          {
+            "value": 1,
+            "label": "Queue immediately",
+            "label_key": "execution_mode_immediate"
+          }
+        ]
+      },
+      {
         "type": "action",
         "label": "Open tactics editor",
         "label_key": "open_tactics_editor_label",

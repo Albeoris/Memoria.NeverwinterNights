@@ -117,5 +117,9 @@
   "friendly_fire_stationary_help": "Il lancio attende che gli alleati si fermino.\nPoi controlla l'area.",
   "equip_item": "Equipaggia oggetto",
   "equippable_items": "Oggetti equipaggiabili",
-  "open_tactics_editor_label": "Apri editor delle tattiche"
+  "open_tactics_editor_label": "Apri editor delle tattiche",
+  "execution_mode_label": "Pianificazione delle abilita",
+  "execution_mode_tooltip": "Ricontrolla tutte le tattiche subito prima di accodare un'abilita. Gli attacchi normali vengono sempre accodati immediatamente.",
+  "execution_mode_recheck": "Ricontrolla prima dell'uso",
+  "execution_mode_immediate": "Accoda subito (precedente)"
 }

@@ -117,5 +117,9 @@
   "friendly_fire_stationary_help": "Casting waits until allies stop.\nThe area is then checked once.",
   "equip_item": "Equip item",
   "equippable_items": "Equippable items",
-  "open_tactics_editor_label": "Open tactics editor"
+  "open_tactics_editor_label": "Open tactics editor",
+  "execution_mode_label": "Ability scheduling",
+  "execution_mode_tooltip": "Rechecks all tactics immediately before committing an ability. Basic attacks are always queued immediately.",
+  "execution_mode_recheck": "Recheck before use",
+  "execution_mode_immediate": "Queue immediately (legacy)"
 }

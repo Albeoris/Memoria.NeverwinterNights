@@ -2,7 +2,7 @@
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
         <ModId>MEDT</ModId>
-        <Version>2.0.3</Version>
+        <Version>2.0.4</Version>
         <ModDisplayName>Memoria: Debug Tools</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">

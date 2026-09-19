@@ -117,5 +117,9 @@
   "friendly_fire_stationary_help": "Der Zauber wartet auf stillstehende Verbundete.\nDann folgt eine Prufung.",
   "equip_item": "Gegenstand ausrusten",
   "equippable_items": "Ausrustbare Gegenstande",
-  "open_tactics_editor_label": "Taktikeditor oeffnen"
+  "open_tactics_editor_label": "Taktikeditor oeffnen",
+  "execution_mode_label": "Planung von Faehigkeiten",
+  "execution_mode_tooltip": "Prueft alle Taktiken erneut, bevor eine Faehigkeit eingereiht wird. Gewoehnliche Angriffe werden immer sofort eingereiht.",
+  "execution_mode_recheck": "Vor Einsatz erneut pruefen",
+  "execution_mode_immediate": "Sofort einreihen (alt)"
 }

@@ -117,5 +117,9 @@
   "friendly_fire_stationary_help": "Le sort attend l'arret des allies.\nLa zone est ensuite verifiee.",
   "equip_item": "Equiper un objet",
   "equippable_items": "Objets equipables",
-  "open_tactics_editor_label": "Ouvrir l'editeur de tactiques"
+  "open_tactics_editor_label": "Ouvrir l'editeur de tactiques",
+  "execution_mode_label": "Planification des capacites",
+  "execution_mode_tooltip": "Reverifie toutes les tactiques juste avant de mettre une capacite en file. Les attaques normales sont toujours ajoutees immediatement.",
+  "execution_mode_recheck": "Reverifier avant utilisation",
+  "execution_mode_immediate": "Ajouter immediatement (ancien)"
 }

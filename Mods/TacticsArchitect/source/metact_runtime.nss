@@ -15,6 +15,8 @@ const string METACT_LOCAL_PENDING_EQUIP_ITEM = "METACT_PENDING_EQUIP_ITEM";
 const string METACT_LOCAL_PENDING_EQUIP_SLOT = "METACT_PENDING_EQUIP_SLOT";
 const string METACT_LOCAL_PENDING_EQUIP_ACTION = "METACT_PENDING_EQUIP_ACTION";
 const string METACT_LOCAL_PENDING_EQUIP_CAST = "METACT_PENDING_EQUIP_CAST";
+const string METACT_LOCAL_PENDING_RECHECK = "METACT_PENDING_RECHECK";
+const string METACT_LOCAL_COMMIT_RECHECK = "METACT_COMMIT_RECHECK";
 const int METACT_MAX_TARGETS = 32;
 
 int METACT_Fail(object oActor, string sReason)
@@ -210,6 +212,27 @@ object METACT_GetPrioritizedEnemy(object oActor, int iSpell, int iSpellLevel, js
         if (!GetIsDead(oEnemy) && GetArea(oEnemy) == GetArea(oActor) && METACT_EnemyMatchesTargetCondition(oActor, oEnemy, jCondition) && (iSpell < 0 || METACT_IsSpellSensible(oActor, oEnemy, iSpell, iSpellLevel)) && METACT_CompareEnemyPriority(oActor, oEnemy, oBest, jPriorities) > 0) oBest = oEnemy;
         iNth++;
         oEnemy = METACT_GetEnemy(oActor, iNth);
+    }
+    if (JsonGetType(jPriorities) != JSON_TYPE_ARRAY)
+        return oBest;
+    int iPriority;
+    for (iPriority = 0; iPriority < JsonGetLength(jPriorities); iPriority++)
+    {
+        json jPriority = JsonArrayGet(jPriorities, iPriority);
+        if (!JsonGetInt(JsonObjectGet(jPriority, "enabled")) || JsonGetString(JsonObjectGet(jPriority, "kind")) != "attacker")
+            continue;
+        object oSubject = METACT_GetPrioritySubject(oActor, jPriority);
+        if (!GetIsObjectValid(oSubject) || GetIsDead(oSubject) || GetArea(oSubject) != GetArea(oActor))
+            continue;
+        iNth = 1;
+        oEnemy = GetNearestCreature(CREATURE_TYPE_REPUTATION, REPUTATION_TYPE_ENEMY, oSubject, iNth, CREATURE_TYPE_PERCEPTION, PERCEPTION_SEEN);
+        while (GetIsObjectValid(oEnemy) && iNth <= METACT_MAX_TARGETS)
+        {
+            if (!GetIsDead(oEnemy) && GetArea(oEnemy) == GetArea(oActor) && GetIsEnemy(oEnemy, oActor) && GetAttackTarget(oEnemy) == oSubject && METACT_EnemyMatchesTargetCondition(oActor, oEnemy, jCondition) && (iSpell < 0 || METACT_IsSpellSensible(oActor, oEnemy, iSpell, iSpellLevel)) && METACT_CompareEnemyPriority(oActor, oEnemy, oBest, jPriorities) > 0)
+                oBest = oEnemy;
+            iNth++;
+            oEnemy = GetNearestCreature(CREATURE_TYPE_REPUTATION, REPUTATION_TYPE_ENEMY, oSubject, iNth, CREATURE_TYPE_PERCEPTION, PERCEPTION_SEEN);
+        }
     }
     return oBest;
 }
@@ -823,8 +846,19 @@ void METACT_EndOwnedAction(object oActor)
     DeleteLocalInt(oActor, METACT_LOCAL_PENDING_EQUIP_SLOT);
     DeleteLocalJson(oActor, METACT_LOCAL_PENDING_EQUIP_ACTION);
     DeleteLocalInt(oActor, METACT_LOCAL_PENDING_EQUIP_CAST);
+    DeleteLocalInt(oActor, METACT_LOCAL_PENDING_RECHECK);
+    DeleteLocalInt(oActor, METACT_LOCAL_COMMIT_RECHECK);
     if (GetIsObjectValid(oActor) && oActor != oPC)
         SetAssociateState(NW_ASC_IS_BUSY, FALSE, oActor);
+}
+
+int METACT_DeferAction(object oActor, object oPC)
+{
+    if (GetLocalInt(oPC, METACT_LOCAL_EXECUTION_MODE) == METACT_EXECUTION_IMMEDIATE || GetLocalInt(oActor, METACT_LOCAL_COMMIT_RECHECK)) return FALSE;
+    METACT_BeginOwnedAction(oActor, oPC, GetCurrentAction(oActor));
+    SetLocalInt(oActor, METACT_LOCAL_PENDING_RECHECK, TRUE);
+    AssignCommand(oActor, ActionDoCommand(ExecuteScript("metact_ready", oActor)));
+    return TRUE;
 }
 
 void METACT_BlockEquipItem(object oActor, object oItem)
@@ -889,6 +923,17 @@ int METACT_CanTakeAction(object oActor, object oPC)
         if (GetLocalInt(oActor, METACT_LOCAL_MANUAL))
         {
             METACT_EndOwnedAction(oActor);
+            return FALSE;
+        }
+        if (GetLocalInt(oActor, METACT_LOCAL_PENDING_RECHECK))
+        {
+            int iPendingTicks = GetLocalInt(oActor, METACT_LOCAL_OWNED_TICKS) + 1;
+            SetLocalInt(oActor, METACT_LOCAL_OWNED_TICKS, iPendingTicks);
+            if (iPendingTicks > 60)
+            {
+                ClearAllActions(FALSE, oActor);
+                METACT_EndOwnedAction(oActor);
+            }
             return FALSE;
         }
         if (GetLocalInt(oActor, METACT_LOCAL_ACTIVE_TARGET_SET))
@@ -983,6 +1028,7 @@ int METACT_ExecuteSpellAction(object oActor, object oPC, json jAction, json jCon
     if (!METACT_IsTargetInRange(oActor, jAction, iSpell)) return METACT_Fail(oActor, "target_out_of_range_or_sight");
     if (iClass != CLASS_TYPE_INVALID)
     {
+        if (METACT_DeferAction(oActor, oPC)) return TRUE;
         METACT_BeginOwnedAction(oActor, oPC, ACTION_CASTSPELL);
         METACT_SetActiveAoe(oActor, oPC, jAction, iSpell, iSpellLevel, iMetaMagic, iClusterMinimum);
         if (GetLocalInt(oActor, METACT_LOCAL_EVAL_IS_LOCATION))
@@ -1001,6 +1047,7 @@ int METACT_ExecuteSpellAction(object oActor, object oPC, json jAction, json jCon
     {
         itemproperty ip = METACT_FindCastProperty(oAvailableItem, JsonGetInt(JsonObjectGet(jAction, "item_property")), iSpell);
         if (!GetIsItemPropertyValid(ip)) return METACT_Fail(oActor, "item_power_unavailable");
+        if (METACT_DeferAction(oActor, oPC)) return TRUE;
         METACT_BeginOwnedAction(oActor, oPC, ACTION_ITEMCASTSPELL);
         METACT_SetActiveAoe(oActor, oPC, jAction, iSpell, iSpellLevel, iMetaMagic, iClusterMinimum);
         int iEquipSlot = MEMORIA_FindPreferredEquipSlot(oActor, oAvailableItem);
@@ -1042,6 +1089,7 @@ int METACT_ExecuteAction(object oActor, object oPC, json jAction, json jConditio
         if (MEMORIA_GetEquippedSlot(oActor, oItem) >= 0) return METACT_Fail(oActor, "item_already_equipped");
         int iEquipSlot = MEMORIA_FindPreferredEquipSlot(oActor, oItem);
         if (iEquipSlot < 0) return METACT_Fail(oActor, "item_cannot_be_equipped");
+        if (METACT_DeferAction(oActor, oPC)) return TRUE;
         METACT_BeginOwnedAction(oActor, oPC, ACTION_USEOBJECT);
         METACT_QueueEquip(oActor, oItem, iEquipSlot, jAction, FALSE);
         return TRUE;
@@ -1050,6 +1098,7 @@ int METACT_ExecuteAction(object oActor, object oPC, json jAction, json jConditio
     {
         if (!GetHasFeat(FEAT_SUMMON_FAMILIAR, oActor)) return METACT_Fail(oActor, "familiar_feat_unavailable");
         if (GetIsObjectValid(GetAssociate(ASSOCIATE_TYPE_FAMILIAR, oActor))) return METACT_Fail(oActor, "familiar_already_present");
+        if (METACT_DeferAction(oActor, oPC)) return TRUE;
         METACT_BeginOwnedAction(oActor, oPC, ACTION_USEOBJECT);
         AssignCommand(oActor, ActionUseFeat(FEAT_SUMMON_FAMILIAR, oActor));
         AssignCommand(oActor, ActionDoCommand(ExecuteScript("metact_done", oActor)));
@@ -1067,6 +1116,7 @@ int METACT_ExecuteAction(object oActor, object oPC, json jAction, json jConditio
         DeleteLocalInt(oActor, METACT_LOCAL_EVAL_IS_LOCATION);
         if (JsonGetInt(JsonObjectGet(jAction, "feat_target_self"))) SetLocalObject(oActor, METACT_LOCAL_EVAL_TARGET, oActor);
         else if (!METACT_ResolveTarget(oActor, oPC, jAction, iSpell, METACT_GetActionSpellLevel(jAction, iSpell), METAMAGIC_NONE, 1, jPriorities, jCondition)) return FALSE;
+        if (METACT_DeferAction(oActor, oPC)) return TRUE;
         METACT_BeginOwnedAction(oActor, oPC, ACTION_USEOBJECT);
         if (GetLocalInt(oActor, METACT_LOCAL_EVAL_IS_LOCATION)) AssignCommand(oActor, ActionUseFeat(iFeat, OBJECT_INVALID, 0, GetLocalLocation(oActor, METACT_LOCAL_EVAL_LOCATION)));
         else AssignCommand(oActor, ActionUseFeat(iFeat, GetLocalObject(oActor, METACT_LOCAL_EVAL_TARGET)));
@@ -1149,10 +1199,8 @@ void METACT_SendDebugTrace(object oActor, object oPC, string sTrace)
     SendMessageToPC(oPC, sMessage);
 }
 
-void METACT_RunActor(object oActor, object oPC)
+void METACT_RunActorRules(object oActor, object oPC)
 {
-    if (!METACT_CanTakeAction(oActor, oPC))
-        return;
     int iProfile = METACT_FindRuntimeProfile(oPC, oActor);
     if (iProfile < 0)
         return;
@@ -1184,7 +1232,8 @@ void METACT_RunActor(object oActor, object oPC)
             json jPriorities = METACT_GetEffectiveTargetPriorities(jAction, jRule, jTactic);
             if (METACT_ExecuteAction(oActor, oPC, jAction, jCondition, jPriorities))
             {
-                sTrace += "\n#" + IntToString(iRule + 1) + "." + IntToString(iAction + 1) + " " + METACT_DebugActionText(jAction) + ": execute";
+                string sResult = GetLocalInt(oActor, METACT_LOCAL_PENDING_RECHECK) ? "recheck" : "execute";
+                sTrace += "\n#" + IntToString(iRule + 1) + "." + IntToString(iAction + 1) + " " + METACT_DebugActionText(jAction) + ": " + sResult;
                 METACT_SendDebugTrace(oActor, oPC, sTrace);
                 return;
             }
@@ -1192,6 +1241,28 @@ void METACT_RunActor(object oActor, object oPC)
         }
     }
     METACT_SendDebugTrace(oActor, oPC, sTrace);
+}
+
+void METACT_RunActor(object oActor, object oPC)
+{
+    if (!METACT_CanTakeAction(oActor, oPC))
+        return;
+    METACT_RunActorRules(oActor, oPC);
+}
+
+void METACT_CommitPendingAction(object oActor)
+{
+    if (!GetLocalInt(oActor, METACT_LOCAL_PENDING_RECHECK)) return;
+    object oPC = GetLocalObject(oActor, METACT_LOCAL_OWNER);
+    if (!GetIsObjectValid(oPC) || !GetIsPC(oPC) || GetIsDM(oPC) || GetIsDead(oActor) || GetArea(oActor) != GetArea(oPC) || !GetCommandable(oActor) || GetIsPossessedFamiliar(oActor) || IsInConversation(oPC) || IsInConversation(oActor) || GetLocalInt(oActor, METACT_LOCAL_MANUAL))
+    {
+        METACT_EndOwnedAction(oActor);
+        return;
+    }
+    METACT_EndOwnedAction(oActor);
+    SetLocalInt(oActor, METACT_LOCAL_COMMIT_RECHECK, TRUE);
+    METACT_RunActorRules(oActor, oPC);
+    DeleteLocalInt(oActor, METACT_LOCAL_COMMIT_RECHECK);
 }
 
 void METACT_RunDispatcher(object oPC)

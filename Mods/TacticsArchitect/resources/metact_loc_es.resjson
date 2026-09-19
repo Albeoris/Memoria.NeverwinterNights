@@ -117,5 +117,9 @@
   "friendly_fire_stationary_help": "Se espera a que los aliados se detengan.\nDespues se comprueba el area.",
   "equip_item": "Equipar objeto",
   "equippable_items": "Objetos equipables",
-  "open_tactics_editor_label": "Abrir editor de tacticas"
+  "open_tactics_editor_label": "Abrir editor de tacticas",
+  "execution_mode_label": "Programacion de habilidades",
+  "execution_mode_tooltip": "Revisa todas las tacticas justo antes de poner una habilidad en cola. Los ataques normales siempre se ponen en cola de inmediato.",
+  "execution_mode_recheck": "Revisar antes de usar",
+  "execution_mode_immediate": "Poner en cola de inmediato (anterior)"
 }

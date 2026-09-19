@@ -6,7 +6,7 @@
 #include "memoria_locale"
 #include "memoria_loc"
 
-const string METACT_VERSION = "0.7.4";
+const string METACT_VERSION = "0.7.6";
 const string METACT_LOC_PREFIX = "metact";
 const string METACT_ESI_KEY_GUI = "metact.module.gui";
 const string METACT_ESI_KEY_TARGET = "metact.module.target";
@@ -59,6 +59,7 @@ const string METACT_LOCAL_AOE_CLEARANCE = "METACT_AOE_CLEARANCE";
 const string METACT_LOCAL_ACTOR_TICK = "METACT_ACTOR_TICK";
 const string METACT_LOCAL_BLOCKED_ITEM = "METACT_BLOCKED_ITEM";
 const string METACT_LOCAL_BLOCKED_ITEM_UNTIL = "METACT_BLOCKED_ITEM_UNTIL";
+const string METACT_LOCAL_EXECUTION_MODE = "METACT_CFG_EXECUTION_MODE";
 
 const int METACT_SCHEMA = 2;
 const int METACT_MAX_GROUP = 32;
@@ -79,6 +80,8 @@ const float METACT_AOE_STATIONARY_SPEED = 0.5f;
 const int METACT_AOE_SAFETY_SAFE = 1;
 const int METACT_AOE_SAFETY_VERY_SAFE = 2;
 const int METACT_AOE_SAFETY_STATIONARY = 3;
+const int METACT_EXECUTION_RECHECK = 0;
+const int METACT_EXECUTION_IMMEDIATE = 1;
 
 const string METACT_TEXT_INSTALLED = "installed";
 const string METACT_TEXT_TITLE = "title";
