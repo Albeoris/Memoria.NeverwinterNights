@@ -26,7 +26,7 @@ This example registers an `OnActivateItem` handler without replacing the module'
 `override/mymod_evt_memoria.txt`:
 
 ```json
-{"schema":1,"id":"mymod_TINY_EVT","version":"1.0.0","dependencies":[{"id":"MEMORIA","versions":"[1.0.0,2.0.0)"},{"id":"esi","versions":"[2.0.0,3.0.0)"}],"bootstrapper":{"heartbeat":"mymod_evt_hb","priority":200}}
+{"schema":1,"id":"MYMOD_TINY_EVT","version":"1.0.0","dependencies":[{"id":"MEMORIA","versions":"[1.0.0,2.0.0)"},{"id":"esi","versions":"[2.0.0,3.0.0)"}],"bootstrapper":{"heartbeat":"mymod_evt_hb","priority":200}}
 ```
 
 `mymod_evt_hb.nss`, compiled as `override/mymod_evt_hb.ncs`:
@@ -48,7 +48,7 @@ void main()
 {
     object oPC = GetItemActivator();
     object oItem = GetItemActivated();
-    if (GetIsPC(oPC)) SendMessageToPC(oPC, "[mymod_TINY_EVT] activated " + GetName(oItem) + ".");
+    if (GetIsPC(oPC)) SendMessageToPC(oPC, "[MYMOD_TINY_EVT] activated " + GetName(oItem) + ".");
 }
 ```
 

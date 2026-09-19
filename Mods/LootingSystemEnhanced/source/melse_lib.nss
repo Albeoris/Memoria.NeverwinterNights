@@ -23,7 +23,7 @@
 #include "memoria_loc"
 
 const string MELSE_VERSION = "1.1";
-const string MELSE_VERSION_BUILD = "1012";
+const string MELSE_VERSION_BUILD = "1014";
 
 const string MELSE_SOUND_TAKE_GOLD = "it_coins";
 const string MELSE_SOUND_TAKE_ITEM = "it_generictiny";
@@ -63,6 +63,17 @@ const string MELSE_LOCAL_ITEM_ACQUIRED_FROM_NAME = "MELSE_ACQUIRED_FROM_NAME";
 const string MELSE_LOCAL_ITEM_ACQUIRED_FROM_AREA_NAME = "MELSE_ACQUIRED_FROM_AREA_NAME";
 const string MELSE_LOCAL_NOLOOTING = "MELSE_NOLOOTING";
 const string MELSE_LOCAL_CORPSE = "MELSE_CORPSE";
+const string MELSE_LOCAL_CORPSE_LOOT_DISPLAY = "MELSE_CORPSE_LOOT_DISPLAY";
+const string MELSE_LOCAL_CORPSE_DISCOVERY_MASK = "MELSE_CORPSE_DISCOVERY_MASK";
+const string MELSE_LOCAL_CORPSE_INVENTORY = "MELSE_CORPSE_INVENTORY";
+const string MELSE_LOCAL_CORPSE_INVENTORY_OWNER = "MELSE_CORPSE_INVENTORY_OWNER";
+const string MELSE_LOCAL_DEBUG_DEATH_EVENT_COUNT = "MELSE_DEBUG_DEATH_EVENT_COUNT";
+const string MELSE_LOCAL_DEBUG_ACQUIRE_EVENT_COUNT = "MELSE_DEBUG_ACQUIRE_EVENT_COUNT";
+const string MELSE_LOCAL_DEBUG_INITIALIZE_SCHEDULE_COUNT = "MELSE_DEBUG_INITIALIZE_SCHEDULE_COUNT";
+const string MELSE_LOCAL_DEBUG_INITIALIZE_COUNT = "MELSE_DEBUG_INITIALIZE_COUNT";
+const string MELSE_LOCAL_DEBUG_DISPLAY_UPDATE_COUNT = "MELSE_DEBUG_DISPLAY_UPDATE_COUNT";
+const string MELSE_LOCAL_DEBUG_DISPLAY_CANDIDATE_COUNT = "MELSE_DEBUG_DISPLAY_CANDIDATE_COUNT";
+const string MELSE_LOCAL_DEBUG_DISPLAY_RESULT = "MELSE_DEBUG_DISPLAY_RESULT";
 const string MELSE_LOCAL_VERSION_BUILD = "MELSE_VERSION_BUILD";
 
 const string MELSE_TAG_BODYBAG = "BodyBag";
@@ -73,6 +84,14 @@ const string MELSE_TAG_BELLY = "NW_IT_MSMLMISC08";
 const float MELSE_DELAY_TREASURE_NOTIFY = 0.1f;
 const float MELSE_DELAY_TREASURE_TRACK = 0.1f;
 const float MELSE_DELAY_CORPSE_INITIALIZE = 1.0f;
+const int MELSE_CORPSE_HILITE_COLOR = 0x00FFFF;
+const int MELSE_CORPSE_DISPLAY_ITEM_LIMIT = 8;
+const int MELSE_CORPSE_DISPLAY_RESULT_FEATURE_DISABLED = 1;
+const int MELSE_CORPSE_DISPLAY_RESULT_NOT_DEAD = 2;
+const int MELSE_CORPSE_DISPLAY_RESULT_NOT_LOOTABLE = 3;
+const int MELSE_CORPSE_DISPLAY_RESULT_NO_CANDIDATES = 4;
+const int MELSE_CORPSE_DISPLAY_RESULT_DISPLAYED = 5;
+const int MELSE_CORPSE_DISPLAY_RESULT_INVENTORY_UNAVAILABLE = 6;
 
 const string MELSE_LOC_PREFIX = "melse";
 const string MELSE_LOCAL_LANGUAGE = "MELSE_LANGUAGE";
@@ -196,11 +215,41 @@ int MELSE_GetConfigInt(string sOption)
 //:: LOOTABLE CORPSES  
 //::///////////////////////////////////////////////////////////////////////////
 
+object MELSE_GetCorpseInventory(object oCorpse)
+{
+    if (!GetIsObjectValid(oCorpse) || GetObjectType(oCorpse) != OBJECT_TYPE_CREATURE || !GetIsDead(oCorpse))
+        return OBJECT_INVALID;
+
+    object oInventory = GetLocalObject(oCorpse, MELSE_LOCAL_CORPSE_INVENTORY);
+    if (GetIsObjectValid(oInventory))
+        return oInventory;
+
+    // The engine exposes a lootable dead creature's loot through its hidden BodyBagId inventory.
+    json jCreature = ObjectToJson(oCorpse);
+    json jBodyBagId = JsonObjectGet(jCreature, "BodyBagId");
+    int nBodyBagId = JsonGetInt(JsonObjectGet(jBodyBagId, "value"));
+    oInventory = StringToObject(IntToHexString(nBodyBagId));
+    if (!GetIsObjectValid(oInventory) || !GetHasInventory(oInventory))
+        return OBJECT_INVALID;
+
+    SetLocalObject(oCorpse, MELSE_LOCAL_CORPSE_INVENTORY, oInventory);
+    SetLocalObject(oInventory, MELSE_LOCAL_CORPSE_INVENTORY_OWNER, oCorpse);
+    return oInventory;
+}
+
 int MELSE_GetHasAnyItem(object oObject)
 {
-    // Cleanup decisions must use the physical contents, not filtered loot state or local flags.
     if (!GetIsObjectValid(oObject))
         return FALSE;
+
+    if (GetObjectType(oObject) == OBJECT_TYPE_CREATURE && GetIsDead(oObject) && GetLootable(oObject))
+    {
+        object oInventory = MELSE_GetCorpseInventory(oObject);
+        // Fail closed: an unresolved corpse inventory must never make a corpse eligible for removal.
+        if (!GetIsObjectValid(oInventory))
+            return TRUE;
+        return GetIsObjectValid(GetFirstItemInInventory(oInventory)) || GetGold(oObject) > 0 || GetGold(oInventory) > 0;
+    }
 
     if (GetIsObjectValid(GetFirstItemInInventory(oObject)))
         return TRUE;
@@ -219,6 +268,101 @@ int MELSE_GetHasAnyItem(object oObject)
     }
 
     return FALSE;
+}
+
+string MELSE_GetCorpseItemLabel(object oItem)
+{
+    string sName = GetIdentified(oItem) ? GetName(oItem) : MELSE_GetLocalizedText(MELSE_STRREF_ITEM_NAME_UNIDENTIFIED);
+    int iStackSize = GetItemStackSize(oItem);
+    return iStackSize > 1 ? IntToString(iStackSize) + "x " + sName : sName;
+}
+
+string MELSE_BuildCorpseLootText(object oCorpse)
+{
+    string sText;
+    int iItems;
+    int bMore;
+    object oInventory = MELSE_GetCorpseInventory(oCorpse);
+    object oItem = GetFirstItemInInventory(oInventory);
+    while (GetIsObjectValid(oItem))
+    {
+        if (iItems < MELSE_CORPSE_DISPLAY_ITEM_LIMIT)
+            sText += "\n- " + MELSE_GetCorpseItemLabel(oItem);
+        else
+            bMore = TRUE;
+        iItems++;
+        oItem = GetNextItemInInventory(oInventory);
+    }
+
+    RAV_SetLocalInt(oCorpse, MELSE_LOCAL_DEBUG_DISPLAY_CANDIDATE_COUNT, iItems);
+    return bMore ? sText + "\n- ..." : sText;
+}
+
+void MELSE_RemoveLegacyCorpseGlow(object oCorpse)
+{
+    effect eEffect = GetFirstEffect(oCorpse);
+    while (GetIsEffectValid(eEffect))
+    {
+        effect eNext = GetNextEffect(oCorpse);
+        if (GetEffectTag(eEffect) == "MELSE_CORPSE_GLOW")
+            RemoveEffect(oCorpse, eEffect);
+        eEffect = eNext;
+    }
+}
+
+void MELSE_ClearCorpseLootDisplay(object oCorpse)
+{
+    if (!RAV_GetLocalInt(oCorpse, MELSE_LOCAL_CORPSE_LOOT_DISPLAY))
+        return;
+    SetObjectTextBubbleOverride(oCorpse, OBJECT_UI_TEXT_BUBBLE_OVERRIDE_NONE, "");
+    SetObjectHiliteColor(oCorpse);
+    SetObjectUiDiscoveryMask(oCorpse, RAV_GetLocalInt(oCorpse, MELSE_LOCAL_CORPSE_DISCOVERY_MASK));
+    DeleteLocalInt(oCorpse, MELSE_LOCAL_CORPSE_LOOT_DISPLAY);
+    DeleteLocalInt(oCorpse, MELSE_LOCAL_CORPSE_DISCOVERY_MASK);
+}
+
+void MELSE_UpdateCorpseLootDisplay(object oCorpse)
+{
+    if (!GetIsObjectValid(oCorpse) || GetObjectType(oCorpse) != OBJECT_TYPE_CREATURE)
+        return;
+    RAV_SetLocalInt(oCorpse, MELSE_LOCAL_DEBUG_DISPLAY_UPDATE_COUNT, RAV_GetLocalInt(oCorpse, MELSE_LOCAL_DEBUG_DISPLAY_UPDATE_COUNT) + 1);
+    string sText;
+    int iResult;
+    if (!MELSE_GetConfigInt(MELSE_LOCAL_FEATURE_CORPSE_LOOTABLE))
+    {
+        iResult = MELSE_CORPSE_DISPLAY_RESULT_FEATURE_DISABLED;
+    }
+    else if (!GetIsDead(oCorpse))
+    {
+        iResult = MELSE_CORPSE_DISPLAY_RESULT_NOT_DEAD;
+    }
+    else if (!RAV_GetLocalInt(oCorpse, MELSE_LOCAL_MOD_LOOTABLE))
+    {
+        iResult = MELSE_CORPSE_DISPLAY_RESULT_NOT_LOOTABLE;
+    }
+    else if (!GetIsObjectValid(MELSE_GetCorpseInventory(oCorpse)))
+    {
+        iResult = MELSE_CORPSE_DISPLAY_RESULT_INVENTORY_UNAVAILABLE;
+    }
+    else
+    {
+        sText = MELSE_BuildCorpseLootText(oCorpse);
+        iResult = sText == "" ? MELSE_CORPSE_DISPLAY_RESULT_NO_CANDIDATES : MELSE_CORPSE_DISPLAY_RESULT_DISPLAYED;
+    }
+    RAV_SetLocalInt(oCorpse, MELSE_LOCAL_DEBUG_DISPLAY_RESULT, iResult);
+    if (sText == "")
+    {
+        MELSE_ClearCorpseLootDisplay(oCorpse);
+        return;
+    }
+    if (!RAV_GetLocalInt(oCorpse, MELSE_LOCAL_CORPSE_LOOT_DISPLAY))
+    {
+        RAV_SetLocalInt(oCorpse, MELSE_LOCAL_CORPSE_DISCOVERY_MASK, GetObjectUiDiscoveryMask(oCorpse));
+        RAV_SetLocalInt(oCorpse, MELSE_LOCAL_CORPSE_LOOT_DISPLAY, TRUE);
+    }
+    SetObjectUiDiscoveryMask(oCorpse, OBJECT_UI_DISCOVERY_HILITE_MOUSEOVER | OBJECT_UI_DISCOVERY_HILITE_TAB | OBJECT_UI_DISCOVERY_TEXTBUBBLE_MOUSEOVER | OBJECT_UI_DISCOVERY_TEXTBUBBLE_TAB);
+    SetObjectHiliteColor(oCorpse, MELSE_CORPSE_HILITE_COLOR);
+    SetObjectTextBubbleOverride(oCorpse, OBJECT_UI_TEXT_BUBBLE_OVERRIDE_APPEND, sText);
 }
 
 void MELSE_TrySetIsDestroyable(object oCorpse)
@@ -922,6 +1066,23 @@ void MELSE_MAINTENANCE_Build(object oModule, object oPC, string sNewBuild, strin
     else if (StringToInt(sOldBuild) < 1012)
         MELSE_SetConfigInt(MELSE_LOCAL_FEATURE_PARTY_IDENTIFICATION, TRUE);
 
+    if (sOldBuild == "1013")
+    {
+        // Build 1013 briefly used a persistent model glow. Remove it once from existing saves.
+        object oArea = GetFirstArea();
+        while (GetIsObjectValid(oArea))
+        {
+            object oObject = GetFirstObjectInArea(oArea);
+            while (GetIsObjectValid(oObject))
+            {
+                if (GetObjectType(oObject) == OBJECT_TYPE_CREATURE && GetIsDead(oObject))
+                    MELSE_RemoveLegacyCorpseGlow(oObject);
+                oObject = GetNextObjectInArea(oArea);
+            }
+            oArea = GetNextArea();
+        }
+    }
+
     if (sOldBuild == STRING_EMPTY)
         DelayCommand(8.0f, AssignCommand(oPC, ActionSpeakString(StringToRGBString(MELSE_GetLocalizedText(MELSE_STRREF_MAINTENANCE_INSTALL) + " " + 
                                                                                   MELSE_VERSION + " (Build " + sNewBuild + ")",
@@ -1008,15 +1169,14 @@ void MELSE_InitializeCreature(object oCreature)
 
 void MELSE_InitializeCorpse(object oCorpse)
 {
-    // Iterate all body bags near the corpse (within whole area to be exact) to inject OnClose event
-    int nNext = 1;
-    object oBodyBag = GetNearestObjectByTag(MELSE_TAG_BODYBAG, oCorpse, nNext);
-    while (GetIsObjectValid(oBodyBag))
-    {
+    if (!GetIsObjectValid(oCorpse) || !GetIsDead(oCorpse))
+        return;
+    RAV_SetLocalInt(oCorpse, MELSE_LOCAL_DEBUG_INITIALIZE_COUNT, RAV_GetLocalInt(oCorpse, MELSE_LOCAL_DEBUG_INITIALIZE_COUNT) + 1);
+    object oBodyBag = MELSE_GetCorpseInventory(oCorpse);
+    if (GetIsObjectValid(oBodyBag) && MELSE_GetConfigInt(MELSE_LOCAL_FEATURE_CORPSE_LOOTING_EXAMINED))
         ESI_InjectToObject(oBodyBag, MELSE_INJECT_KEY_PLACEABLE_CLOSE, EVENT_SCRIPT_PLACEABLE_ON_CLOSED, MELSE_SCRIPT_EVENT_PLACEABLE_CLOSE, ESI_INJECTION_PLACEMENT_FIRST);
-        nNext++;
-        oBodyBag = GetNearestObjectByTag(MELSE_TAG_BODYBAG, oCorpse, nNext);
-    }
+    MELSE_UpdateCorpseLootDisplay(oCorpse);
+    AssignCommand(oCorpse, MELSE_SetIsDestroyable(MELSE_GetHasAnyItem(oCorpse)));
 }
 
 //::///////////////////////////////////////////////////////////////////////////
@@ -1040,6 +1200,11 @@ void MELSE_OnHeartbeat(object oObject)
 
 void MELSE_OnDeath(object oObject, object oKiller)
 {
+    object oOldInventory = GetLocalObject(oObject, MELSE_LOCAL_CORPSE_INVENTORY);
+    if (GetIsObjectValid(oOldInventory))
+        DeleteLocalObject(oOldInventory, MELSE_LOCAL_CORPSE_INVENTORY_OWNER);
+    DeleteLocalObject(oObject, MELSE_LOCAL_CORPSE_INVENTORY);
+    RAV_SetLocalInt(oObject, MELSE_LOCAL_DEBUG_DEATH_EVENT_COUNT, RAV_GetLocalInt(oObject, MELSE_LOCAL_DEBUG_DEATH_EVENT_COUNT) + 1);
     int bLootedAll;
 
     if (MELSE_GetConfigInt(MELSE_LOCAL_FEATURE_CORPSE_LOOTING_KILLED) && GetIsPC(oKiller))
@@ -1063,9 +1228,11 @@ void MELSE_OnDeath(object oObject, object oKiller)
         bSelectable = TRUE;
     MELSE_SetIsDestroyable(bSelectable);
     ActionDoCommand(MELSE_SetIsDestroyable(bSelectable));
-
-    if (MELSE_GetConfigInt(MELSE_LOCAL_FEATURE_CORPSE_LOOTING_EXAMINED))
+    if (MELSE_GetConfigInt(MELSE_LOCAL_FEATURE_CORPSE_LOOTABLE))
+    {
+        RAV_SetLocalInt(oObject, MELSE_LOCAL_DEBUG_INITIALIZE_SCHEDULE_COUNT, RAV_GetLocalInt(oObject, MELSE_LOCAL_DEBUG_INITIALIZE_SCHEDULE_COUNT) + 1);
         DelayCommand(MELSE_DELAY_CORPSE_INITIALIZE, MELSE_InitializeCorpse(oObject));
+    }
 }
 
 void MELSE_OnAcquiredItem(object oModule, object oItem, object oBy, object oFrom, int nStackSize)
@@ -1083,6 +1250,17 @@ void MELSE_OnAcquiredItem(object oModule, object oItem, object oBy, object oFrom
                 MELSE_AddAcquiredFromToDescription(oItem);
             }
         }
+    }
+    object oCorpse;
+    if (GetIsObjectValid(oFrom) && GetObjectType(oFrom) == OBJECT_TYPE_CREATURE && GetIsDead(oFrom))
+        oCorpse = oFrom;
+    else if (GetIsObjectValid(oFrom))
+        oCorpse = GetLocalObject(oFrom, MELSE_LOCAL_CORPSE_INVENTORY_OWNER);
+    if (GetIsObjectValid(oCorpse))
+    {
+        RAV_SetLocalInt(oCorpse, MELSE_LOCAL_DEBUG_ACQUIRE_EVENT_COUNT, RAV_GetLocalInt(oCorpse, MELSE_LOCAL_DEBUG_ACQUIRE_EVENT_COUNT) + 1);
+        MELSE_UpdateCorpseLootDisplay(oCorpse);
+        AssignCommand(oCorpse, MELSE_SetIsDestroyable(MELSE_GetHasAnyItem(oCorpse)));
     }
 }
 

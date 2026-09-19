@@ -83,7 +83,15 @@ json METACT_ConditionEntries(object oPC)
     jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_HEALTH, oPC), 3));
     jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_NO_SUMMON, oPC), 4));
     jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_NO_FAMILIAR, oPC), 5));
-    return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_ENEMY_RATING, oPC), 6));
+    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_ENEMY_RATING, oPC), 6));
+    return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_COMBAT_STATE, oPC), 7));
+}
+
+json METACT_CombatStateEntries(object oPC)
+{
+    json jEntries = JsonArray();
+    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_IN_COMBAT, oPC), 1));
+    return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_OUT_OF_COMBAT, oPC), 0));
 }
 
 json METACT_RatingEntries()
@@ -337,6 +345,7 @@ string METACT_ConditionLabel(object oPC, json jCondition)
     if (sKind == "no_summon") return METACT_GetText(METACT_TEXT_COND_NO_SUMMON, oPC);
     if (sKind == "no_familiar") return METACT_GetText(METACT_TEXT_COND_NO_FAMILIAR, oPC);
     if (sKind == "enemy_rating") return METACT_GetText(JsonGetString(JsonObjectGet(jCondition, "comparison")) == "max" ? METACT_TEXT_COND_ENEMY_RATING_MAX : METACT_TEXT_COND_ENEMY_RATING_MIN, oPC) + ": " + GetStringByStrRef(6416 + iValue);
+    if (sKind == "combat_state") return METACT_GetText(iValue ? METACT_TEXT_COND_IN_COMBAT : METACT_TEXT_COND_OUT_OF_COMBAT, oPC);
     return METACT_GetText(METACT_TEXT_INVALID, oPC);
 }
 
@@ -740,6 +749,10 @@ json METACT_BuildConditionPanel(object oPC)
     jConditionRadius = JsonArrayInsert(jConditionRadius, NuiHeight(NuiTextEdit(JsonString("20"), NuiBind("condition_radius"), 8, FALSE), 28.0f));
     jCondition = JsonArrayInsert(jCondition, NuiHeight(NuiVisible(NuiCol(jConditionRadius), NuiBind("show_condition_radius")), 48.0f));
     jCondition = JsonArrayInsert(jCondition, NuiHeight(NuiVisible(NuiStyleForegroundColor(METACT_Label(METACT_GetText(METACT_TEXT_CLUSTER_HINT, oPC)), NuiColor(150, 150, 150)), NuiBind("show_condition_cluster_hint")), 44.0f));
+    json jCombatState = JsonArray();
+    jCombatState = JsonArrayInsert(jCombatState, NuiHeight(METACT_Label(METACT_GetText(METACT_TEXT_COND_COMBAT_STATE, oPC)), 20.0f));
+    jCombatState = JsonArrayInsert(jCombatState, NuiHeight(NuiCombo(METACT_CombatStateEntries(oPC), NuiBind("combat_state_sel")), 28.0f));
+    jCondition = JsonArrayInsert(jCondition, NuiHeight(NuiVisible(NuiCol(jCombatState), NuiBind("show_condition_combat_state")), 48.0f));
     return NuiCol(jCondition);
 }
 
@@ -847,12 +860,13 @@ int METACT_ConditionToIndex(string sKind)
     if (sKind == "no_summon") return 4;
     if (sKind == "no_familiar") return 5;
     if (sKind == "enemy_rating") return 6;
+    if (sKind == "combat_state") return 7;
     return 0;
 }
 
 string METACT_IndexToCondition(int iKind)
 {
-    return iKind == 1 ? "enemies" : iKind == 2 ? "cluster" : iKind == 3 ? "health" : iKind == 4 ? "no_summon" : iKind == 5 ? "no_familiar" : iKind == 6 ? "enemy_rating" : "always";
+    return iKind == 1 ? "enemies" : iKind == 2 ? "cluster" : iKind == 3 ? "health" : iKind == 4 ? "no_summon" : iKind == 5 ? "no_familiar" : iKind == 6 ? "enemy_rating" : iKind == 7 ? "combat_state" : "always";
 }
 
 void METACT_RefreshConditionMode(object oPC, int iToken)
@@ -863,6 +877,7 @@ void METACT_RefreshConditionMode(object oPC, int iToken)
     NuiSetBind(oPC, iToken, "show_condition_subject", JsonBool(iCondition == 3));
     NuiSetBind(oPC, iToken, "show_condition_rating", JsonBool(iCondition == 6));
     NuiSetBind(oPC, iToken, "show_condition_cluster_hint", JsonBool(iCondition == 2));
+    NuiSetBind(oPC, iToken, "show_condition_combat_state", JsonBool(iCondition == 7));
 }
 
 void METACT_RefreshRuleEditor(object oPC, int iToken)
@@ -878,6 +893,7 @@ void METACT_RefreshRuleEditor(object oPC, int iToken)
     NuiSetBind(oPC, iToken, "rating_sel", JsonInt(iRating));
     NuiSetBind(oPC, iToken, "comparison_sel", JsonInt(JsonGetString(JsonObjectGet(jCondition, "comparison")) == "max" ? 1 : 0));
     NuiSetBind(oPC, iToken, "subject_sel", JsonInt(JsonGetString(JsonObjectGet(jCondition, "subject")) == "ally" ? 1 : 0));
+    NuiSetBind(oPC, iToken, "combat_state_sel", JsonInt(JsonGetString(JsonObjectGet(jCondition, "kind")) == "combat_state" ? JsonGetInt(JsonObjectGet(jCondition, "value")) : 1));
     METACT_RefreshConditionMode(oPC, iToken);
     NuiSetBind(oPC, iToken, "rule_existing", JsonBool(GetLocalInt(oPC, METACT_LOCAL_RULE) >= 0));
     METACT_RefreshPrioritiesPanel(oPC, iToken, METACT_PRIORITY_SCOPE_RULE);

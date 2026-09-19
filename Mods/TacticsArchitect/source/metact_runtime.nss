@@ -563,6 +563,7 @@ int METACT_MatchesCondition(object oActor, object oPC, json jCondition)
     if (sKind == "enemy_rating") return METACT_CountMatchingEnemies(oActor, jCondition) > 0;
     if (sKind == "no_summon") return !GetIsObjectValid(GetAssociate(ASSOCIATE_TYPE_SUMMONED, oActor));
     if (sKind == "no_familiar") return !GetIsObjectValid(GetAssociate(ASSOCIATE_TYPE_FAMILIAR, oActor));
+    if (sKind == "combat_state") return GetIsInCombat(oActor) == iValue;
     return FALSE;
 }
 
@@ -1127,6 +1128,7 @@ string METACT_DebugConditionText(object oActor, json jCondition)
         int iExpected = JsonGetInt(JsonObjectGet(jCondition, "value"));
         return "matching targets=" + IntToString(METACT_CountMatchingEnemies(oActor, jCondition)) + ", rating " + (JsonGetString(JsonObjectGet(jCondition, "comparison")) == "max" ? "<= " : ">= ") + IntToString(iExpected);
     }
+    if (sKind == "combat_state") return "combat=" + IntToString(GetIsInCombat(oActor)) + ", expected=" + IntToString(JsonGetInt(JsonObjectGet(jCondition, "value")));
     return sKind == "" ? "always" : sKind;
 }
 

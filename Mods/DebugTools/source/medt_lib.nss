@@ -55,6 +55,104 @@ void MEDT_Report(object oPC, string sLine)
     SendMessageToPC(oPC, "[MEDT] " + sLine);
 }
 
+void MEDT_ReportEventHooks(object oPC, json jRegistry, object oObject, int iHandler, int iPlacement, string sPlacement)
+{
+    json jHooks = ESI_IsRuntimeRegistry(jRegistry) ? ESI_GetRuntimeHooks(jRegistry, oObject, iHandler, iPlacement) : JsonArray();
+    int iCount = JsonGetLength(jHooks);
+    MEDT_Report(oPC, "script.hooks[" + ESI_GetEventNumberAlias(iHandler) + "." + sPlacement + "].count=" + IntToString(iCount) + ".");
+    int iIndex;
+    for (iIndex = 0; iIndex < iCount; iIndex++)
+    {
+        json jHook = JsonArrayGet(jHooks, iIndex);
+        MEDT_Report(oPC, "script.hooks[" + ESI_GetEventNumberAlias(iHandler) + "." + sPlacement + "][" + IntToString(iIndex + 1) + "]: key=\"" + JsonGetString(JsonObjectGet(jHook, ESI_RUNTIME_HOOK_KEY)) + "\" script=\"" + JsonGetString(JsonObjectGet(jHook, ESI_RUNTIME_HOOK_SCRIPT)) + "\".");
+    }
+}
+
+void MEDT_ReportEventScript(object oPC, object oObject, int iHandler, string sLabel)
+{
+    string sAlias = ESI_GetEventNumberAlias(iHandler);
+    json jRegistry = ESI_GetRuntimeRegistry();
+    MEDT_Report(oPC, "script[" + sLabel + "]: object=" + MEDT_ObjectRef(oObject) + " handler=" + IntToString(iHandler) + " alias=\"" + sAlias + "\" current=\"" + GetEventScript(oObject, iHandler) + "\" union=\"" + ESI_GetUnionScript(iHandler) + "\" original=\"" + RAV_GetLocalString(oObject, ESI_GetLocalNameOriginalScript(iHandler)) + "\" storage_schema=" + IntToString(GetLocalInt(oObject, ESI_GetLocalNameStorageSchema(iHandler))) + " runtime_registry=" + IntToString(ESI_IsRuntimeRegistry(jRegistry)) + " runtime_owner=" + MEDT_ObjectRef(ESI_GetRuntimeOwner()) + ".");
+    MEDT_ReportEventHooks(oPC, jRegistry, oObject, iHandler, ESI_INJECTION_PLACEMENT_FIRST, "first");
+    MEDT_ReportEventHooks(oPC, jRegistry, oObject, iHandler, ESI_INJECTION_PLACEMENT_LAST, "last");
+}
+
+void MEDT_ReportLiveEventScript(object oPC, object oObject, int iHandler, string sLabel)
+{
+    MEDT_Report(oPC, "script[" + sLabel + "]: object=" + MEDT_ObjectRef(oObject) + " handler=" + IntToString(iHandler) + " current=\"" + GetEventScript(oObject, iHandler) + "\".");
+}
+
+void MEDT_ReportInventoryItem(object oPC, object oItem, string sLocation)
+{
+    MEDT_Report(oPC, "inventory." + sLocation + ": object=" + MEDT_ObjectRef(oItem) + " tag=\"" + GetTag(oItem) + "\" resref=\"" + GetResRef(oItem) + "\" base_type=" + IntToString(GetBaseItemType(oItem)) + " stack=" + IntToString(GetItemStackSize(oItem)) + " weight=" + IntToString(GetWeight(oItem)) + " value=" + IntToString(GetGoldPieceValue(oItem)) + " identified=" + IntToString(GetIdentified(oItem)) + " droppable=" + IntToString(GetDroppableFlag(oItem)) + " plot=" + IntToString(GetPlotFlag(oItem)) + " cursed=" + IntToString(GetItemCursedFlag(oItem)) + " possessor=" + MEDT_ObjectRef(GetItemPossessor(oItem, TRUE)) + ".");
+}
+
+void MEDT_ReportCorpseInventory(object oPC, object oCreature)
+{
+    json jCreature = ObjectToJson(oCreature);
+    json jBodyBagId = JsonObjectGet(jCreature, "BodyBagId");
+    int iBodyBagId = JsonGetInt(JsonObjectGet(jBodyBagId, "value"));
+    object oInventory = StringToObject(IntToHexString(iBodyBagId));
+    MEDT_Report(oPC, "corpse_inventory.state: body_bag_id=" + IntToHexString(iBodyBagId) + " object=" + MEDT_ObjectRef(oInventory) + " type=" + MEDT_ObjectTypeName(GetObjectType(oInventory)) + " tag=\"" + GetTag(oInventory) + "\" resref=\"" + GetResRef(oInventory) + "\" has_inventory=" + IntToString(GetHasInventory(oInventory)) + " usable=" + IntToString(GetUseableFlag(oInventory)) + ".");
+    if (!GetIsObjectValid(oInventory))
+        return;
+
+    MEDT_ReportEventScript(oPC, oInventory, EVENT_SCRIPT_PLACEABLE_ON_CLOSED, "corpse_inventory.close");
+    int iCount;
+    object oItem = GetFirstItemInInventory(oInventory);
+    while (GetIsObjectValid(oItem))
+    {
+        iCount++;
+        MEDT_ReportInventoryItem(oPC, oItem, "corpse.item[" + IntToString(iCount) + "]");
+        oItem = GetNextItemInInventory(oInventory);
+    }
+    MEDT_Report(oPC, "corpse_inventory.summary: items=" + IntToString(iCount) + " melse_display_candidates=" + IntToString(iCount) + ".");
+}
+
+void MEDT_ReportCreatureInventory(object oPC, object oCreature)
+{
+    MEDT_Report(oPC, "inventory.state: has_inventory=" + IntToString(GetHasInventory(oCreature)) + " gold=" + IntToString(GetGold(oCreature)) + ".");
+    int iInventoryCount;
+    int iDroppableInventoryCount;
+    object oItem = GetFirstItemInInventory(oCreature);
+    while (GetIsObjectValid(oItem))
+    {
+        iInventoryCount++;
+        if (GetDroppableFlag(oItem))
+        {
+            iDroppableInventoryCount++;
+        }
+        MEDT_ReportInventoryItem(oPC, oItem, "item[" + IntToString(iInventoryCount) + "]");
+        oItem = GetNextItemInInventory(oCreature);
+    }
+    int iEquippedCount;
+    int iDroppableEquippedCount;
+    int iSlot;
+    for (iSlot = 0; iSlot < NUM_INVENTORY_SLOTS; iSlot++)
+    {
+        oItem = GetItemInSlot(iSlot, oCreature);
+        if (!GetIsObjectValid(oItem))
+        {
+            continue;
+        }
+        iEquippedCount++;
+        if (GetDroppableFlag(oItem))
+        {
+            iDroppableEquippedCount++;
+        }
+        MEDT_ReportInventoryItem(oPC, oItem, "slot[" + IntToString(iSlot) + "]");
+    }
+    MEDT_Report(oPC, "inventory.summary: items=" + IntToString(iInventoryCount) + " droppable_items=" + IntToString(iDroppableInventoryCount) + " equipped=" + IntToString(iEquippedCount) + " droppable_equipped=" + IntToString(iDroppableEquippedCount) + ".");
+}
+
+void MEDT_ReportMelseState(object oPC, object oCreature)
+{
+    object oModule = GetModule();
+    MEDT_Report(oPC, "melse.module: version_build=\"" + GetLocalString(oModule, "MELSE_VERSION_BUILD") + "\" corpse_lootable=" + IntToString(GetLocalInt(oModule, "MELSE_FEATURE_CORPSE_LOOTABLE")) + " loot_killed=" + IntToString(GetLocalInt(oModule, "MELSE_FEATURE_CORPSE_LOOTING_KILLED")) + " loot_killed_by_hench=" + IntToString(GetLocalInt(oModule, "MELSE_FEATURE_CORPSE_LOOTING_KILLED_BY_HENCH")) + " loot_examined=" + IntToString(GetLocalInt(oModule, "MELSE_FEATURE_CORPSE_LOOTING_EXAMINED")) + " threshold_price=" + IntToString(GetLocalInt(oModule, "MELSE_PARAM_THRESHOLD_ITEM_PRICE")) + " threshold_weight=" + IntToString(GetLocalInt(oModule, "MELSE_PARAM_THRESHOLD_ITEM_WEIGHT")) + ".");
+    MEDT_Report(oPC, "melse.object: initialized=" + IntToString(GetLocalInt(oCreature, "MELSE_INITIALIZED")) + " mod_lootable=" + IntToString(GetLocalInt(oCreature, "MELSE_MOD_LOOTABLE")) + " mod_destroyable=" + IntToString(GetLocalInt(oCreature, "MELSE_MOD_DESTROYABLE")) + " looted=" + IntToString(GetLocalInt(oCreature, "MELSE_LOOTED")) + " no_looting=" + IntToString(GetLocalInt(oCreature, "MELSE_NOLOOTING")) + " loot_display=" + IntToString(GetLocalInt(oCreature, "MELSE_CORPSE_LOOT_DISPLAY")) + " saved_discovery_mask=" + IntToString(GetLocalInt(oCreature, "MELSE_CORPSE_DISCOVERY_MASK")) + " corpse_inventory=" + MEDT_ObjectRef(GetLocalObject(oCreature, "MELSE_CORPSE_INVENTORY")) + ".");
+    MEDT_Report(oPC, "melse.trace: death_events=" + IntToString(GetLocalInt(oCreature, "MELSE_DEBUG_DEATH_EVENT_COUNT")) + " acquire_events=" + IntToString(GetLocalInt(oCreature, "MELSE_DEBUG_ACQUIRE_EVENT_COUNT")) + " initialize_scheduled=" + IntToString(GetLocalInt(oCreature, "MELSE_DEBUG_INITIALIZE_SCHEDULE_COUNT")) + " initialize_runs=" + IntToString(GetLocalInt(oCreature, "MELSE_DEBUG_INITIALIZE_COUNT")) + " update_runs=" + IntToString(GetLocalInt(oCreature, "MELSE_DEBUG_DISPLAY_UPDATE_COUNT")) + " last_candidates=" + IntToString(GetLocalInt(oCreature, "MELSE_DEBUG_DISPLAY_CANDIDATE_COUNT")) + " last_result=" + IntToString(GetLocalInt(oCreature, "MELSE_DEBUG_DISPLAY_RESULT")) + " (1=feature_disabled,2=not_dead,3=not_melse_lootable,4=no_items,5=displayed,6=inventory_unavailable).");
+}
+
 void MEDT_ReportEffects(object oPC, object oTarget)
 {
     int iIndex = 0;
@@ -95,7 +193,14 @@ void MEDT_ReportCreature(object oPC, object oCreature)
     MEDT_Report(oPC, "creature.levels: hit_dice=" + IntToString(GetHitDice(oCreature)) + " class1=" + IntToString(iClass1) + ":" + IntToString(GetLevelByClass(iClass1, oCreature)) + " class2=" + IntToString(iClass2) + ":" + IntToString(GetLevelByClass(iClass2, oCreature)) + " class3=" + IntToString(iClass3) + ":" + IntToString(GetLevelByClass(iClass3, oCreature)) + " xp=" + IntToString(GetXP(oCreature)) + " challenge_rating=" + FloatToString(GetChallengeRating(oCreature), 0, 2) + ".");
     MEDT_Report(oPC, "creature.abilities: str=" + IntToString(GetAbilityScore(oCreature, ABILITY_STRENGTH)) + " dex=" + IntToString(GetAbilityScore(oCreature, ABILITY_DEXTERITY)) + " con=" + IntToString(GetAbilityScore(oCreature, ABILITY_CONSTITUTION)) + " int=" + IntToString(GetAbilityScore(oCreature, ABILITY_INTELLIGENCE)) + " wis=" + IntToString(GetAbilityScore(oCreature, ABILITY_WISDOM)) + " cha=" + IntToString(GetAbilityScore(oCreature, ABILITY_CHARISMA)) + ".");
     MEDT_Report(oPC, "creature.combat: ac=" + IntToString(GetAC(oCreature)) + " fortitude=" + IntToString(GetFortitudeSavingThrow(oCreature)) + " reflex=" + IntToString(GetReflexSavingThrow(oCreature)) + " will=" + IntToString(GetWillSavingThrow(oCreature)) + " spell_resistance=" + IntToString(GetSpellResistance(oCreature)) + " current_action=" + IntToString(GetCurrentAction(oCreature)) + ".");
-    MEDT_Report(oPC, "creature.state: alignment_lc=" + IntToString(GetAlignmentLawChaos(oCreature)) + " alignment_ge=" + IntToString(GetAlignmentGoodEvil(oCreature)) + " commandable=" + IntToString(GetCommandable(oCreature)) + " lootable=" + IntToString(GetLootable(oCreature)) + " master=" + MEDT_ObjectRef(GetMaster(oCreature)) + ".");
+    MEDT_Report(oPC, "creature.state: alignment_lc=" + IntToString(GetAlignmentLawChaos(oCreature)) + " alignment_ge=" + IntToString(GetAlignmentGoodEvil(oCreature)) + " commandable=" + IntToString(GetCommandable(oCreature)) + " lootable=" + IntToString(GetLootable(oCreature)) + " destroyable=" + IntToString(GetIsDestroyable(oCreature)) + " raiseable=" + IntToString(GetIsRaiseable(oCreature)) + " selectable_when_dead=" + IntToString(GetIsSelectableWhenDead(oCreature)) + " discovery_mask=" + IntToString(GetObjectUiDiscoveryMask(oCreature)) + " master=" + MEDT_ObjectRef(GetMaster(oCreature)) + ".");
+    MEDT_ReportMelseState(oPC, oCreature);
+    MEDT_ReportLiveEventScript(oPC, oCreature, EVENT_SCRIPT_CREATURE_ON_HEARTBEAT, "creature.heartbeat");
+    MEDT_ReportEventScript(oPC, oCreature, EVENT_SCRIPT_CREATURE_ON_SPAWN_IN, "creature.spawn");
+    MEDT_ReportEventScript(oPC, oCreature, EVENT_SCRIPT_CREATURE_ON_DEATH, "creature.death");
+    MEDT_ReportEventScript(oPC, GetModule(), EVENT_SCRIPT_MODULE_ON_ACQUIRE_ITEM, "module.acquire_item");
+    MEDT_ReportCreatureInventory(oPC, oCreature);
+    MEDT_ReportCorpseInventory(oPC, oCreature);
 }
 
 void MEDT_ReportLockAndTrap(object oPC, object oTarget)

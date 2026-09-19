@@ -10,6 +10,7 @@ This edition fixes an original LSE bug that could remove corpses together with k
 - Uses the Lore skill of the player or a nearby party member to identify loot before transferring it.
 - Filters automatic looting by item value and weight.
 - Makes corpses lootable and optionally raiseable, then removes them after looting or a chosen delay.
+- Highlights lootable corpses with remaining items in cyan and lists up to eight item stacks in their standard mouseover and Tab label.
 - Reports important drops and records where acquired items came from in their descriptions.
 
 ## Compatibility

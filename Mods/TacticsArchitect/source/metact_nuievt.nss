@@ -264,12 +264,13 @@ void METACT_SaveRule(object oPC, int iToken)
     string sRadius = RegExpReplace(",", JsonGetString(NuiGetBind(oPC, iToken, "condition_radius")), ".");
     int iCondition = JsonGetInt(NuiGetBind(oPC, iToken, "condition_sel"));
     int bRating = iCondition == 6;
+    int bCombatState = iCondition == 7;
     int bUsesValue = iCondition >= 1 && iCondition <= 3;
     int bUsesRadius = iCondition == 1 || iCondition == 3 || iCondition == 6;
-    int iValue = bRating ? JsonGetInt(NuiGetBind(oPC, iToken, "rating_sel")) : bUsesValue ? StringToInt(sValue) : 1;
+    int iValue = bRating ? JsonGetInt(NuiGetBind(oPC, iToken, "rating_sel")) : bCombatState ? JsonGetInt(NuiGetBind(oPC, iToken, "combat_state_sel")) : bUsesValue ? StringToInt(sValue) : 1;
     float fRadius = StringToFloat(sRadius);
     if (fRadius <= 0.0f) fRadius = 20.0f;
-    if ((bRating && (iValue < 0 || iValue > 6)) || (bUsesValue && (iValue < 1 || iValue > 100)) || (bUsesRadius && (fRadius < 0.1f || fRadius > 100.0f)))
+    if ((bRating && (iValue < 0 || iValue > 6)) || (bCombatState && iValue != 0 && iValue != 1) || (bUsesValue && (iValue < 1 || iValue > 100)) || (bUsesRadius && (fRadius < 0.1f || fRadius > 100.0f)))
     {
         SendMessageToPC(oPC, METACT_GetText(METACT_TEXT_INVALID, oPC));
         return;

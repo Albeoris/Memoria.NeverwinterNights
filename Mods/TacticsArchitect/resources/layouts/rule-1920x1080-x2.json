@@ -34,7 +34,7 @@
             "child": {
               "id": "condition-fields",
               "type": "column",
-              "height": 366
+              "height": 414
             }
           },
           {
