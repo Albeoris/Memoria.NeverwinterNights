@@ -5,6 +5,7 @@ Memoria Inventory Organizer adds a spellbook-shaped **Scriptorium** to every pla
 ## Features
 
 - Automatically stores newly acquired scrolls, including the acquired portion of a merged stack.
+- Imports all carried scrolls once when the character first receives the Scriptorium.
 - Displays the current physical contents as compact spell-icon rows grouped by spell level, with localized names in tooltips.
 - Filters scrolls by arcane/divine spell lists and offensive/non-offensive behavior; search matches both the current language and the English 2DA label.
 - Keeps different cast-spell subtypes separate, so variants with different caster levels remain distinguishable.

@@ -1,7 +1,4 @@
-# Agent rules
-
-- Generated files go in `artifacts`; retain `api-cache`.
+- Locate code with `rg` first and read only the smallest relevant line ranges; never dump whole large source files unless necessary.
+- Batch related inspection/edits, avoid verbose progress logs, and do not repeat code or context already established.
 - Every `Mods/<Project>` change bumps `Version`: PATCH compatible/internal, MINOR additive API, MAJOR breaking; update dependents after MAJOR.
-- `.proj` is authoritative: wildcard `Nwn*` items, no file lists/generated manifests. Dependencies declare `ModId`, bounded `Versions`, and `PackageName`.
-- NWScript is UTF-8. Repository text is English; English in Windows-1252; Russian in Windows-1251; player text is localized.
 - After build-logic or multi-mod changes, clean/build Release with zero warnings/errors; validate every GUI layout.
