@@ -84,12 +84,12 @@ void MEIO_CopyRuntimeFlags(object oSource, object oCopy)
     SetInfiniteFlag(oCopy, GetInfiniteFlag(oSource));
 }
 
-object MEIO_ExtractOne(object oPC, object oStorage, object oSource)
+object MEIO_ExtractStoredItem(object oPC, object oStorage, object oSource, int iBaseItem)
 {
     MEIO_Debug(oPC, "ExtractOne entered storage=" + ObjectToString(oStorage) + " " + MEIO_DebugItemState(oPC, oSource));
-    if (!MEIO_IsInScriptorium(oStorage, oSource) || !GetBaseItemFitsInInventory(BASE_ITEM_SPELLSCROLL, oPC))
+    if (!MEIO_IsInScriptorium(oStorage, oSource) || !GetBaseItemFitsInInventory(iBaseItem, oPC))
     {
-        MEIO_Debug(oPC, "ExtractOne decision=fail inScriptorium=" + IntToString(MEIO_IsInScriptorium(oStorage, oSource)) + " fits=" + IntToString(GetBaseItemFitsInInventory(BASE_ITEM_SPELLSCROLL, oPC)));
+        MEIO_Debug(oPC, "ExtractOne decision=fail inStorage=" + IntToString(MEIO_IsInScriptorium(oStorage, oSource)) + " fits=" + IntToString(GetBaseItemFitsInInventory(iBaseItem, oPC)));
         return OBJECT_INVALID;
     }
     int iSourceSize = GetItemStackSize(oSource);
@@ -148,6 +148,16 @@ object MEIO_ExtractOne(object oPC, object oStorage, object oSource)
     return oReserved;
 }
 
+object MEIO_ExtractOne(object oPC, object oStorage, object oSource)
+{
+    return MEIO_ExtractStoredItem(oPC, oStorage, oSource, BASE_ITEM_SPELLSCROLL);
+}
+
+object MEIO_ExtractPotionOne(object oPC, object oStorage, object oSource)
+{
+    return MEIO_ExtractStoredItem(oPC, oStorage, oSource, BASE_ITEM_POTIONS);
+}
+
 int MEIO_WithdrawOne(object oPC, json jSelected)
 {
     MEIO_Debug(oPC, "WithdrawOne entered selection=" + JsonDump(jSelected));
@@ -179,6 +189,37 @@ int MEIO_WithdrawOne(object oPC, json jSelected)
     MEIO_ClearReservation(oPC);
     MEIO_Debug(oPC, "WithdrawOne completed and left item in inventory " + MEIO_DebugItemState(oPC, oWithdrawn));
     SendMessageToPC(oPC, MEIO_GetText(oPC, "withdrawn"));
+    return TRUE;
+}
+
+int MEIO_WithdrawPotionOne(object oPC, json jSelected)
+{
+    MEIO_Debug(oPC, "WithdrawPotionOne entered selection=" + JsonDump(jSelected));
+    if (GetIsObjectValid(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)))
+    {
+        return FALSE;
+    }
+    object oStorage = MEIO_EnsurePotionStorage(oPC);
+    string sKey = JsonGetString(JsonObjectGet(jSelected, "key"));
+    int iSubtype = JsonGetInt(JsonObjectGet(jSelected, "subtype"));
+    object oSource = MEIO_ResolvePotion(oStorage, sKey, iSubtype);
+    if (!GetIsObjectValid(oSource))
+    {
+        SendMessageToPC(oPC, MEIO_GetText(oPC, "stale_entry"));
+        return FALSE;
+    }
+    if (!GetBaseItemFitsInInventory(BASE_ITEM_POTIONS, oPC))
+    {
+        SendMessageToPC(oPC, MEIO_GetText(oPC, "no_space"));
+        return FALSE;
+    }
+    object oWithdrawn = MEIO_ExtractPotionOne(oPC, oStorage, oSource);
+    if (!GetIsObjectValid(oWithdrawn))
+    {
+        return FALSE;
+    }
+    MEIO_ClearReservation(oPC);
+    SendMessageToPC(oPC, MEIO_GetText(oPC, "potion_withdrawn"));
     return TRUE;
 }
 
@@ -311,5 +352,41 @@ int MEIO_BeginCast(object oPC, json jSelected)
     SetEnterTargetingModeData(oPC, iShape, fSizeX, fSizeY, iFlags, MEIO_GetRange(iSpell), iSpell);
     EnterTargetingMode(oPC, OBJECT_TYPE_ALL, MOUSECURSOR_MAGIC, MOUSECURSOR_NOMAGIC);
     MEIO_Debug(oPC, "BeginCast decision=enter-targeting shape=" + IntToString(iShape) + " flags=" + IntToString(iFlags));
+    return TRUE;
+}
+
+int MEIO_BeginPotionUse(object oPC, json jSelected)
+{
+    MEIO_Debug(oPC, "BeginPotionUse entered selection=" + JsonDump(jSelected));
+    if (GetIsObjectValid(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)))
+    {
+        return FALSE;
+    }
+    object oStorage = MEIO_EnsurePotionStorage(oPC);
+    string sKey = JsonGetString(JsonObjectGet(jSelected, "key"));
+    int iSubtype = JsonGetInt(JsonObjectGet(jSelected, "subtype"));
+    object oSource = MEIO_ResolvePotion(oStorage, sKey, iSubtype);
+    if (!GetIsObjectValid(oSource))
+    {
+        SendMessageToPC(oPC, MEIO_GetText(oPC, "stale_entry"));
+        return FALSE;
+    }
+    if (!GetBaseItemFitsInInventory(BASE_ITEM_POTIONS, oPC))
+    {
+        SendMessageToPC(oPC, MEIO_GetText(oPC, "no_space"));
+        return FALSE;
+    }
+    object oReserved = MEIO_ExtractPotionOne(oPC, oStorage, oSource);
+    if (!GetIsObjectValid(oReserved))
+    {
+        return FALSE;
+    }
+    SetLocalString(oPC, MEIO_LOCAL_RESERVED_KEY, IntToString(iSubtype));
+    int iWindow = NuiFindWindow(oPC, MEIO_WINDOW);
+    if (iWindow > 0)
+    {
+        NuiDestroy(oPC, iWindow);
+    }
+    MEIO_IssueUseOnObject(oPC, oPC);
     return TRUE;
 }

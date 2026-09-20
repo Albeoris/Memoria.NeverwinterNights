@@ -16,9 +16,9 @@
         "type": "choice",
         "scope": "player",
         "local": "MEIO_CFG_SORT_MODE",
-        "label": "Scroll storage mode",
+        "label": "Item storage mode",
         "label_key": "sort_mode_label",
-        "tooltip": "Automatically store every acquired scroll, or only store scrolls when requested from the Scriptorium window.",
+        "tooltip": "Automatically store every acquired scroll and potion, or only store them when requested from the Spatial Storage window.",
         "tooltip_key": "sort_mode_tooltip",
         "choices": [
           {

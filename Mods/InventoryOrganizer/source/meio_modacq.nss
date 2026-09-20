@@ -26,9 +26,9 @@ void main()
         MEIO_Debug(oPC, "OnAcquire decision=ignore reason=manual-mode " + MEIO_DebugItemState(oPC, oItem));
         return;
     }
-    if (!MEIO_IsScroll(oItem))
+    if (!MEIO_IsScroll(oItem) && !MEIO_IsUsablePotion(oItem))
     {
-        MEIO_Debug(oPC, "OnAcquire decision=ignore reason=not-scroll " + MEIO_DebugItemState(oPC, oItem));
+        MEIO_Debug(oPC, "OnAcquire decision=ignore reason=not-managed-item " + MEIO_DebugItemState(oPC, oItem));
         return;
     }
     if (!MEIO_IsDirectlyIn(oItem, oPC))
@@ -41,6 +41,6 @@ void main()
         iAcquired = GetItemStackSize(oItem);
     }
     MEIO_Debug(oPC, "OnAcquire decision=store requested=" + IntToString(iAcquired) + " " + MEIO_DebugItemState(oPC, oItem));
-    int iMoved = MEIO_StoreAmount(oPC, oItem, iAcquired);
+    int iMoved = MEIO_IsScroll(oItem) ? MEIO_StoreAmount(oPC, oItem, iAcquired) : MEIO_StorePotionAmount(oPC, oItem, iAcquired);
     MEIO_Debug(oPC, "OnAcquire store-finished moved=" + IntToString(iMoved) + " " + MEIO_DebugItemState(oPC, oItem));
 }

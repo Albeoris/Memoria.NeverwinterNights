@@ -1,0 +1,33 @@
+{
+  "screen": { "width": 1920, "height": 1080, "uiScale": 2.0 },
+  "window": { "logicalWidth": 760, "logicalHeight": 500, "titleHeight": 24, "padding": 8 },
+  "root": {
+    "id": "spatial-storage-potions",
+    "type": "column",
+    "children": [
+      { "id": "tabs", "type": "control", "height": 30 },
+      {
+        "id": "potion-grid",
+        "type": "shelf",
+        "height": 382,
+        "unit": 54,
+        "scroll": true,
+        "items": [
+          { "id": "potion-1", "width": 1, "height": 1 },
+          { "id": "potion-2", "width": 1, "height": 1 },
+          { "id": "potion-3", "width": 1, "height": 1 },
+          { "id": "potion-4", "width": 1, "height": 1 },
+          { "id": "potion-5", "width": 1, "height": 1 },
+          { "id": "potion-6", "width": 1, "height": 1 },
+          { "id": "potion-7", "width": 1, "height": 1 },
+          { "id": "potion-8", "width": 1, "height": 1 },
+          { "id": "potion-9", "width": 1, "height": 1 },
+          { "id": "potion-10", "width": 1, "height": 1 },
+          { "id": "potion-11", "width": 1, "height": 1 },
+          { "id": "potion-12", "width": 1, "height": 1 }
+        ]
+      },
+      { "id": "footer", "type": "control", "height": 32 }
+    ]
+  }
+}

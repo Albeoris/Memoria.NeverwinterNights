@@ -1,10 +1,15 @@
 {
   "screen": { "width": 1920, "height": 1080, "uiScale": 2.0 },
-  "window": { "logicalWidth": 760, "logicalHeight": 470, "titleHeight": 24, "padding": 8 },
+  "window": { "logicalWidth": 760, "logicalHeight": 500, "titleHeight": 24, "padding": 8 },
   "root": {
-    "id": "scriptorium",
+    "id": "spatial-storage",
     "type": "column",
     "children": [
+      {
+        "id": "tabs",
+        "type": "control",
+        "height": 30
+      },
       {
         "id": "search",
         "type": "control",

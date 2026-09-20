@@ -1,0 +1,29 @@
+{
+  "__data_type": "UTM ",
+  "BlackMarket": { "type": "byte", "value": 0 },
+  "BM_MarkDown": { "type": "int", "value": 0 },
+  "Comment": { "type": "cexostring", "value": "Runtime potion storage for Memoria Inventory Organizer" },
+  "ID": { "type": "byte", "value": 0 },
+  "IdentifyPrice": { "type": "int", "value": 0 },
+  "LocName": { "type": "cexolocstring", "value": { "0": "Potion Storage" } },
+  "MarkDown": { "type": "int", "value": 0 },
+  "MarkUp": { "type": "int", "value": 0 },
+  "MaxBuyPrice": { "type": "int", "value": -1 },
+  "OnOpenStore": { "type": "resref", "value": "" },
+  "OnStoreClosed": { "type": "resref", "value": "" },
+  "ResRef": { "type": "resref", "value": "meio_potions" },
+  "StoreGold": { "type": "int", "value": -1 },
+  "StoreList": {
+    "type": "list",
+    "value": [
+      { "__struct_id": 0 },
+      { "__struct_id": 4 },
+      { "__struct_id": 2 },
+      { "__struct_id": 3 },
+      { "__struct_id": 1 }
+    ]
+  },
+  "Tag": { "type": "cexostring", "value": "MEIO_POTIONS" },
+  "WillNotBuy": { "type": "list", "value": [] },
+  "WillOnlyBuy": { "type": "list", "value": [] }
+}

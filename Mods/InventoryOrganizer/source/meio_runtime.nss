@@ -9,6 +9,7 @@ void MEIO_InstallHooks()
     ESI_InjectToObject(oModule, MEIO_ESI_ACTIVATE, EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, "meio_modact", ESI_INJECTION_PLACEMENT_FIRST);
     ESI_InjectToObject(oModule, MEIO_ESI_GUI, EVENT_SCRIPT_MODULE_ON_PLAYER_GUIEVENT, "meio_guievt", ESI_INJECTION_PLACEMENT_FIRST);
     ESI_InjectToObject(oModule, MEIO_ESI_TARGET, EVENT_SCRIPT_MODULE_ON_PLAYER_TARGET, "meio_target", ESI_INJECTION_PLACEMENT_FIRST);
+    ESI_InjectToObject(oModule, MEIO_ESI_CHAT, EVENT_SCRIPT_MODULE_ON_PLAYER_CHAT, "meio_modchat", ESI_INJECTION_PLACEMENT_LAST);
 }
 
 void MEIO_RunInitialImportBatch(object oPC, int iGeneration)
@@ -48,6 +49,7 @@ void MEIO_Heartbeat(object oPC)
     MEMORIA_SetHeartbeatDiagnostic(oPC, "initializing the Scriptorium and its physical storage");
     object oScriptorium = MEIO_EnsureScriptorium(oPC);
     object oStorage = MEIO_EnsureStorage(oPC);
+    object oPotionStorage = MEIO_EnsurePotionStorage(oPC);
     if (!ESI_IsRuntimeMarkerSet(oPC, MEIO_RUNTIME_RESERVATION))
     {
         if (GetIsObjectValid(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)))
@@ -62,7 +64,7 @@ void MEIO_Heartbeat(object oPC)
         }
         ESI_SetRuntimeMarker(oPC, MEIO_RUNTIME_RESERVATION);
     }
-    if (GetIsObjectValid(oScriptorium) && GetIsObjectValid(oStorage))
+    if (GetIsObjectValid(oScriptorium) && GetIsObjectValid(oStorage) && GetIsObjectValid(oPotionStorage))
     {
         if (!GetLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_DONE))
         {
@@ -81,6 +83,7 @@ void MEIO_Heartbeat(object oPC)
         }
         MEMORIA_SetHeartbeatDiagnostic(oPC, "validating Scriptorium contents");
         MEIO_ValidateContents(oPC, oStorage);
+        MEIO_ValidatePotionContents(oPC, oPotionStorage);
         MEIO_ReconcileDuplicates(oPC, oScriptorium);
     }
     object oReserved = GetLocalObject(oPC, MEIO_LOCAL_RESERVED);

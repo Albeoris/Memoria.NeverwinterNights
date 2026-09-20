@@ -8,17 +8,20 @@
 #include "memoria_nui"
 #include "memoria_string"
 
-const string MEIO_SCRIPTORIUM_RESREF = "meio_scriptorium";
-const string MEIO_SCRIPTORIUM_TAG = "MEIO_SCRIPTORIUM";
+const string MEIO_SCRIPTORIUM_RESREF = "meio_vault";
+const string MEIO_SCRIPTORIUM_TAG = "MEIO_VAULT";
 const string MEIO_STORAGE_RESREF = "meio_storage";
 const string MEIO_STORAGE_TAG = "MEIO_STORAGE";
-const string MEIO_WINDOW = "meio_scriptorium";
-const string MEIO_LOCAL_SCRIPTORIUM = "MEIO_SCRIPTORIUM_OBJECT";
+const string MEIO_POTION_STORAGE_RESREF = "meio_potions";
+const string MEIO_POTION_STORAGE_TAG = "MEIO_POTIONS";
+const string MEIO_WINDOW = "meio_vault";
+const string MEIO_LOCAL_SCRIPTORIUM = "MEIO_VAULT_OBJECT";
 const string MEIO_LOCAL_STORAGE = "MEIO_STORAGE_OBJECT";
+const string MEIO_LOCAL_POTION_STORAGE = "MEIO_POTION_STORAGE_OBJECT";
 const string MEIO_LOCAL_STORAGE_OWNER = "MEIO_STORAGE_OWNER";
 const string MEIO_LOCAL_SCHEMA = "MEIO_SCHEMA";
-const string MEIO_LOCAL_INITIAL_IMPORT_DONE = "MEIO_INITIAL_IMPORT_V2_DONE";
-const string MEIO_LOCAL_INITIAL_IMPORT_SNAPSHOT_DONE = "MEIO_INITIAL_IMPORT_SNAPSHOT_DONE";
+const string MEIO_LOCAL_INITIAL_IMPORT_DONE = "MEIO_INITIAL_IMPORT_V3_DONE";
+const string MEIO_LOCAL_INITIAL_IMPORT_SNAPSHOT_DONE = "MEIO_INITIAL_IMPORT_V3_SNAPSHOT";
 const string MEIO_LOCAL_INITIAL_IMPORT_ITEM = "MEIO_INITIAL_IMPORT_ITEM";
 const string MEIO_LOCAL_INITIAL_IMPORT_RUNNING = "MEIO_INITIAL_IMPORT_RUNNING";
 const string MEIO_LOCAL_INITIAL_IMPORT_GENERATION = "MEIO_INITIAL_IMPORT_GENERATION";
@@ -33,7 +36,13 @@ const string MEIO_LOCAL_HAS_ORIGINAL_TAG = "MEIO_HAS_ORIGINAL_TAG";
 const string MEIO_LOCAL_INDEX = "MEIO_INDEX";
 const string MEIO_LOCAL_FILTERED_INDEX = "MEIO_FILTERED_INDEX";
 const string MEIO_LOCAL_DISPLAY_ENTRIES = "MEIO_DISPLAY_ENTRIES";
+const string MEIO_LOCAL_POTION_INDEX = "MEIO_POTION_INDEX";
+const string MEIO_LOCAL_POTION_ENTRIES = "MEIO_POTION_ENTRIES";
 const string MEIO_LOCAL_LEVEL_CAPACITIES = "MEIO_LEVEL_CAPACITIES";
+const string MEIO_LOCAL_POTION_CAPACITY = "MEIO_POTION_CAPACITY";
+const string MEIO_LOCAL_ACTIVE_TAB = "MEIO_ACTIVE_TAB";
+const string MEIO_LOCAL_EXAMINE_ITEM = "MEIO_EXAMINE_ITEM";
+const string MEIO_LOCAL_EXAMINE_DISABLED = "MEIO_EXAMINE_DISABLED";
 const string MEIO_CFG_SORT_MODE = "MEIO_CFG_SORT_MODE";
 const string MEIO_CFG_DEBUG = "MEIO_CFG_DEBUG";
 const string MEIO_LOCAL_RESERVED = "MEIO_RESERVED";
@@ -48,6 +57,7 @@ const string MEIO_ESI_ACQUIRE = "meio.module.acquire";
 const string MEIO_ESI_ACTIVATE = "meio.module.activate";
 const string MEIO_ESI_GUI = "meio.module.gui";
 const string MEIO_ESI_TARGET = "meio.module.target";
+const string MEIO_ESI_CHAT = "meio.module.chat";
 const string MEIO_RUNTIME_RESERVATION = "meio.reservation";
 const string MEIO_RUNTIME_INITIAL_IMPORT = "meio.initial_import";
 const int MEIO_SCHEMA = 1;
@@ -55,9 +65,12 @@ const int MEIO_TARGET_ALL = 0;
 const int MEIO_TARGET_SELF = 1;
 const int MEIO_TARGET_ALLY = 2;
 const int MEIO_TARGET_ENEMY = 3;
+const int MEIO_TAB_SCROLLS = 0;
+const int MEIO_TAB_POTIONS = 1;
 const int MEIO_SORT_MODE_AUTOMATIC = 0;
 const int MEIO_SORT_MODE_MANUAL = 1;
 const int MEIO_INITIAL_IMPORT_BATCH_SIZE = 4;
+const int MEIO_POTION_COLUMNS = 12;
 
 void MEIO_MarkKeepOut(object oPC, object oItem)
 {
@@ -181,6 +194,32 @@ int MEIO_IsScroll(object oItem)
     return GetIsObjectValid(oItem) && GetBaseItemType(oItem) == BASE_ITEM_SPELLSCROLL;
 }
 
+int MEIO_IsPotion(object oItem)
+{
+    return GetIsObjectValid(oItem) && GetBaseItemType(oItem) == BASE_ITEM_POTIONS;
+}
+
+string MEIO_PadItemAppearance(int iAppearance)
+{
+    if (iAppearance < 10)
+    {
+        return "00" + IntToString(iAppearance);
+    }
+    if (iAppearance < 100)
+    {
+        return "0" + IntToString(iAppearance);
+    }
+    return IntToString(iAppearance);
+}
+
+string MEIO_GetPotionIconLayer(object oPotion, int iPart)
+{
+    int iColor = GetItemAppearance(oPotion, ITEM_APPR_TYPE_WEAPON_COLOR, iPart);
+    int iModel = GetItemAppearance(oPotion, ITEM_APPR_TYPE_WEAPON_MODEL, iPart);
+    string sPart = iPart == ITEM_APPR_WEAPON_MODEL_BOTTOM || iModel > 3 ? "b" : iPart == ITEM_APPR_WEAPON_MODEL_MIDDLE ? "m" : "t";
+    return "iit_potion_" + sPart + "_" + MEIO_PadItemAppearance(iColor * 10 + iModel);
+}
+
 int MEIO_GetOnlyCastSubtype(object oScroll)
 {
     int iSubtype = -1;
@@ -218,6 +257,16 @@ int MEIO_GetSpell(int iSubtype)
     return sSpell == "" || sSpell == "****" ? -1 : StringToInt(sSpell);
 }
 
+int MEIO_IsUsablePotion(object oItem)
+{
+    if (!MEIO_IsPotion(oItem))
+    {
+        return FALSE;
+    }
+    int iSubtype = MEIO_GetOnlyCastSubtype(oItem);
+    return iSubtype >= 0 && MEIO_GetSpell(iSubtype) >= 0;
+}
+
 int MEIO_GetSpellLevel(int iSpell)
 {
     string sLevel = Get2DAString("spells", "Innate", iSpell);
@@ -228,6 +277,11 @@ int MEIO_GetSpellLevel(int iSpell)
 string MEIO_GetVariantKey(object oScroll, int iSubtype)
 {
     return IntToString(iSubtype);
+}
+
+string MEIO_GetPotionKey(object oPotion, int iSubtype)
+{
+    return GetResRef(oPotion) + "|" + IntToString(iSubtype) + "|" + IntToString(GetItemAppearance(oPotion, ITEM_APPR_TYPE_WEAPON_MODEL, ITEM_APPR_WEAPON_MODEL_BOTTOM)) + "|" + IntToString(GetItemAppearance(oPotion, ITEM_APPR_TYPE_WEAPON_MODEL, ITEM_APPR_WEAPON_MODEL_MIDDLE)) + "|" + IntToString(GetItemAppearance(oPotion, ITEM_APPR_TYPE_WEAPON_MODEL, ITEM_APPR_WEAPON_MODEL_TOP));
 }
 
 int MEIO_GetCasterLevel(int iSubtype)

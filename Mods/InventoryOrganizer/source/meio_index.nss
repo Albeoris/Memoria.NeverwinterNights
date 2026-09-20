@@ -108,3 +108,109 @@ object MEIO_ResolveScroll(object oStorage, string sKey, int iSubtype)
     }
     return OBJECT_INVALID;
 }
+
+int MEIO_GetPotionCategory(int iSpell)
+{
+    string sAlias = MEMORIA_GetSpellAlias(iSpell);
+    if (FindSubString(sAlias, "Cure") >= 0 || FindSubString(sAlias, "Heal") >= 0 || FindSubString(sAlias, "Restoration") >= 0)
+    {
+        return 0;
+    }
+    if (sAlias == "Bull's Strength" || sAlias == "Cat's Grace" || sAlias == "Endurance" || sAlias == "Fox's Cunning" || sAlias == "Owl's Wisdom" || sAlias == "Eagle's Splendor")
+    {
+        return 1;
+    }
+    if (FindSubString(sAlias, "Armor") >= 0 || FindSubString(sAlias, "Shield") >= 0 || FindSubString(sAlias, "Protection") >= 0 || FindSubString(sAlias, "Skin") >= 0 || FindSubString(sAlias, "Blur") >= 0 || FindSubString(sAlias, "Displacement") >= 0 || FindSubString(sAlias, "Invisibility") >= 0 || FindSubString(sAlias, "Sanctuary") >= 0 || FindSubString(sAlias, "Resistance") >= 0)
+    {
+        return 2;
+    }
+    if (Get2DAString("spells", "HostileSetting", iSpell) == "1")
+    {
+        return 4;
+    }
+    return 3;
+}
+
+json MEIO_NewPotionEntry(object oPotion, int iSubtype)
+{
+    int iSpell = MEIO_GetSpell(iSubtype);
+    json jEntry = JsonObject();
+    jEntry = JsonObjectSet(jEntry, "key", JsonString(MEIO_GetPotionKey(oPotion, iSubtype)));
+    jEntry = JsonObjectSet(jEntry, "subtype", JsonInt(iSubtype));
+    jEntry = JsonObjectSet(jEntry, "spell", JsonInt(iSpell));
+    jEntry = JsonObjectSet(jEntry, "name", JsonString(GetName(oPotion)));
+    jEntry = JsonObjectSet(jEntry, "alias", JsonString(MEMORIA_GetSpellAlias(iSpell)));
+    jEntry = JsonObjectSet(jEntry, "bottom", JsonString(MEIO_GetPotionIconLayer(oPotion, ITEM_APPR_WEAPON_MODEL_BOTTOM)));
+    jEntry = JsonObjectSet(jEntry, "middle", JsonString(MEIO_GetPotionIconLayer(oPotion, ITEM_APPR_WEAPON_MODEL_MIDDLE)));
+    jEntry = JsonObjectSet(jEntry, "top", JsonString(MEIO_GetPotionIconLayer(oPotion, ITEM_APPR_WEAPON_MODEL_TOP)));
+    jEntry = JsonObjectSet(jEntry, "quantity", JsonInt(GetItemStackSize(oPotion)));
+    jEntry = JsonObjectSet(jEntry, "category", JsonInt(MEIO_GetPotionCategory(iSpell)));
+    return jEntry;
+}
+
+json MEIO_BuildPotionIndex(object oStorage)
+{
+    json jUnsorted = JsonArray();
+    object oItem = GetFirstItemInInventory(oStorage);
+    while (GetIsObjectValid(oItem))
+    {
+        if (MEIO_IsDirectlyIn(oItem, oStorage) && MEIO_IsPotion(oItem))
+        {
+            int iSubtype = MEIO_GetOnlyCastSubtype(oItem);
+            int iSpell = iSubtype >= 0 ? MEIO_GetSpell(iSubtype) : -1;
+            if (iSubtype >= 0 && iSpell >= 0)
+            {
+                string sKey = MEIO_GetPotionKey(oItem, iSubtype);
+                int iFound = -1;
+                int iIndex;
+                for (iIndex = 0; iIndex < JsonGetLength(jUnsorted); iIndex++)
+                {
+                    if (JsonGetString(JsonObjectGet(JsonArrayGet(jUnsorted, iIndex), "key")) == sKey)
+                    {
+                        iFound = iIndex;
+                    }
+                }
+                if (iFound >= 0)
+                {
+                    json jEntry = JsonArrayGet(jUnsorted, iFound);
+                    jEntry = JsonObjectSet(jEntry, "quantity", JsonInt(JsonGetInt(JsonObjectGet(jEntry, "quantity")) + GetItemStackSize(oItem)));
+                    jUnsorted = JsonArraySet(jUnsorted, iFound, jEntry);
+                }
+                else
+                {
+                    jUnsorted = JsonArrayInsert(jUnsorted, MEIO_NewPotionEntry(oItem, iSubtype));
+                }
+            }
+        }
+        oItem = GetNextItemInInventory(oStorage);
+    }
+    json jSorted = JsonArray();
+    int iCategory;
+    for (iCategory = 0; iCategory <= 4; iCategory++)
+    {
+        int iIndex;
+        for (iIndex = 0; iIndex < JsonGetLength(jUnsorted); iIndex++)
+        {
+            json jEntry = JsonArrayGet(jUnsorted, iIndex);
+            if (JsonGetInt(JsonObjectGet(jEntry, "category")) == iCategory)
+            {
+                jSorted = JsonArrayInsert(jSorted, jEntry);
+            }
+        }
+    }
+    return jSorted;
+}
+
+object MEIO_ResolvePotion(object oStorage, string sKey, int iSubtype)
+{
+    object oItem = GetFirstItemInInventory(oStorage);
+    while (GetIsObjectValid(oItem))
+    {
+        if (MEIO_IsDirectlyIn(oItem, oStorage) && MEIO_IsPotion(oItem) && MEIO_GetOnlyCastSubtype(oItem) == iSubtype && MEIO_GetPotionKey(oItem, iSubtype) == sKey)
+        {
+            return oItem;
+        }
+        oItem = GetNextItemInInventory(oStorage);
+    }
+    return OBJECT_INVALID;
+}
