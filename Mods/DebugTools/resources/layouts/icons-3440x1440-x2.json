@@ -1,0 +1,29 @@
+{
+  "screen": {
+    "width": 3440,
+    "height": 1440,
+    "uiScale": 2.0
+  },
+  "window": {
+    "logicalWidth": 540,
+    "logicalHeight": 500,
+    "titleHeight": 24,
+    "padding": 8
+  },
+  "root": {
+    "id": "icon-picker",
+    "type": "column",
+    "children": [
+      {
+        "id": "summary",
+        "type": "control",
+        "height": 38
+      },
+      {
+        "id": "icon-list",
+        "type": "control",
+        "height": 410
+      }
+    ]
+  }
+}

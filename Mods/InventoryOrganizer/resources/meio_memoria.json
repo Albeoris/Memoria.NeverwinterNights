@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "id": "MEIO",
+  "bootstrapper": {
+    "heartbeat": "meio_hb",
+    "priority": 400
+  },
+  "configuration": {
+    "name": "Inventory Organizer",
+    "name_key": "mod_display_name",
+    "localization": {
+      "prefix": "meio"
+    },
+    "options": [
+      {
+        "type": "choice",
+        "scope": "player",
+        "local": "MEIO_CFG_SORT_MODE",
+        "label": "Scroll storage mode",
+        "label_key": "sort_mode_label",
+        "tooltip": "Automatically store every acquired scroll, or only store scrolls when requested from the Scriptorium window.",
+        "tooltip_key": "sort_mode_tooltip",
+        "choices": [
+          {
+            "value": 0,
+            "label": "Automatic",
+            "label_key": "sort_mode_automatic"
+          },
+          {
+            "value": 1,
+            "label": "Only on request",
+            "label_key": "sort_mode_manual"
+          }
+        ]
+      },
+      {
+        "type": "bool",
+        "scope": "player",
+        "local": "MEIO_CFG_DEBUG",
+        "label": "Debug messages",
+        "label_key": "debug_label",
+        "tooltip": "Writes detailed Scriptorium transfer tracing to the character chat and nwengineLog.txt.",
+        "tooltip_key": "debug_tooltip"
+      }
+    ]
+  }
+}

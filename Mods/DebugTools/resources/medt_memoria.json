@@ -23,6 +23,12 @@
         "label": "Delete object",
         "label_key": "delete_action",
         "script": "medt_delete"
+      },
+      {
+        "type": "action",
+        "label": "Change item icon",
+        "label_key": "icon_action",
+        "script": "medt_icon"
       }
     ]
   }

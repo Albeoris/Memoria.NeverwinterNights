@@ -1,23 +1,23 @@
 <Project DefaultTargets="Build">
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
-        <ModId>MEMORIA</ModId>
-        <Version>1.2.0</Version>
-        <ModDisplayName>Memoria</ModDisplayName>
+        <ModId>MEIO</ModId>
+        <Version>0.1.6</Version>
+        <ModDisplayName>Memoria: Inventory Organizer</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
-        <!-- Set this to the ID of the existing Workshop item. Leaving it empty prevents accidental item creation. -->
-        <WorkshopPublishedFileId>3802970314</WorkshopPublishedFileId>
-        <!-- SteamCMD cannot apply tags; keep this value in sync with the category selected on the Workshop page. -->
+        <!-- Set this to the ID of the existing Workshop item before publishing. -->
+        <WorkshopPublishedFileId></WorkshopPublishedFileId>
         <WorkshopTags>override;singleplayer;script</WorkshopTags>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\Tools\Toolset\Memoria.NeverwinterNights.Toolset.csproj" />
         <NwnSource Include="source\**\*.nss" />
-        <NwnPackageFile Include="source\memoria_*.nss" Exclude="source\memoria_boot.nss;source\memoria_is_ru.nss;source\memoria_noop.nss" />
         <NwnResource Include="resources\**\*" Exclude="resources\layouts\**\*;resources\**\.gitkeep" />
         <NwnLayout Include="resources\layouts\**\*.json" />
         <PackageDocument Include="*.md" />
+        <NwnRequiredPackage Include="..\Memoria\Memoria.proj" ModId="MEMORIA" Versions="[1.2.0,2.0.0)" PackageName="Memoria" />
+        <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" ModId="esi" Versions="[2.0.0,3.0.0)" PackageName="Event Script Injector (Memoria Edition)" />
     </ItemGroup>
     <Import Project="..\..\Build\NwnModProject.targets" />
 </Project>

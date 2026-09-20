@@ -2,8 +2,10 @@
   "mod_display_name": "Debug Tools",
   "examine_action": "Examiner un objet",
   "delete_action": "Supprimer un objet",
+  "icon_action": "Changer l'icône de l'objet",
   "select_examine": "Sélectionnez un objet dans l'inventaire ou dans le monde à examiner.",
   "select_delete": "Sélectionnez un objet dans l'inventaire ou dans le monde à supprimer.",
+  "select_icon": "Sélectionnez dans l'inventaire l'objet dont vous souhaitez changer l'icône.",
   "selection_cancelled": "Sélection annulée.",
   "confirm_title": "Supprimer l'objet",
   "confirm_question": "Voulez-vous vraiment supprimer {name} ({id}) ?",
@@ -11,5 +13,13 @@
   "confirm_delete": "Supprimer",
   "confirm_cancel": "Annuler",
   "target_missing": "L'objet sélectionné n'existe plus.",
-  "deleted": "Objet supprimé : {name} ({id})."
+  "deleted": "Objet supprimé : {name} ({id}).",
+  "icon_title": "Changer l'icône de l'objet",
+  "icon_summary": "Classe d'objet : {class} · Type de base : {base} · Icônes disponibles : {count}",
+  "icon_current": "(actuelle)",
+  "icon_none": "Aucune ressource d'icône numérotée n'est disponible pour cette classe d'objet.",
+  "icon_item_required": "L'objet sélectionné n'est pas un objet d'inventaire.",
+  "icon_unsupported": "Cet objet n'utilise pas une icône de modèle simple numérotée.",
+  "icon_change_failed": "Impossible de changer l'icône. Les conteneurs contenant des objets ne peuvent pas être copiés.",
+  "icon_changed": "L'icône de {name} est maintenant {model} ({icon})."
 }

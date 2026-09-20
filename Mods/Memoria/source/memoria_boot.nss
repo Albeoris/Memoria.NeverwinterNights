@@ -1,10 +1,12 @@
 // Dependency-aware heartbeat dispatcher for NWN:EE override mods.
 
 #include "memoria_loader"
+#include "memoria_diag"
 
 const string MEMORIA_BOOT_DISPATCH_CYCLE_LOCAL = "MEMORIA_BOOT_DISPATCH_CYCLE";
 const string MEMORIA_BOOT_DISPATCH_DONE_LOCAL = "MEMORIA_BOOT_DISPATCH_DONE_";
 const string MEMORIA_BOOT_DISPATCH_FAILURE_LOCAL = "MEMORIA_BOOT_DISPATCH_FAILURE_";
+const string MEMORIA_BOOT_DISPATCH_DIAGNOSTIC_LOCAL = "MEMORIA_BOOT_DISPATCH_DIAGNOSTIC_";
 
 json MEMORIA_BOOT_GetEntries(object oPlayer)
 {
@@ -44,7 +46,7 @@ json MEMORIA_BOOT_GetEntries(object oPlayer)
     return jEntries;
 }
 
-void MEMORIA_BOOT_CheckDispatch(object oPlayer, string sId, string sHeartbeat, string sDoneLocal, string sFailureLocal)
+void MEMORIA_BOOT_CheckDispatch(object oPlayer, string sId, string sHeartbeat, string sDoneLocal, string sFailureLocal, string sDiagnosticLocal)
 {
     if (!GetIsObjectValid(oPlayer)) return;
     if (!GetLocalInt(oPlayer, sDoneLocal))
@@ -53,21 +55,29 @@ void MEMORIA_BOOT_CheckDispatch(object oPlayer, string sId, string sHeartbeat, s
         if (GetLocalString(oPlayer, sFailureLocal) != sFailure)
         {
             SetLocalString(oPlayer, sFailureLocal, sFailure);
-            SendMessageToPC(oPlayer, "Memoria heartbeat failed: " + sFailure + ". Other compatible mods will continue to run.");
+            string sDiagnostic = GetLocalString(oPlayer, sDiagnosticLocal);
+            if (sDiagnostic == "") sDiagnostic = "the package did not report its current stage";
+            SendMessageToPC(oPlayer, "Memoria heartbeat failed: " + sFailure + ". Last reported stage: " + sDiagnostic + ". The exact VM error is written to nwengineLog.txt because NWScript does not expose it to the caller. Other compatible mods will continue to run.");
         }
     }
     DeleteLocalInt(oPlayer, sDoneLocal);
+    DeleteLocalString(oPlayer, sDiagnosticLocal);
 }
 
 void MEMORIA_BOOT_Dispatch(object oPlayer, string sId, string sHeartbeat, int nCycle, int nIndex)
 {
     string sDoneLocal = MEMORIA_BOOT_DISPATCH_DONE_LOCAL + IntToString(nCycle) + "_" + IntToString(nIndex);
     string sFailureLocal = MEMORIA_BOOT_DISPATCH_FAILURE_LOCAL + IntToString(nIndex);
+    string sDiagnosticLocal = MEMORIA_BOOT_DISPATCH_DIAGNOSTIC_LOCAL + IntToString(nCycle) + "_" + IntToString(nIndex);
     DeleteLocalInt(oPlayer, sDoneLocal);
-    DelayCommand(0.1f, MEMORIA_BOOT_CheckDispatch(oPlayer, sId, sHeartbeat, sDoneLocal, sFailureLocal));
+    DeleteLocalString(oPlayer, sDiagnosticLocal);
+    DelayCommand(0.1f, MEMORIA_BOOT_CheckDispatch(oPlayer, sId, sHeartbeat, sDoneLocal, sFailureLocal, sDiagnosticLocal));
+    SetLocalString(oPlayer, MEMORIA_HEARTBEAT_DIAGNOSTIC_TARGET_LOCAL, sDiagnosticLocal);
     ExecuteScript(sHeartbeat, oPlayer);
     SetLocalInt(oPlayer, sDoneLocal, TRUE);
     DeleteLocalString(oPlayer, sFailureLocal);
+    DeleteLocalString(oPlayer, sDiagnosticLocal);
+    DeleteLocalString(oPlayer, MEMORIA_HEARTBEAT_DIAGNOSTIC_TARGET_LOCAL);
 }
 
 void main()

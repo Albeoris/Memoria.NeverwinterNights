@@ -5,6 +5,7 @@ Memoria Debug Tools adds object inspection and removal tools to the Memoria Conf
 ## Features
 
 - Examines inventory items and world objects, including their identity, state, effects, local variables, event hooks, inventory contents, and type-specific properties.
+- Lists every numbered icon resource available to a selected simple-model item class and applies the chosen appearance.
 - Deletes a selected object after confirmation and shows an extra warning for protected or service objects.
 
 ## Compatibility

@@ -2,8 +2,10 @@
   "mod_display_name": "Debug Tools",
   "examine_action": "Examine object",
   "delete_action": "Delete object",
+  "icon_action": "Change item icon",
   "select_examine": "Select an inventory item or an object in the world to examine.",
   "select_delete": "Select an inventory item or an object in the world to delete.",
+  "select_icon": "Select an inventory item whose icon you want to change.",
   "selection_cancelled": "Object selection cancelled.",
   "confirm_title": "Delete object",
   "confirm_question": "Do you really want to delete {name} ({id})?",
@@ -11,5 +13,13 @@
   "confirm_delete": "Delete",
   "confirm_cancel": "Cancel",
   "target_missing": "The selected object no longer exists.",
-  "deleted": "Deleted {name} ({id})."
+  "deleted": "Deleted {name} ({id}).",
+  "icon_title": "Change Item Icon",
+  "icon_summary": "Item class: {class} · Base item: {base} · Available icons: {count}",
+  "icon_current": "(current)",
+  "icon_none": "No numbered icon resources are available for this item class.",
+  "icon_item_required": "The selected object is not an item.",
+  "icon_unsupported": "This item does not use a simple numbered model icon.",
+  "icon_change_failed": "The item icon could not be changed. Containers with contents cannot be copied.",
+  "icon_changed": "Changed {name} to icon {model} ({icon})."
 }

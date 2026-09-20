@@ -17,6 +17,7 @@ ATTENTION: The mods are ready but are currently being debugged. I will release t
 | MELSE | MEMORIA `[1.0.0,2.0.0)`, ESI `[2.0.0,3.0.0)`, MECONFIG `[1.0.0,2.0.0)` | Memoria edition of Looting System Enhanced, namespaced as `MELSE_*` and `melse_*`. |
 | MECM | MEMORIA `[1.0.0,2.0.0)`, ESI `[2.0.0,3.0.0)`, MECONFIG `[1.0.0,2.0.0)` | Companion Manager. |
 | METACT | MEMORIA `[1.0.0,2.0.0)`, ESI `[2.0.0,3.0.0)`, MECONFIG `[1.0.0,2.0.0)` | Tactics Architect. |
+| MEIO | MEMORIA `[1.1.0,2.0.0)`, ESI `[2.0.0,3.0.0)` | Inventory Organizer with a physical scroll Scriptorium and spellbook NUI. |
 | Toolset | .NET 10 | Builds, validates, and packages all projects. |
 
 Memoria-owned mod identifiers and resources use package-specific `ME<PACKAGE>_` and `me<package>_` prefixes. MEMORIA uses `MEMORIA_*` and `memoria_*`; ESI retains its original compatibility names.
@@ -105,3 +106,60 @@ The workflow downloads Valve's Windows SteamCMD bootstrap, verifies its Authenti
 ## Licensing
 
 Albeoris-authored work is MIT licensed. ESI, MELSE, game-derived scripts, and vendored tools retain their original authorship notices; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Development
+
+Each directory under `Mods/` is an independently versioned and publishable mod. Its `.proj` file defines package metadata, dependencies, sources, resources, layouts, and publishing information.
+
+Generated files belong under `artifacts/`. `artifacts/api-cache` contains immutable NWScript API snapshots and is preserved across normal clean operations.
+
+### Package architecture
+
+Runtime initialization order is:
+
+1. MEMORIA
+2. ESI
+3. Consumer mods such as MECONFIG, MEDT, MELSE, MECM, and METACT
+
+MEMORIA owns `default.ncs`, validates installed package versions/dependencies, and dispatches compatible heartbeats. ESI runs before packages consuming injected events.
+
+Memoria-owned identifiers use `ME<PACKAGE>_`; resource names use lowercase `me<package>_` forms and must fit NWN resref limits. ESI retains its historical `ESI_*`, `esi_*`, and `rav_*` names for compatibility.
+
+### Mod projects
+
+Projects use wildcard inputs rather than explicit file lists:
+
+* `NwnSource` — NWScript sources.
+* `NwnResource` — packaged override resources.
+* `NwnLayout` — NUI layouts.
+* `NwnPackageFile` — sources intentionally shipped in the package.
+* `NwnRequiredPackage` — compile/runtime dependencies.
+* `NwnIncludeDirectory` — non-package compiler include paths.
+* `PackageDocument` — published documentation.
+
+`NwnRequiredPackage` specifies `ModId`, a bounded NuGet-style `Versions` range, and `PackageName`. Dependency sources are compiler inputs only and are not copied into the consuming package.
+
+The Toolset discovers entry points, compiles NWScript, converts supported JSON/GFF resources, validates layouts and resources, and rejects duplicate output resrefs. Adding a file beneath an existing wildcard should normally require no project-file change.
+
+### Versioning
+
+Every change inside `Mods/<Project>` produces a new package version.
+
+* PATCH — implementation, documentation, metadata, fixes, defaults, or other compatible changes.
+* MINOR — backward-compatible public API additions.
+* MAJOR — incompatible public API, identifier, resource-contract, or manifest changes.
+
+After a MAJOR bump, dependent version ranges must be reviewed and updated.
+
+### Validation
+
+For build-system or multi-mod changes:
+
+```powershell
+dotnet clean Memoria.NeverwinterNights.slnx --configuration Release
+dotnet build Memoria.NeverwinterNights.slnx --configuration Release
+```
+
+The build must complete with zero warnings/errors. Changed GUI layouts must pass the layout emulator.
+
+Individual mods can be built through their `.proj` files. Publishing and immutable `api-<mod-id>-v<version>` snapshots are handled by the repository build/publishing infrastructure.

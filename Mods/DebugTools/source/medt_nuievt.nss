@@ -1,18 +1,38 @@
-#include "medt_lib"
+#include "medt_iconlib"
 
 void main()
 {
-    if (NuiGetEventType() != "click") return;
     object oPC = NuiGetEventPlayer();
     int iToken = NuiGetEventWindow();
+    string sEvent = NuiGetEventType();
+    if (sEvent == "close")
+    {
+        if (iToken == NuiFindWindow(oPC, MEDT_ICON_WINDOW_ID))
+        {
+            DeleteLocalObject(oPC, MEDT_LOCAL_ICON_TARGET);
+        }
+        return;
+    }
+    if (sEvent != "click")
+    {
+        return;
+    }
     string sElement = NuiGetEventElement();
+    if (GetStringLeft(sElement, 5) == "icon_")
+    {
+        MEDT_ChangeItemIcon(oPC, iToken, StringToInt(GetSubString(sElement, 5, GetStringLength(sElement) - 5)));
+        return;
+    }
     if (sElement == "cancel")
     {
         DeleteLocalObject(oPC, MEDT_LOCAL_DELETE_TARGET);
         NuiDestroy(oPC, iToken);
         return;
     }
-    if (sElement != "delete") return;
+    if (sElement != "delete")
+    {
+        return;
+    }
     object oTarget = GetLocalObject(oPC, MEDT_LOCAL_DELETE_TARGET);
     DeleteLocalObject(oPC, MEDT_LOCAL_DELETE_TARGET);
     NuiDestroy(oPC, iToken);

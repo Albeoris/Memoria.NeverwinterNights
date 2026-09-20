@@ -7,9 +7,12 @@ const string MEDT_ESI_KEY_TARGET = "medt.module.target";
 const string MEDT_LOCAL_LANGUAGE = "MEDT_LANGUAGE";
 const string MEDT_LOCAL_TARGET_MODE = "MEDT_TARGET_MODE";
 const string MEDT_LOCAL_DELETE_TARGET = "MEDT_DELETE_TARGET";
+const string MEDT_LOCAL_ICON_TARGET = "MEDT_ICON_TARGET";
 const string MEDT_CONFIRM_WINDOW_ID = "medt_confirm";
+const string MEDT_ICON_WINDOW_ID = "medt_icons";
 const int MEDT_TARGET_MODE_EXAMINE = 1;
 const int MEDT_TARGET_MODE_DELETE = 2;
+const int MEDT_TARGET_MODE_ICON = 3;
 
 string MEDT_GetText(object oPC, string sKey)
 {
@@ -298,8 +301,9 @@ void MEDT_OpenDeleteConfirmation(object oPC, object oTarget)
 void MEDT_StartTargeting(object oPC, int iMode)
 {
     SetLocalInt(oPC, MEDT_LOCAL_TARGET_MODE, iMode);
-    SendMessageToPC(oPC, MEDT_GetText(oPC, iMode == MEDT_TARGET_MODE_EXAMINE ? "select_examine" : "select_delete"));
-    EnterTargetingMode(oPC, OBJECT_TYPE_ALL, MOUSECURSOR_EXAMINE, MOUSECURSOR_NOEXAMINE);
+    string sMessage = iMode == MEDT_TARGET_MODE_EXAMINE ? "select_examine" : iMode == MEDT_TARGET_MODE_DELETE ? "select_delete" : "select_icon";
+    SendMessageToPC(oPC, MEDT_GetText(oPC, sMessage));
+    EnterTargetingMode(oPC, iMode == MEDT_TARGET_MODE_ICON ? OBJECT_TYPE_ITEM : OBJECT_TYPE_ALL, MOUSECURSOR_EXAMINE, MOUSECURSOR_NOEXAMINE);
 }
 
 void MEDT_InstallHook()

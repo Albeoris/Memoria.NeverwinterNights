@@ -6,6 +6,7 @@ Memoria is the shared loader and framework that lets multiple Neverwinter Nights
 
 - Loads compatible Memoria mods through a single `default.ncs` instead of letting them overwrite one another.
 - Checks package versions and dependencies, disables incompatible packages, and keeps the remaining mods running.
+- Reports the last diagnostic stage supplied by a heartbeat when the NWScript VM aborts that package.
 - Provides shared NWScript helpers for mod authors.
 - Provides consistent right-click contextual help for Memoria-owned NUI windows.
 

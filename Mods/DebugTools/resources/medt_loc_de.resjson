@@ -2,8 +2,10 @@
   "mod_display_name": "Debug Tools",
   "examine_action": "Objekt untersuchen",
   "delete_action": "Objekt löschen",
+  "icon_action": "Gegenstandssymbol ändern",
   "select_examine": "Wählt einen Inventargegenstand oder ein Objekt in der Welt zum Untersuchen aus.",
   "select_delete": "Wählt einen Inventargegenstand oder ein Objekt in der Welt zum Löschen aus.",
+  "select_icon": "Wählt einen Inventargegenstand aus, dessen Symbol geändert werden soll.",
   "selection_cancelled": "Objektauswahl abgebrochen.",
   "confirm_title": "Objekt löschen",
   "confirm_question": "Soll {name} ({id}) wirklich gelöscht werden?",
@@ -11,5 +13,13 @@
   "confirm_delete": "Löschen",
   "confirm_cancel": "Abbrechen",
   "target_missing": "Das ausgewählte Objekt existiert nicht mehr.",
-  "deleted": "{name} ({id}) wurde gelöscht."
+  "deleted": "{name} ({id}) wurde gelöscht.",
+  "icon_title": "Gegenstandssymbol ändern",
+  "icon_summary": "Gegenstandsklasse: {class} · Basistyp: {base} · Verfügbare Symbole: {count}",
+  "icon_current": "(aktuell)",
+  "icon_none": "Für diese Gegenstandsklasse sind keine nummerierten Symbolressourcen verfügbar.",
+  "icon_item_required": "Das ausgewählte Objekt ist kein Gegenstand.",
+  "icon_unsupported": "Dieser Gegenstand verwendet kein einfaches nummeriertes Modellsymbol.",
+  "icon_change_failed": "Das Gegenstandssymbol konnte nicht geändert werden. Behälter mit Inhalt können nicht kopiert werden.",
+  "icon_changed": "{name} verwendet jetzt Symbol {model} ({icon})."
 }

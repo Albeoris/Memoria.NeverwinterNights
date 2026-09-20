@@ -2,8 +2,10 @@
   "mod_display_name": "Debug Tools",
   "examine_action": "Examinar objeto",
   "delete_action": "Eliminar objeto",
+  "icon_action": "Cambiar icono del objeto",
   "select_examine": "Selecciona un objeto del inventario o del mundo para examinarlo.",
   "select_delete": "Selecciona un objeto del inventario o del mundo para eliminarlo.",
+  "select_icon": "Selecciona en el inventario el objeto cuyo icono quieres cambiar.",
   "selection_cancelled": "Selección de objeto cancelada.",
   "confirm_title": "Eliminar objeto",
   "confirm_question": "¿Seguro que quieres eliminar {name} ({id})?",
@@ -11,5 +13,13 @@
   "confirm_delete": "Eliminar",
   "confirm_cancel": "Cancelar",
   "target_missing": "El objeto seleccionado ya no existe.",
-  "deleted": "Se eliminó {name} ({id})."
+  "deleted": "Se eliminó {name} ({id}).",
+  "icon_title": "Cambiar icono del objeto",
+  "icon_summary": "Clase de objeto: {class} · Tipo base: {base} · Iconos disponibles: {count}",
+  "icon_current": "(actual)",
+  "icon_none": "No hay recursos de iconos numerados disponibles para esta clase de objeto.",
+  "icon_item_required": "El objeto seleccionado no es un objeto de inventario.",
+  "icon_unsupported": "Este objeto no utiliza un icono de modelo simple numerado.",
+  "icon_change_failed": "No se pudo cambiar el icono. Los contenedores con contenido no se pueden copiar.",
+  "icon_changed": "El icono de {name} ahora es {model} ({icon})."
 }
