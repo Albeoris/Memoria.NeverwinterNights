@@ -38,7 +38,7 @@
   "sort_mode_automatic": "Automatico",
   "sort_mode_manual": "Solo su richiesta",
   "ui_scale_label": "Scala degli elementi (%)",
-  "ui_scale_tooltip": "Imposta le dimensioni delle voci degli incantesimi nel deposito spaziale. Intervallo consentito: 25–100%. Valore predefinito: 50%.",
+  "ui_scale_tooltip": "Imposta le dimensioni delle voci degli incantesimi nel deposito spaziale. Intervallo consentito: 25–100%. Valore predefinito: 75%.",
   "debug_label": "Messaggi di debug",
   "debug_tooltip": "Scrive una traccia dettagliata dei trasferimenti dello Scriptorium nella chat del personaggio e in nwengineLog.txt."
 }

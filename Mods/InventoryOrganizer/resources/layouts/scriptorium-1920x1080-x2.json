@@ -29,41 +29,42 @@
         "id": "spell-list",
         "type": "list",
         "height": 307,
-        "rowHeight": 35,
-        "sampleRows": 8,
+        "rowHeight": 53,
+        "sampleRows": 5,
         "scrollbars": "both",
         "cells": [
           {
             "id": "row-widget",
-            "width": 137,
+            "width": 215.5,
+            "grow": 1,
             "child": {
               "id": "row-layout",
               "type": "row",
-              "width": 137,
-              "height": 35,
+              "height": 53,
+              "gap": 2,
               "children": [
-                { "id": "level", "type": "control", "width": 17, "height": 35 },
+                { "id": "level", "type": "control", "width": 25.5, "height": 53 },
                 {
                   "id": "spell-0",
                   "type": "group",
-                  "width": 24,
-                  "height": 34,
+                  "width": 36,
+                  "height": 51,
                   "borderInset": 0,
                   "child": {
                     "id": "spell-0-content",
                     "type": "column",
-                    "width": 24,
-                    "height": 34,
+                    "width": 36,
+                    "height": 51,
                     "children": [
-                      { "id": "icon", "type": "control", "width": 22, "height": 22 },
-                      { "id": "quantity", "type": "control", "width": 24, "height": 12 }
+                      { "id": "icon", "type": "control", "width": 33, "height": 33 },
+                      { "id": "quantity", "type": "control", "width": 36, "height": 18 }
                     ]
                   }
                 },
-                { "id": "spell-1", "type": "control", "width": 24, "height": 34 },
-                { "id": "spell-2", "type": "control", "width": 24, "height": 34 },
-                { "id": "spell-3", "type": "control", "width": 24, "height": 34 },
-                { "id": "spell-4", "type": "control", "width": 24, "height": 34 }
+                { "id": "spell-1", "type": "control", "width": 36, "height": 51 },
+                { "id": "spell-2", "type": "control", "width": 36, "height": 51 },
+                { "id": "spell-3", "type": "control", "width": 36, "height": 51 },
+                { "id": "spell-4", "type": "control", "width": 36, "height": 51 }
               ]
             }
           }

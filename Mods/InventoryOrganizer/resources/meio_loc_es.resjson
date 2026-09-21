@@ -38,7 +38,7 @@
   "sort_mode_automatic": "Automático",
   "sort_mode_manual": "Solo bajo petición",
   "ui_scale_label": "Escala de elementos (%)",
-  "ui_scale_tooltip": "Define el tamaño de las entradas de hechizos del almacén espacial. Rango permitido: 25–100 %. Valor predeterminado: 50 %.",
+  "ui_scale_tooltip": "Define el tamaño de las entradas de hechizos del almacén espacial. Rango permitido: 25–100 %. Valor predeterminado: 75 %.",
   "debug_label": "Mensajes de depuración",
   "debug_tooltip": "Escribe un seguimiento detallado de las transferencias del Scriptorium en el chat del personaje y en nwengineLog.txt."
 }

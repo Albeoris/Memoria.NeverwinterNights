@@ -38,7 +38,7 @@
   "sort_mode_automatic": "Automatisch",
   "sort_mode_manual": "Nur auf Anforderung",
   "ui_scale_label": "Elementgröße (%)",
-  "ui_scale_tooltip": "Legt die Größe der Zaubereinträge im Dimensionslager fest. Zulässiger Bereich: 25–100 %. Standardwert: 50 %.",
+  "ui_scale_tooltip": "Legt die Größe der Zaubereinträge im Dimensionslager fest. Zulässiger Bereich: 25–100 %. Standardwert: 75 %.",
   "debug_label": "Debugmeldungen",
   "debug_tooltip": "Schreibt eine detaillierte Ablaufverfolgung der Scriptorium-Übertragungen in den Charakter-Chat und in nwengineLog.txt."
 }

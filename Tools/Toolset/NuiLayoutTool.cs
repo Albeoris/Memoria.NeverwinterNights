@@ -161,17 +161,20 @@ internal static class NuiLayoutTool
         int sampleRows = Math.Max(1, (int)Number(node, "sampleRows", Math.Floor(viewport.Height / rowHeight)));
         JsonArray cells = node["cells"]?.AsArray() ?? [];
         if (cells.Count > 16) diagnostics.Add($"{Text(node, "id", "list")}: {cells.Count} template cells exceed the NUI limit of 16.");
-        double fixedWidth = 0.0;
+        double baseWidth = 0.0;
         double growTotal = 0.0;
         foreach (JsonNode? cellNode in cells)
         {
             JsonObject cell = cellNode?.AsObject() ?? [];
+            baseWidth += Number(cell, "width", 0.0);
             double grow = Number(cell, "grow", 0.0);
             if (grow > 0.0) growTotal += grow;
-            else fixedWidth += Number(cell, "width", 0.0);
         }
 
-        if (fixedWidth > viewport.Width + 0.01) diagnostics.Add($"{Text(node, "id", "list")}: fixed cells consume {fixedWidth:0.##} of {viewport.Width:0.##}.");
+        string scrollbars = Text(node, "scrollbars", "y").ToLowerInvariant();
+        bool hasHorizontal = scrollbars is "x" or "horizontal" or "both";
+        if (!hasHorizontal && baseWidth > viewport.Width + 0.01) diagnostics.Add($"{Text(node, "id", "list")}: cells consume {baseWidth:0.##} of {viewport.Width:0.##} without a horizontal scrollbar.");
+        double growWidth = Math.Max(0.0, viewport.Width - baseWidth);
         for (int row = 0; row < sampleRows && (row + 1) * rowHeight <= viewport.Height + 0.01; row++)
         {
             double x = viewport.X;
@@ -179,7 +182,7 @@ internal static class NuiLayoutTool
             {
                 JsonObject cell = cells[cellIndex]?.AsObject() ?? [];
                 double grow = Number(cell, "grow", 0.0);
-                double cellWidth = grow > 0.0 && growTotal > 0.0 ? Math.Max(0.0, viewport.Width - fixedWidth) * grow / growTotal : Number(cell, "width", 0.0);
+                double cellWidth = Number(cell, "width", 0.0) + (grow > 0.0 && growTotal > 0.0 ? growWidth * grow / growTotal : 0.0);
                 Rect cellRect = new(x, viewport.Y + row * rowHeight, cellWidth, rowHeight);
                 string id = $"{Text(node, "id", "list")}.row{row}.{Text(cell, "id", "cell" + cellIndex)}";
                 elements.Add(new Element(id, "list-cell", cellRect, ToPhysical(cellRect, scale, physicalWindow)));

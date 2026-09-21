@@ -38,7 +38,7 @@
   "sort_mode_automatic": "Automatic",
   "sort_mode_manual": "Only on request",
   "ui_scale_label": "Item scale (%)",
-  "ui_scale_tooltip": "Sets the size of spell entries in Spatial Storage. Allowed range: 25-100%. The default is 50%.",
+  "ui_scale_tooltip": "Sets the size of spell entries in Spatial Storage. Allowed range: 25-100%. The default is 75%.",
   "debug_label": "Debug messages",
   "debug_tooltip": "Writes detailed Spatial Storage transfer tracing to the character chat and nwengineLog.txt."
 }

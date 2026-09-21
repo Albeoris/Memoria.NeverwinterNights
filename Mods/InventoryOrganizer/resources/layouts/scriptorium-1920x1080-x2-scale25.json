@@ -13,34 +13,35 @@
         "id": "spell-list",
         "type": "list",
         "height": 307,
-        "rowHeight": 24,
+        "rowHeight": 31,
         "sampleRows": 10,
         "scrollbars": "both",
         "cells": [
           {
             "id": "row-widget",
-            "width": 20.5,
+            "width": 22.5,
+            "grow": 1,
             "child": {
               "id": "row-layout",
               "type": "row",
-              "width": 20.5,
-              "height": 24,
+              "height": 31,
+              "gap": 2,
               "children": [
-                { "id": "level", "type": "control", "width": 8.5, "height": 24 },
+                { "id": "level", "type": "control", "width": 8.5, "height": 31 },
                 {
                   "id": "spell",
                   "type": "group",
                   "width": 12,
-                  "height": 23,
+                  "height": 29,
                   "borderInset": 0,
                   "child": {
                     "id": "spell-content",
                     "type": "column",
                     "width": 12,
-                    "height": 23,
+                    "height": 29,
                     "children": [
                       { "id": "icon", "type": "control", "width": 11, "height": 11 },
-                      { "id": "quantity", "type": "control", "width": 12, "height": 12 }
+                      { "id": "quantity", "type": "control", "width": 12, "height": 18 }
                     ]
                   }
                 }

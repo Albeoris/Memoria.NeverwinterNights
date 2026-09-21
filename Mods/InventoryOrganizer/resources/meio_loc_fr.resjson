@@ -38,7 +38,7 @@
   "sort_mode_automatic": "Automatique",
   "sort_mode_manual": "Uniquement sur demande",
   "ui_scale_label": "Échelle des éléments (%)",
-  "ui_scale_tooltip": "Définit la taille des entrées de sorts de la réserve spatiale. Plage autorisée : 25–100 %. Valeur par défaut : 50 %.",
+  "ui_scale_tooltip": "Définit la taille des entrées de sorts de la réserve spatiale. Plage autorisée : 25–100 %. Valeur par défaut : 75 %.",
   "debug_label": "Messages de débogage",
   "debug_tooltip": "Écrit une trace détaillée des transferts du Scriptorium dans le chat du personnage et dans nwengineLog.txt."
 }

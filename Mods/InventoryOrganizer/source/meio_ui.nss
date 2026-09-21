@@ -130,9 +130,10 @@ json MEIO_BuildLevelList(object oPC, json jCapacities)
     float fScale = MEIO_GetUIScale(oPC);
     float fIconSize = 44.0f * fScale;
     float fSlotWidth = 48.0f * fScale;
-    float fQuantityHeight = 12.0f;
-    float fRowHeight = fIconSize + fQuantityHeight + 1.0f;
+    float fQuantityHeight = 18.0f;
+    float fRowHeight = fIconSize + fQuantityHeight + 2.0f;
     float fLevelWidth = 34.0f * fScale;
+    float fRowSpacing = 2.0f;
     json jRow = JsonArray();
     json jLevel = NuiStyleForegroundColor(NuiLabel(NuiBind("spell_level"), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE)), NuiColor(225, 190, 95));
     jRow = JsonArrayInsert(jRow, NuiWidth(jLevel, fLevelWidth));
@@ -144,7 +145,8 @@ json MEIO_BuildLevelList(object oPC, json jCapacities)
     json jRowElement = NuiPadding(NuiGroup(NuiRow(jRow), FALSE, NUI_SCROLLBARS_NONE), 0.0f);
     jRowElement = NuiHeight(jRowElement, fRowHeight);
     json jTemplate = JsonArray();
-    jTemplate = JsonArrayInsert(jTemplate, NuiListTemplateCell(jRowElement, fLevelWidth + fSlotWidth * IntToFloat(iCapacity), FALSE));
+    float fContentWidth = fLevelWidth + (fSlotWidth + fRowSpacing) * IntToFloat(iCapacity);
+    jTemplate = JsonArrayInsert(jTemplate, NuiListTemplateCell(jRowElement, fContentWidth, TRUE));
     return NuiList(jTemplate, NuiBind("spell_level_count"), fRowHeight, FALSE, NUI_SCROLLBARS_BOTH);
 }
 
