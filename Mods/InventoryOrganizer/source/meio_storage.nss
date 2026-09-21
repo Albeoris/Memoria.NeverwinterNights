@@ -133,14 +133,14 @@ void MEIO_ScheduleStorageSave(object oPC)
 object MEIO_FindScriptorium(object oPC)
 {
     object oCached = GetLocalObject(oPC, MEIO_LOCAL_SCRIPTORIUM);
-    if (MEIO_IsDirectlyIn(oCached, oPC) && GetTag(oCached) == MEIO_SCRIPTORIUM_TAG && GetBaseItemType(oCached) == BASE_ITEM_MISCMEDIUM)
+    if (MEIO_IsDirectlyIn(oCached, oPC) && GetTag(oCached) == MEIO_SCRIPTORIUM_TAG && GetBaseItemType(oCached) == BASE_ITEM_LARGEBOX)
     {
         return oCached;
     }
     object oItem = GetFirstItemInInventory(oPC);
     while (GetIsObjectValid(oItem))
     {
-        if (MEIO_IsDirectlyIn(oItem, oPC) && GetTag(oItem) == MEIO_SCRIPTORIUM_TAG && GetBaseItemType(oItem) == BASE_ITEM_MISCMEDIUM)
+        if (MEIO_IsDirectlyIn(oItem, oPC) && GetTag(oItem) == MEIO_SCRIPTORIUM_TAG && GetBaseItemType(oItem) == BASE_ITEM_LARGEBOX)
         {
             SetLocalObject(oPC, MEIO_LOCAL_SCRIPTORIUM, oItem);
             return oItem;
@@ -148,29 +148,6 @@ object MEIO_FindScriptorium(object oPC)
         oItem = GetNextItemInInventory(oPC);
     }
     return OBJECT_INVALID;
-}
-
-int MEIO_HasActivationProperty(object oScriptorium)
-{
-    itemproperty ip = GetFirstItemProperty(oScriptorium);
-    while (GetIsItemPropertyValid(ip))
-    {
-        if (GetItemPropertyType(ip) == ITEM_PROPERTY_CAST_SPELL && GetItemPropertySubType(ip) == IP_CONST_CASTSPELL_UNIQUE_POWER_SELF_ONLY)
-        {
-            return TRUE;
-        }
-        ip = GetNextItemProperty(oScriptorium);
-    }
-    return FALSE;
-}
-
-void MEIO_EnsureActivationProperty(object oScriptorium)
-{
-    if (!MEIO_HasActivationProperty(oScriptorium))
-    {
-        itemproperty ip = ItemPropertyCastSpell(IP_CONST_CASTSPELL_UNIQUE_POWER_SELF_ONLY, IP_CONST_CASTSPELL_NUMUSES_UNLIMITED_USE);
-        AddItemProperty(DURATION_TYPE_PERMANENT, ip, oScriptorium);
-    }
 }
 
 int MEIO_CopyAmount(object oSource, object oTarget, int iRequested)
@@ -256,7 +233,7 @@ int MEIO_CopyPotionAmount(object oSource, object oTarget, int iRequested)
 int MEIO_StoreAmountInternal(object oPC, object oScroll, int iRequested, int bIgnoreSuppression)
 {
     MEIO_Debug(oPC, "StoreAmount entered requested=" + IntToString(iRequested) + " explicit=" + IntToString(bIgnoreSuppression) + " suppress=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_SORT)) + " " + MEIO_DebugItemState(oPC, oScroll));
-    if (!MEIO_IsScroll(oScroll))
+    if (!MEIO_IsScroll(oScroll) || !MEIO_CanStoreItem(oScroll))
     {
         MEIO_Debug(oPC, "StoreAmount decision=ignore reason=not-scroll " + MEIO_DebugItemState(oPC, oScroll));
         return 0;
@@ -337,7 +314,7 @@ int MEIO_StoreAmountExplicit(object oPC, object oScroll, int iRequested)
 int MEIO_StorePotionAmountInternal(object oPC, object oPotion, int iRequested, int bIgnoreSuppression)
 {
     MEIO_Debug(oPC, "StorePotionAmount entered requested=" + IntToString(iRequested) + " explicit=" + IntToString(bIgnoreSuppression) + " suppress=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_SORT)) + " " + MEIO_DebugItemState(oPC, oPotion));
-    if (!MEIO_IsUsablePotion(oPotion) || !MEIO_IsDirectlyIn(oPotion, oPC) || (!bIgnoreSuppression && GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_SORT)))
+    if (!MEIO_IsUsablePotion(oPotion) || !MEIO_CanStoreItem(oPotion) || !MEIO_IsDirectlyIn(oPotion, oPC) || (!bIgnoreSuppression && GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_SORT)))
     {
         return 0;
     }
@@ -435,7 +412,6 @@ object MEIO_EnsureScriptorium(object oPC)
     SetPlotFlag(oScriptorium, TRUE);
     SetItemCursedFlag(oScriptorium, TRUE);
     SetDroppableFlag(oScriptorium, FALSE);
-    MEIO_EnsureActivationProperty(oScriptorium);
     if (GetLocalString(oScriptorium, MEIO_LOCAL_ITEM_LANGUAGE) != MEIO_GetLanguage(oPC))
     {
         SetName(oScriptorium, MEIO_GetText(oPC, "item_name"));
@@ -470,7 +446,7 @@ int MEIO_SortInventory(object oPC, int bIncludeKeptOut)
     while (GetIsObjectValid(oItem))
     {
         object oNext = GetNextItemInInventory(oPC);
-        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_IsScroll(oItem) && (bIncludeKeptOut || !MEIO_IsKeepOut(oPC, oItem)))
+        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_IsScroll(oItem) && MEIO_CanStoreItem(oItem) && (bIncludeKeptOut || !MEIO_IsKeepOut(oPC, oItem)))
         {
             iMoved += bIncludeKeptOut ? MEIO_StoreAmountExplicit(oPC, oItem, GetItemStackSize(oItem)) : MEIO_StoreAmount(oPC, oItem, GetItemStackSize(oItem));
         }
@@ -492,7 +468,7 @@ int MEIO_StoreInventoryBatch(object oPC, int iLimit)
     while (GetIsObjectValid(oItem))
     {
         object oNext = GetNextItemInInventory(oPC);
-        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_IsScroll(oItem))
+        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_IsScroll(oItem) && MEIO_CanStoreItem(oItem))
         {
             iAttempted++;
             iMoved += MEIO_StoreAmountExplicit(oPC, oItem, GetItemStackSize(oItem));
@@ -518,7 +494,7 @@ int MEIO_StorePotionInventoryBatch(object oPC, int iLimit)
     while (GetIsObjectValid(oItem))
     {
         object oNext = GetNextItemInInventory(oPC);
-        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_IsUsablePotion(oItem))
+        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_IsUsablePotion(oItem) && MEIO_CanStoreItem(oItem))
         {
             iAttempted++;
             iMoved += MEIO_StorePotionAmountExplicit(oPC, oItem, GetItemStackSize(oItem));
@@ -542,7 +518,7 @@ void MEIO_MarkInitialImportItems(object oPC)
     object oItem = GetFirstItemInInventory(oPC);
     while (GetIsObjectValid(oItem))
     {
-        if (MEIO_IsDirectlyIn(oItem, oPC) && (MEIO_IsScroll(oItem) || MEIO_IsUsablePotion(oItem)))
+        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_CanStoreItem(oItem))
         {
             SetLocalInt(oItem, MEIO_LOCAL_INITIAL_IMPORT_ITEM, TRUE);
             iMarked++;
@@ -560,7 +536,7 @@ int MEIO_StoreInitialInventoryBatch(object oPC, int iLimit)
     while (GetIsObjectValid(oItem))
     {
         object oNext = GetNextItemInInventory(oPC);
-        if (MEIO_IsDirectlyIn(oItem, oPC) && (MEIO_IsScroll(oItem) || MEIO_IsUsablePotion(oItem)) && GetLocalInt(oItem, MEIO_LOCAL_INITIAL_IMPORT_ITEM))
+        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_CanStoreItem(oItem) && GetLocalInt(oItem, MEIO_LOCAL_INITIAL_IMPORT_ITEM))
         {
             iAttempted++;
             int iRequested = GetItemStackSize(oItem);

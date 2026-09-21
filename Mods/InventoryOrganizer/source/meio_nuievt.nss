@@ -2,7 +2,13 @@
 
 json MEIO_GetEventEntry(object oPC, string sElement)
 {
-    return JsonObjectGet(GetLocalJson(oPC, MEIO_LOCAL_DISPLAY_ENTRIES), sElement);
+    json jRows = GetLocalJson(oPC, MEIO_LOCAL_DISPLAY_ENTRIES);
+    int iRow = NuiGetEventArrayIndex();
+    if (JsonGetType(jRows) != JSON_TYPE_ARRAY || iRow < 0 || iRow >= JsonGetLength(jRows))
+    {
+        return JsonNull();
+    }
+    return JsonObjectGet(JsonArrayGet(jRows, iRow), sElement);
 }
 
 json MEIO_GetPotionEventEntry(object oPC, string sElement)
@@ -10,19 +16,25 @@ json MEIO_GetPotionEventEntry(object oPC, string sElement)
     return JsonObjectGet(GetLocalJson(oPC, MEIO_LOCAL_POTION_ENTRIES), sElement);
 }
 
+void MEIO_RefreshBatchWindow(object oPC, int iToken)
+{
+    if (NuiFindWindow(oPC, MEIO_WINDOW) == iToken)
+    {
+        MEIO_RebuildWindowIndex(oPC, iToken);
+    }
+}
+
 void MEIO_ReturnAllBatch(object oPC, int iToken, int iGeneration, int iBaseItem)
 {
-    if (GetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION) != iGeneration)
+    int iMode = iBaseItem == BASE_ITEM_POTIONS ? MEIO_TRANSFER_STORE_POTIONS : MEIO_TRANSFER_STORE_SCROLLS;
+    if (GetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION) != iGeneration || GetLocalInt(oPC, MEIO_LOCAL_TRANSFER_MODE) != iMode)
     {
         return;
     }
     int bComplete = iBaseItem == BASE_ITEM_POTIONS ? MEIO_StorePotionInventoryBatch(oPC, MEIO_INITIAL_IMPORT_BATCH_SIZE) : MEIO_StoreInventoryBatch(oPC, MEIO_INITIAL_IMPORT_BATCH_SIZE);
     int iTotal = GetLocalInt(oPC, MEIO_LOCAL_RETURN_TOTAL) + GetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED);
     SetLocalInt(oPC, MEIO_LOCAL_RETURN_TOTAL, iTotal);
-    if (NuiFindWindow(oPC, MEIO_WINDOW) == iToken)
-    {
-        MEIO_RebuildWindowIndex(oPC, iToken);
-    }
+    DelayCommand(0.01f, MEIO_RefreshBatchWindow(oPC, iToken));
     if (!bComplete)
     {
         DelayCommand(0.1f, MEIO_ReturnAllBatch(oPC, iToken, iGeneration, iBaseItem));
@@ -33,6 +45,34 @@ void MEIO_ReturnAllBatch(object oPC, int iToken, int iGeneration, int iBaseItem)
         SendMessageToPC(oPC, IntToString(iTotal) + " " + MEIO_GetText(oPC, iBaseItem == BASE_ITEM_POTIONS ? "potions_returned" : "returned"));
     }
     MEIO_Debug(oPC, "NUI explicit-return finished moved=" + IntToString(iTotal));
+    MEIO_EndTransfer(oPC, iMode);
+}
+
+void MEIO_WithdrawAllBatch(object oPC, int iToken, int iGeneration, int iBaseItem)
+{
+    int iMode = iBaseItem == BASE_ITEM_POTIONS ? MEIO_TRANSFER_WITHDRAW_POTIONS : MEIO_TRANSFER_WITHDRAW_SCROLLS;
+    if (GetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION) != iGeneration || GetLocalInt(oPC, MEIO_LOCAL_TRANSFER_MODE) != iMode)
+    {
+        return;
+    }
+    int bComplete = MEIO_WithdrawStorageBatch(oPC, iBaseItem, MEIO_INITIAL_IMPORT_BATCH_SIZE);
+    int iTotal = GetLocalInt(oPC, MEIO_LOCAL_RETURN_TOTAL) + GetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED);
+    SetLocalInt(oPC, MEIO_LOCAL_RETURN_TOTAL, iTotal);
+    DelayCommand(0.01f, MEIO_RefreshBatchWindow(oPC, iToken));
+    if (!bComplete)
+    {
+        DelayCommand(0.1f, MEIO_WithdrawAllBatch(oPC, iToken, iGeneration, iBaseItem));
+        return;
+    }
+    if (iTotal > 0)
+    {
+        SendMessageToPC(oPC, IntToString(iTotal) + " " + MEIO_GetText(oPC, iBaseItem == BASE_ITEM_POTIONS ? "potions_withdrawn_all" : "scrolls_withdrawn_all"));
+    }
+    if (GetLocalInt(oPC, MEIO_LOCAL_BATCH_BLOCKED))
+    {
+        SendMessageToPC(oPC, MEIO_GetText(oPC, "inventory_full"));
+    }
+    MEIO_EndTransfer(oPC, iMode);
 }
 
 void main()
@@ -44,14 +84,7 @@ void main()
     MEIO_Debug(oPC, "NUI event type=\"" + sEvent + "\" element=\"" + sElement + "\" token=" + IntToString(iToken));
     if (sEvent == "close")
     {
-        if (GetLocalInt(oPC, MEIO_LOCAL_EXAMINE_DISABLED))
-        {
-            object oExamined = GetLocalObject(oPC, MEIO_LOCAL_EXAMINE_ITEM);
-            SetGuiPanelDisabled(oPC, GUI_PANEL_EXAMINE_ITEM, TRUE, oExamined);
-            DelayCommand(0.1f, SetGuiPanelDisabled(oPC, GUI_PANEL_EXAMINE_ITEM, FALSE, oExamined));
-            DeleteLocalObject(oPC, MEIO_LOCAL_EXAMINE_ITEM);
-            DeleteLocalInt(oPC, MEIO_LOCAL_EXAMINE_DISABLED);
-        }
+        MEIO_ScheduleExamineSuppression(oPC, MEIO_FindScriptorium(oPC), "nui-close");
         DeleteLocalJson(oPC, MEIO_LOCAL_INDEX);
         DeleteLocalJson(oPC, MEIO_LOCAL_FILTERED_INDEX);
         DeleteLocalJson(oPC, MEIO_LOCAL_DISPLAY_ENTRIES);
@@ -61,7 +94,7 @@ void main()
         DeleteLocalInt(oPC, MEIO_LOCAL_POTION_CAPACITY);
         return;
     }
-    if (sEvent == "watch" && (sElement == "search" || sElement == "target"))
+    if (sEvent == "watch" && (sElement == "search" || sElement == "target" || sElement == "english_names" || sElement == "show_caster_level"))
     {
         MEIO_RefreshWindow(oPC, iToken);
         return;
@@ -90,8 +123,12 @@ void main()
     {
         return;
     }
-    if (sElement == "return_scrolls")
+    if (sElement == "store_scrolls")
     {
+        if (!MEIO_BeginTransfer(oPC, MEIO_TRANSFER_STORE_SCROLLS, TRUE))
+        {
+            return;
+        }
         MEIO_Debug(oPC, "NUI decision=explicit-return-all-carried-scrolls");
         int iGeneration = GetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION) + 1;
         SetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION, iGeneration);
@@ -99,13 +136,31 @@ void main()
         MEIO_ReturnAllBatch(oPC, iToken, iGeneration, BASE_ITEM_SPELLSCROLL);
         return;
     }
-    if (sElement == "return_potions")
+    if (sElement == "store_potions")
     {
+        if (!MEIO_BeginTransfer(oPC, MEIO_TRANSFER_STORE_POTIONS, TRUE))
+        {
+            return;
+        }
         MEIO_Debug(oPC, "NUI decision=explicit-return-all-carried-potions");
         int iGeneration = GetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION) + 1;
         SetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION, iGeneration);
         SetLocalInt(oPC, MEIO_LOCAL_RETURN_TOTAL, 0);
         MEIO_ReturnAllBatch(oPC, iToken, iGeneration, BASE_ITEM_POTIONS);
+        return;
+    }
+    if (sElement == "withdraw_all_scrolls" || sElement == "withdraw_all_potions")
+    {
+        int iBaseItem = sElement == "withdraw_all_potions" ? BASE_ITEM_POTIONS : BASE_ITEM_SPELLSCROLL;
+        int iMode = iBaseItem == BASE_ITEM_POTIONS ? MEIO_TRANSFER_WITHDRAW_POTIONS : MEIO_TRANSFER_WITHDRAW_SCROLLS;
+        if (!MEIO_BeginTransfer(oPC, iMode, TRUE))
+        {
+            return;
+        }
+        int iGeneration = GetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION) + 1;
+        SetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION, iGeneration);
+        SetLocalInt(oPC, MEIO_LOCAL_RETURN_TOTAL, 0);
+        MEIO_WithdrawAllBatch(oPC, iToken, iGeneration, iBaseItem);
         return;
     }
     if (sElement == "tab_scrolls")

@@ -4,6 +4,7 @@
   "mod_description": "Opens the visual tactics editor. Configure prioritized actions and conditions for the hero, a specific companion, or a creature template.",
   "installed": "Tactics Architect installed, version",
   "title": "Tactics Architect",
+  "command_hint": "Open this editor with /memoria-tact. For quick access, place this chat message as a quickbar macro.",
   "profile": "Character",
   "scope": "Profile scope",
   "scope_exact": "This character",

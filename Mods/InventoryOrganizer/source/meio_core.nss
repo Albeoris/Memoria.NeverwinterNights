@@ -41,9 +41,10 @@ const string MEIO_LOCAL_POTION_ENTRIES = "MEIO_POTION_ENTRIES";
 const string MEIO_LOCAL_LEVEL_CAPACITIES = "MEIO_LEVEL_CAPACITIES";
 const string MEIO_LOCAL_POTION_CAPACITY = "MEIO_POTION_CAPACITY";
 const string MEIO_LOCAL_ACTIVE_TAB = "MEIO_ACTIVE_TAB";
-const string MEIO_LOCAL_EXAMINE_ITEM = "MEIO_EXAMINE_ITEM";
-const string MEIO_LOCAL_EXAMINE_DISABLED = "MEIO_EXAMINE_DISABLED";
+const string MEIO_LOCAL_TRANSFER_MODE = "MEIO_TRANSFER_MODE";
+const string MEIO_LOCAL_BATCH_BLOCKED = "MEIO_BATCH_BLOCKED";
 const string MEIO_CFG_SORT_MODE = "MEIO_CFG_SORT_MODE";
+const string MEIO_CFG_UI_SCALE = "MEIO_CFG_UI_SCALE";
 const string MEIO_CFG_DEBUG = "MEIO_CFG_DEBUG";
 const string MEIO_LOCAL_RESERVED = "MEIO_RESERVED";
 const string MEIO_LOCAL_RESERVED_KEY = "MEIO_RESERVED_KEY";
@@ -54,7 +55,6 @@ const string MEIO_LOCAL_SUPPRESS_GENERATION = "MEIO_SUPPRESS_GENERATION";
 const string MEIO_LOCAL_LANGUAGE = "MEIO_LANGUAGE";
 const string MEIO_LOCAL_ITEM_LANGUAGE = "MEIO_ITEM_LANGUAGE";
 const string MEIO_ESI_ACQUIRE = "meio.module.acquire";
-const string MEIO_ESI_ACTIVATE = "meio.module.activate";
 const string MEIO_ESI_GUI = "meio.module.gui";
 const string MEIO_ESI_TARGET = "meio.module.target";
 const string MEIO_ESI_CHAT = "meio.module.chat";
@@ -70,7 +70,32 @@ const int MEIO_TAB_POTIONS = 1;
 const int MEIO_SORT_MODE_AUTOMATIC = 0;
 const int MEIO_SORT_MODE_MANUAL = 1;
 const int MEIO_INITIAL_IMPORT_BATCH_SIZE = 4;
+const int MEIO_UI_SCALE_MINIMUM = 25;
+const int MEIO_UI_SCALE_MAXIMUM = 100;
+const int MEIO_UI_SCALE_DEFAULT = 50;
 const int MEIO_POTION_COLUMNS = 12;
+const int MEIO_TRANSFER_NONE = 0;
+const int MEIO_TRANSFER_STORE_SCROLLS = 1;
+const int MEIO_TRANSFER_STORE_POTIONS = 2;
+const int MEIO_TRANSFER_WITHDRAW_SCROLLS = 3;
+const int MEIO_TRANSFER_WITHDRAW_POTIONS = 4;
+const int MEIO_TRANSFER_INITIAL_IMPORT = 5;
+
+int MEIO_GetUIScalePercent(object oPC)
+{
+    int iScale = GetLocalInt(oPC, MEIO_CFG_UI_SCALE);
+    if (iScale < MEIO_UI_SCALE_MINIMUM || iScale > MEIO_UI_SCALE_MAXIMUM)
+    {
+        iScale = MEIO_UI_SCALE_DEFAULT;
+        SetLocalInt(oPC, MEIO_CFG_UI_SCALE, iScale);
+    }
+    return iScale;
+}
+
+float MEIO_GetUIScale(object oPC)
+{
+    return IntToFloat(MEIO_GetUIScalePercent(oPC)) / 100.0f;
+}
 
 void MEIO_MarkKeepOut(object oPC, object oItem)
 {
@@ -178,6 +203,25 @@ void MEIO_Debug(object oPC, string sMessage)
     WriteTimestampedLogEntry(sLine + " pc=" + ObjectToString(oPC));
 }
 
+void MEIO_EnforceExamineSuppression(object oPC, object oItem, string sPhase)
+{
+    if (!MEIO_IsDirectlyIn(oItem, oPC) || GetTag(oItem) != MEIO_SCRIPTORIUM_TAG)
+    {
+        MEIO_Debug(oPC, "Examine suppression skipped phase=" + sPhase + " item=" + ObjectToString(oItem));
+        return;
+    }
+    SetGuiPanelDisabled(oPC, GUI_PANEL_EXAMINE_ITEM, FALSE, oItem);
+    SetGuiPanelDisabled(oPC, GUI_PANEL_EXAMINE_ITEM, TRUE, oItem);
+    MEIO_Debug(oPC, "Examine suppression enforced phase=" + sPhase + " item=" + ObjectToString(oItem));
+}
+
+void MEIO_ScheduleExamineSuppression(object oPC, object oItem, string sReason)
+{
+    MEIO_EnforceExamineSuppression(oPC, oItem, sReason + "-immediate");
+    DelayCommand(0.0f, MEIO_EnforceExamineSuppression(oPC, oItem, sReason + "-next-frame"));
+    DelayCommand(0.1f, MEIO_EnforceExamineSuppression(oPC, oItem, sReason + "-delayed"));
+}
+
 string MEIO_DebugItemState(object oPC, object oItem)
 {
     if (!GetIsObjectValid(oItem))
@@ -199,6 +243,40 @@ int MEIO_IsPotion(object oItem)
     return GetIsObjectValid(oItem) && GetBaseItemType(oItem) == BASE_ITEM_POTIONS;
 }
 
+int MEIO_IsUsablePotion(object oItem);
+
+int MEIO_CanStoreItem(object oItem)
+{
+    return GetIsObjectValid(oItem) && !GetPlotFlag(oItem) && !GetItemCursedFlag(oItem) && GetGoldPieceValue(oItem) > 0 && (MEIO_IsScroll(oItem) || MEIO_IsUsablePotion(oItem));
+}
+
+int MEIO_IsTransferBusy(object oPC)
+{
+    return GetLocalInt(oPC, MEIO_LOCAL_TRANSFER_MODE) != MEIO_TRANSFER_NONE;
+}
+
+int MEIO_BeginTransfer(object oPC, int iMode, int bNotify)
+{
+    if (MEIO_IsTransferBusy(oPC) || GetIsObjectValid(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)))
+    {
+        if (bNotify)
+        {
+            SendMessageToPC(oPC, MEIO_GetText(oPC, "transfer_busy"));
+        }
+        return FALSE;
+    }
+    SetLocalInt(oPC, MEIO_LOCAL_TRANSFER_MODE, iMode);
+    return TRUE;
+}
+
+void MEIO_EndTransfer(object oPC, int iMode)
+{
+    if (GetLocalInt(oPC, MEIO_LOCAL_TRANSFER_MODE) == iMode)
+    {
+        DeleteLocalInt(oPC, MEIO_LOCAL_TRANSFER_MODE);
+    }
+}
+
 string MEIO_PadItemAppearance(int iAppearance)
 {
     if (iAppearance < 10)
@@ -212,12 +290,17 @@ string MEIO_PadItemAppearance(int iAppearance)
     return IntToString(iAppearance);
 }
 
-string MEIO_GetPotionIconLayer(object oPotion, int iPart)
+int MEIO_GetPotionIconAppearance(object oPotion, int iPart)
 {
     int iColor = GetItemAppearance(oPotion, ITEM_APPR_TYPE_WEAPON_COLOR, iPart);
     int iModel = GetItemAppearance(oPotion, ITEM_APPR_TYPE_WEAPON_MODEL, iPart);
-    string sPart = iPart == ITEM_APPR_WEAPON_MODEL_BOTTOM || iModel > 3 ? "b" : iPart == ITEM_APPR_WEAPON_MODEL_MIDDLE ? "m" : "t";
-    return "iit_potion_" + sPart + "_" + MEIO_PadItemAppearance(iColor * 10 + iModel);
+    return iModel * 10 + iColor;
+}
+
+string MEIO_GetPotionIconLayer(object oPotion, int iPart)
+{
+    string sPart = iPart == ITEM_APPR_WEAPON_MODEL_BOTTOM ? "b" : iPart == ITEM_APPR_WEAPON_MODEL_MIDDLE ? "m" : "t";
+    return "iit_potion_" + sPart + "_" + MEIO_PadItemAppearance(MEIO_GetPotionIconAppearance(oPotion, iPart));
 }
 
 int MEIO_GetOnlyCastSubtype(object oScroll)
@@ -281,7 +364,7 @@ string MEIO_GetVariantKey(object oScroll, int iSubtype)
 
 string MEIO_GetPotionKey(object oPotion, int iSubtype)
 {
-    return GetResRef(oPotion) + "|" + IntToString(iSubtype) + "|" + IntToString(GetItemAppearance(oPotion, ITEM_APPR_TYPE_WEAPON_MODEL, ITEM_APPR_WEAPON_MODEL_BOTTOM)) + "|" + IntToString(GetItemAppearance(oPotion, ITEM_APPR_TYPE_WEAPON_MODEL, ITEM_APPR_WEAPON_MODEL_MIDDLE)) + "|" + IntToString(GetItemAppearance(oPotion, ITEM_APPR_TYPE_WEAPON_MODEL, ITEM_APPR_WEAPON_MODEL_TOP));
+    return GetResRef(oPotion) + "|" + IntToString(iSubtype) + "|" + IntToString(MEIO_GetPotionIconAppearance(oPotion, ITEM_APPR_WEAPON_MODEL_BOTTOM)) + "|" + IntToString(MEIO_GetPotionIconAppearance(oPotion, ITEM_APPR_WEAPON_MODEL_MIDDLE)) + "|" + IntToString(MEIO_GetPotionIconAppearance(oPotion, ITEM_APPR_WEAPON_MODEL_TOP));
 }
 
 int MEIO_GetCasterLevel(int iSubtype)

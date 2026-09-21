@@ -8,10 +8,11 @@ Memoria Configuration Manager provides one persistent inventory item and a share
 - Supports player-specific and module-wide booleans, numbers, choices, action buttons, validation, and mod diagnostics.
 - Stores settings on the character or module so they persist in saved games and during the transition between modules.
 - Opens contextual help for an option with the right mouse button instead of showing unsolicited hover tooltips.
+- Opens directly with `/memoria-config`; the command can be assigned as a quickbar chat macro.
 
 ## Compatibility
 
-MECONFIG works with Memoria mods that register a `configuration` section in their manifest; other mods are unaffected. Mods that replace the module's `OnActivateItem` handler at runtime may prevent its inventory item from opening.
+MECONFIG works with Memoria mods that register a `configuration` section in their manifest; other mods are unaffected. Its item activation and player-chat hooks require Event Script Injector 2.1 or newer. Mods that replace the module's `OnActivateItem` handler at runtime may prevent its inventory item from opening.
 
 The [original LSE](https://steamcommunity.com/sharedfiles/filedetails/?id=2307769974) is incompatible with Memoria and its mods. Use the [Memoria edition](https://steamcommunity.com/sharedfiles/filedetails/?id=3803404663) instead.
 

@@ -4,6 +4,7 @@
   "mod_description": "Offnet den visuellen Taktikeditor. Legt priorisierte Aktionen und Bedingungen fur den Helden, einen bestimmten Begleiter oder eine Kreaturenart fest.",
   "installed": "Taktikarchitekt installiert, Version",
   "title": "Taktikarchitekt",
+  "command_hint": "Öffne diesen Editor mit /memoria-tact. Lege die Chatnachricht für schnellen Zugriff als Schnellleistenmakro ab.",
   "profile": "Charakter",
   "scope": "Profilbereich",
   "scope_exact": "Dieser Charakter",

@@ -6,7 +6,6 @@ void MEIO_InstallHooks()
 {
     object oModule = GetModule();
     ESI_InjectToObject(oModule, MEIO_ESI_ACQUIRE, EVENT_SCRIPT_MODULE_ON_ACQUIRE_ITEM, "meio_modacq", ESI_INJECTION_PLACEMENT_FIRST);
-    ESI_InjectToObject(oModule, MEIO_ESI_ACTIVATE, EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, "meio_modact", ESI_INJECTION_PLACEMENT_FIRST);
     ESI_InjectToObject(oModule, MEIO_ESI_GUI, EVENT_SCRIPT_MODULE_ON_PLAYER_GUIEVENT, "meio_guievt", ESI_INJECTION_PLACEMENT_FIRST);
     ESI_InjectToObject(oModule, MEIO_ESI_TARGET, EVENT_SCRIPT_MODULE_ON_PLAYER_TARGET, "meio_target", ESI_INJECTION_PLACEMENT_FIRST);
     ESI_InjectToObject(oModule, MEIO_ESI_CHAT, EVENT_SCRIPT_MODULE_ON_PLAYER_CHAT, "meio_modchat", ESI_INJECTION_PLACEMENT_LAST);
@@ -25,6 +24,7 @@ void MEIO_RunInitialImportBatch(object oPC, int iGeneration)
     {
         SetLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_DONE, TRUE);
         DeleteLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_RUNNING);
+        MEIO_EndTransfer(oPC, MEIO_TRANSFER_INITIAL_IMPORT);
         MEIO_Debug(oPC, "Initial Scriptorium import completed");
         return;
     }
@@ -37,6 +37,7 @@ void MEIO_Heartbeat(object oPC)
     {
         return;
     }
+    MEIO_GetUIScalePercent(oPC);
     MEIO_Debug(oPC, "Heartbeat entered; regular inventory sorting is disabled on heartbeat reserved=" + ObjectToString(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)) + " suppress=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_SORT)) + " sortMode=" + IntToString(GetLocalInt(oPC, MEIO_CFG_SORT_MODE)));
     MEMORIA_SetHeartbeatDiagnostic(oPC, "installing MEIO event hooks");
     MEIO_InstallHooks();
@@ -44,6 +45,7 @@ void MEIO_Heartbeat(object oPC)
     if (!ESI_IsRuntimeMarkerSet(oPC, MEIO_RUNTIME_INITIAL_IMPORT))
     {
         DeleteLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_RUNNING);
+        DeleteLocalInt(oPC, MEIO_LOCAL_TRANSFER_MODE);
         ESI_SetRuntimeMarker(oPC, MEIO_RUNTIME_INITIAL_IMPORT);
     }
     MEMORIA_SetHeartbeatDiagnostic(oPC, "initializing the Scriptorium and its physical storage");
@@ -75,10 +77,13 @@ void MEIO_Heartbeat(object oPC)
                     MEIO_MarkInitialImportItems(oPC);
                     SetLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_SNAPSHOT_DONE, TRUE);
                 }
-                int iGeneration = GetLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_GENERATION) + 1;
-                SetLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_GENERATION, iGeneration);
-                SetLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_RUNNING, TRUE);
-                MEIO_RunInitialImportBatch(oPC, iGeneration);
+                if (MEIO_BeginTransfer(oPC, MEIO_TRANSFER_INITIAL_IMPORT, FALSE))
+                {
+                    int iGeneration = GetLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_GENERATION) + 1;
+                    SetLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_GENERATION, iGeneration);
+                    SetLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_RUNNING, TRUE);
+                    MEIO_RunInitialImportBatch(oPC, iGeneration);
+                }
             }
         }
         MEMORIA_SetHeartbeatDiagnostic(oPC, "validating Scriptorium contents");

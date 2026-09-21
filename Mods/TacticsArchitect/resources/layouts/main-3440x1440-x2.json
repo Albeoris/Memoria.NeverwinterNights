@@ -34,9 +34,14 @@
         "height": 28
       },
       {
+        "id": "command-hint",
+        "type": "control",
+        "height": 36
+      },
+      {
         "id": "content",
         "type": "row",
-        "height": 465,
+        "height": 429,
         "gap": 8,
         "children": [
           {
@@ -52,7 +57,7 @@
               {
                 "id": "rules",
                 "type": "list",
-                "height": 411,
+                "height": 375,
                 "rowHeight": 32,
                 "sampleRows": 12,
                 "cells": [
@@ -94,7 +99,7 @@
               {
                 "id": "actions",
                 "type": "list",
-                "height": 411,
+                "height": 375,
                 "rowHeight": 32,
                 "sampleRows": 12,
                 "cells": [
@@ -137,7 +142,7 @@
               {
                 "id": "priorities",
                 "type": "list",
-                "height": 351,
+                "height": 315,
                 "rowHeight": 32,
                 "sampleRows": 10,
                 "cells": [

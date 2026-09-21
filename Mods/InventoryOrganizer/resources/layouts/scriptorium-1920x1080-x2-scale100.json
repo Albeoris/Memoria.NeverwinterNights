@@ -1,0 +1,55 @@
+{
+  "screen": { "width": 1920, "height": 1080, "uiScale": 2.0 },
+  "window": { "logicalWidth": 760, "logicalHeight": 500, "titleHeight": 24, "padding": 8 },
+  "root": {
+    "id": "spatial-storage-scale-100",
+    "type": "column",
+    "children": [
+      { "id": "tabs", "type": "control", "height": 30 },
+      { "id": "command-hint", "type": "control", "height": 22 },
+      { "id": "search", "type": "control", "height": 30 },
+      { "id": "filters", "type": "control", "height": 30 },
+      {
+        "id": "spell-list",
+        "type": "list",
+        "height": 307,
+        "rowHeight": 57,
+        "sampleRows": 5,
+        "scrollbars": "both",
+        "cells": [
+          {
+            "id": "row-widget",
+            "width": 82,
+            "child": {
+              "id": "row-layout",
+              "type": "row",
+              "width": 82,
+              "height": 57,
+              "children": [
+                { "id": "level", "type": "control", "width": 34, "height": 57 },
+                {
+                  "id": "spell",
+                  "type": "group",
+                  "width": 48,
+                  "height": 56,
+                  "borderInset": 0,
+                  "child": {
+                    "id": "spell-content",
+                    "type": "column",
+                    "width": 48,
+                    "height": 56,
+                    "children": [
+                      { "id": "icon", "type": "control", "width": 44, "height": 44 },
+                      { "id": "quantity", "type": "control", "width": 48, "height": 12 }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      { "id": "footer", "type": "control", "height": 32 }
+    ]
+  }
+}

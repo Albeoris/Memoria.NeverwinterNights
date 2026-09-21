@@ -14,6 +14,7 @@ Tactics Architect adds a persistent Dragon Age-style tactics editor for the play
 - Rechecks tactics immediately before committing abilities, with an optional legacy mode that queues them immediately.
 - Saves tactics for an individual character or creature type.
 - Opens contextual help for controls with the right mouse button.
+- Opens the editor directly with `/memoria-tact`; the command can be assigned as a quickbar chat macro.
 
 ## Compatibility
 
@@ -25,7 +26,7 @@ The [original LSE](https://steamcommunity.com/sharedfiles/filedetails/?id=230776
 
 Install Memoria, ESI, MECONFIG, and then METACT by copying each package's `override` contents into the NWN user `override` directory.
 
-Open **Memoria Configuration** from the inventory, select **Tactics Architect**, and choose **Open tactics editor**.
+Open **Memoria Configuration** from the inventory, select **Tactics Architect**, and choose **Open tactics editor**, or enter `/memoria-tact` in chat.
 
 ## Localization
 

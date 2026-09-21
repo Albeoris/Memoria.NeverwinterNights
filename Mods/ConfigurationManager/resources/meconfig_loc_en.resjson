@@ -7,5 +7,6 @@
   "save": "Save",
   "close": "Close",
   "help_hint": "Right-click an option to view its help.",
+  "command_hint": "Open this window with /memoria-config. For quick access, place this chat message as a quickbar macro.",
   "range_error": "must be between"
 }

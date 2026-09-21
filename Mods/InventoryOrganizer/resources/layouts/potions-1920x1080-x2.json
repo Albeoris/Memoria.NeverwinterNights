@@ -6,10 +6,11 @@
     "type": "column",
     "children": [
       { "id": "tabs", "type": "control", "height": 30 },
+      { "id": "command-hint", "type": "control", "height": 22 },
       {
         "id": "potion-grid",
         "type": "shelf",
-        "height": 382,
+        "height": 367,
         "unit": 54,
         "scroll": true,
         "items": [

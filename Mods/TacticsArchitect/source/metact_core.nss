@@ -6,10 +6,11 @@
 #include "memoria_locale"
 #include "memoria_loc"
 
-const string METACT_VERSION = "0.7.6";
+const string METACT_VERSION = "0.7.7";
 const string METACT_LOC_PREFIX = "metact";
 const string METACT_ESI_KEY_GUI = "metact.module.gui";
 const string METACT_ESI_KEY_TARGET = "metact.module.target";
+const string METACT_ESI_KEY_CHAT = "metact.module.chat";
 const string METACT_LOCAL_DATABASE = "METACT_DATABASE_V1";
 const string METACT_LOCAL_STORAGE_READY = "METACT_STORAGE_READY";
 const string METACT_LOCAL_STORAGE_SYNCED = "METACT_STORAGE_SYNCED";
@@ -85,6 +86,7 @@ const int METACT_EXECUTION_IMMEDIATE = 1;
 
 const string METACT_TEXT_INSTALLED = "installed";
 const string METACT_TEXT_TITLE = "title";
+const string METACT_TEXT_COMMAND_HINT = "command_hint";
 const string METACT_TEXT_PROFILE = "profile";
 const string METACT_TEXT_SCOPE = "scope";
 const string METACT_TEXT_SCOPE_EXACT = "scope_exact";
@@ -416,4 +418,5 @@ void METACT_InstallHook()
     object oModule = GetModule();
     ESI_InjectToObject(oModule, METACT_ESI_KEY_GUI, EVENT_SCRIPT_MODULE_ON_PLAYER_GUIEVENT, "metact_guievt", ESI_INJECTION_PLACEMENT_FIRST);
     ESI_InjectToObject(oModule, METACT_ESI_KEY_TARGET, EVENT_SCRIPT_MODULE_ON_PLAYER_TARGET, "metact_target", ESI_INJECTION_PLACEMENT_FIRST);
+    ESI_InjectToObject(oModule, METACT_ESI_KEY_CHAT, EVENT_SCRIPT_MODULE_ON_PLAYER_CHAT, "metact_chat", ESI_INJECTION_PLACEMENT_LAST);
 }

@@ -4,6 +4,7 @@
   "mod_description": "Apre l'editor visuale delle tattiche. Configura azioni e condizioni prioritarie per l'eroe, un compagno specifico o un tipo di creatura.",
   "installed": "Architetto tattico installato, versione",
   "title": "Architetto tattico",
+  "command_hint": "Apri questo editor con /memoria-tact. Per un accesso rapido, assegna il messaggio come macro della barra rapida.",
   "profile": "Personaggio",
   "scope": "Ambito del profilo",
   "scope_exact": "Questo personaggio",

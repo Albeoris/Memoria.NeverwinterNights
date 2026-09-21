@@ -464,7 +464,9 @@ json METACT_BuildMainWindow(object oPC)
     jDebugRow = JsonArrayInsert(jDebugRow, NuiWidth(NuiId(NuiButton(JsonString(METACT_GetText(METACT_TEXT_INSPECT_TARGET, oPC))), "debug_target"), 260.0f));
     jDebugRow = JsonArrayInsert(jDebugRow, NuiSpacer());
     jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiRow(jDebugRow), 28.0f));
-    float fContentHeight = fHeight - (fWidth >= 1000.0f ? 183.0f : 211.0f);
+    json jCommandHint = NuiLabel(JsonString(METACT_GetText(METACT_TEXT_COMMAND_HINT, oPC)), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE));
+    jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiStyleForegroundColor(jCommandHint, NuiColor(180, 180, 180)), 36.0f));
+    float fContentHeight = fHeight - (fWidth >= 1000.0f ? 219.0f : 247.0f);
     if (fWidth >= 800.0f)
     {
         float fContentWidth = fWidth - 24.0f;

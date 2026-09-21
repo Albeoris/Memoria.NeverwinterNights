@@ -7,5 +7,6 @@
   "save": "Speichern",
   "close": "Schließen",
   "help_hint": "Rechtsklicke auf eine Option, um ihre Hilfe anzuzeigen.",
+  "command_hint": "Öffne dieses Fenster mit /memoria-config. Lege die Chatnachricht für schnellen Zugriff als Schnellleistenmakro ab.",
   "range_error": "muss im Bereich liegen"
 }

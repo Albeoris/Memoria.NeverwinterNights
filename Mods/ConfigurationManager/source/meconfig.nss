@@ -8,6 +8,7 @@ const string MECONFIG_ITEM_RESREF = "meconfig";
 const string MECONFIG_ITEM_TAG = "MECONFIG_ITEM";
 const string MECONFIG_ACTIVATE_HANDLER = "meconfig_evact";
 const string MECONFIG_ESI_KEY = "meconfig.module.activate";
+const string MECONFIG_ESI_CHAT_KEY = "meconfig.module.chat";
 const string MECONFIG_WINDOW_ID = "meconfig";
 const string MECONFIG_LOC_PREFIX = "meconfig";
 const string MECONFIG_LOCAL_ITEM_SCHEMA = "MECONFIG_ITEM_SCHEMA";
@@ -25,6 +26,7 @@ const string MECONFIG_TEXT_NO_MODULES = "no_modules";
 const string MECONFIG_TEXT_SAVE = "save";
 const string MECONFIG_TEXT_RANGE_ERROR = "range_error";
 const string MECONFIG_TEXT_HELP_HINT = "help_hint";
+const string MECONFIG_TEXT_COMMAND_HINT = "command_hint";
 
 string MECONFIG_GetLanguage(object oPC)
 {
@@ -285,9 +287,11 @@ json MECONFIG_BuildWindow(object oPC, json jModule)
     jRow = JsonArrayInsert(jRow, NuiWidth(NuiGroup(MECONFIG_BuildModuleList(), TRUE, NUI_SCROLLBARS_NONE), 250.0f));
     jRow = JsonArrayInsert(jRow, NuiWidth(NuiGroup(MECONFIG_BuildOptions(oPC, jModule), TRUE, NUI_SCROLLBARS_Y), 540.0f));
     json jRoot = JsonArray();
-    jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiRow(jRow), 414.0f));
+    jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiRow(jRow), 378.0f));
     json jHint = NuiLabel(JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_HELP_HINT)), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE));
     jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiStyleForegroundColor(jHint, NuiColor(180, 180, 180)), 28.0f));
+    json jCommandHint = NuiLabel(JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_COMMAND_HINT)), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE));
+    jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiStyleForegroundColor(jCommandHint, NuiColor(180, 180, 180)), 36.0f));
     return NuiWindow(NuiCol(jRoot), JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_WINDOW_TITLE)), NuiRect(-1.0f, -1.0f, 830.0f, 500.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
 }
 
@@ -459,6 +463,7 @@ void MECONFIG_InstallHook()
 {
     object oModule = GetModule();
     ESI_InjectToObject(oModule, MECONFIG_ESI_KEY, EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, MECONFIG_ACTIVATE_HANDLER, ESI_INJECTION_PLACEMENT_FIRST);
+    ESI_InjectToObject(oModule, MECONFIG_ESI_CHAT_KEY, EVENT_SCRIPT_MODULE_ON_PLAYER_CHAT, "meconfig_chat", ESI_INJECTION_PLACEMENT_LAST);
 }
 
 void MECONFIG_Heartbeat(object oPC)

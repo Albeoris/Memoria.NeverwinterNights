@@ -7,5 +7,6 @@
   "save": "Salva",
   "close": "Chiudi",
   "help_hint": "Fai clic destro su un'opzione per visualizzarne la guida.",
+  "command_hint": "Apri questa finestra con /memoria-config. Per un accesso rapido, assegna il messaggio come macro della barra rapida.",
   "range_error": "deve essere compreso tra"
 }

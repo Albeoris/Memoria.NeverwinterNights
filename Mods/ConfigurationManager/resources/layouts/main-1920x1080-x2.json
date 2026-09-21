@@ -19,7 +19,7 @@
       {
         "id": "main",
         "type": "row",
-        "height": 414,
+        "height": 378,
         "gap": 8,
         "minimumSlack": 8,
         "children": [
@@ -66,6 +66,11 @@
         "id": "help-hint",
         "type": "control",
         "height": 28
+      },
+      {
+        "id": "command-hint",
+        "type": "control",
+        "height": 36
       }
     ]
   }

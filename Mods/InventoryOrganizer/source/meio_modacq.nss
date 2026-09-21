@@ -16,6 +16,11 @@ void main()
         MEIO_Debug(oPC, "OnAcquire decision=ignore reason=suppression-active " + MEIO_DebugItemState(oPC, oItem));
         return;
     }
+    if (MEIO_IsTransferBusy(oPC))
+    {
+        MEIO_Debug(oPC, "OnAcquire decision=ignore reason=bulk-transfer-active " + MEIO_DebugItemState(oPC, oItem));
+        return;
+    }
     if (MEIO_IsKeepOut(oPC, oItem))
     {
         MEIO_Debug(oPC, "OnAcquire decision=ignore reason=keep-out " + MEIO_DebugItemState(oPC, oItem));
@@ -26,9 +31,9 @@ void main()
         MEIO_Debug(oPC, "OnAcquire decision=ignore reason=manual-mode " + MEIO_DebugItemState(oPC, oItem));
         return;
     }
-    if (!MEIO_IsScroll(oItem) && !MEIO_IsUsablePotion(oItem))
+    if (!MEIO_CanStoreItem(oItem))
     {
-        MEIO_Debug(oPC, "OnAcquire decision=ignore reason=not-managed-item " + MEIO_DebugItemState(oPC, oItem));
+        MEIO_Debug(oPC, "OnAcquire decision=ignore reason=not-eligible-managed-item " + MEIO_DebugItemState(oPC, oItem));
         return;
     }
     if (!MEIO_IsDirectlyIn(oItem, oPC))

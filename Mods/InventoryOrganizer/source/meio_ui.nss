@@ -2,10 +2,7 @@
 
 #include "meio_cast"
 
-string MEIO_SlotSuffix(int iLevel, int iSlot)
-{
-    return IntToString(iLevel) + "_" + IntToString(iSlot);
-}
+void MEIO_OpenTab(object oPC, int iTab);
 
 int MEIO_CountLevel(json jIndex, int iLevel)
 {
@@ -27,12 +24,12 @@ json MEIO_BuildCapacities(object oPC, json jIndex)
     int iLevel;
     for (iLevel = 0; iLevel <= 9; iLevel++)
     {
-        jCapacities = JsonArrayInsert(jCapacities, JsonInt(MEIO_CountLevel(jIndex, iLevel) + 1));
+        jCapacities = JsonArrayInsert(jCapacities, JsonInt(MEIO_CountLevel(jIndex, iLevel)));
     }
     object oItem = GetFirstItemInInventory(oPC);
     while (GetIsObjectValid(oItem))
     {
-        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_IsScroll(oItem))
+        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_IsScroll(oItem) && MEIO_CanStoreItem(oItem))
         {
             int iSubtype = MEIO_GetOnlyCastSubtype(oItem);
             int iSpell = iSubtype >= 0 ? MEIO_GetSpell(iSubtype) : -1;
@@ -45,6 +42,21 @@ json MEIO_BuildCapacities(object oPC, json jIndex)
         oItem = GetNextItemInInventory(oPC);
     }
     return jCapacities;
+}
+
+int MEIO_GetSpellRowCapacity(json jCapacities)
+{
+    int iCapacity;
+    int iLevel;
+    for (iLevel = 0; iLevel <= 9; iLevel++)
+    {
+        int iLevelCapacity = JsonGetInt(JsonArrayGet(jCapacities, iLevel));
+        if (iLevelCapacity > iCapacity)
+        {
+            iCapacity = iLevelCapacity;
+        }
+    }
+    return iCapacity > 0 ? iCapacity : 1;
 }
 
 json MEIO_TargetEntries(object oPC)
@@ -62,7 +74,7 @@ int MEIO_BuildPotionCapacity(object oPC, json jIndex)
     object oItem = GetFirstItemInInventory(oPC);
     while (GetIsObjectValid(oItem))
     {
-        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_IsUsablePotion(oItem))
+        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_IsUsablePotion(oItem) && MEIO_CanStoreItem(oItem))
         {
             iCapacity++;
         }
@@ -101,29 +113,39 @@ json MEIO_BuildPotionGrid(int iCapacity)
     return NuiGroup(NuiCol(jRows), TRUE, NUI_SCROLLBARS_Y);
 }
 
-json MEIO_BuildSpellSlot(int iLevel, int iSlot)
+json MEIO_BuildSpellSlot(int iSlot, float fSlotWidth, float fIconSize, float fQuantityHeight)
 {
-    string sSuffix = MEIO_SlotSuffix(iLevel, iSlot);
+    string sSlot = IntToString(iSlot);
     json jCell = JsonArray();
-    json jButton = NuiTooltip(NuiId(NuiButtonImage(NuiBind("icon_" + sSuffix)), "spell_" + sSuffix), NuiBind("tip_" + sSuffix));
-    jCell = JsonArrayInsert(jCell, NuiHeight(NuiStyleForegroundColor(NuiLabel(NuiBind("quantity_" + sSuffix), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE)), NuiColor(225, 190, 95)), 18.0f));
-    jCell = JsonArrayInsert(jCell, NuiHeight(jButton, 44.0f));
-    return NuiWidth(NuiVisible(NuiCol(jCell), NuiBind("visible_" + sSuffix)), 48.0f);
+    json jButton = NuiTooltip(NuiId(NuiButtonImage(NuiBind("spell_icon_" + sSlot)), "spell_" + sSlot), NuiBind("spell_tip_" + sSlot));
+    jCell = JsonArrayInsert(jCell, NuiWidth(NuiHeight(jButton, fIconSize), fIconSize));
+    jCell = JsonArrayInsert(jCell, NuiHeight(NuiStyleForegroundColor(NuiLabel(NuiBind("spell_quantity_" + sSlot), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE)), NuiColor(225, 190, 95)), fQuantityHeight));
+    json jSlot = NuiPadding(NuiGroup(NuiCol(jCell), FALSE, NUI_SCROLLBARS_NONE), 0.0f);
+    return NuiWidth(NuiHeight(NuiVisible(jSlot, NuiBind("spell_visible_" + sSlot)), fIconSize + fQuantityHeight), fSlotWidth);
 }
 
-json MEIO_BuildLevelRow(json jCapacities, int iLevel)
+json MEIO_BuildLevelList(object oPC, json jCapacities)
 {
-    json jSpells = JsonArray();
-    int iCapacity = JsonGetInt(JsonArrayGet(jCapacities, iLevel));
+    int iCapacity = MEIO_GetSpellRowCapacity(jCapacities);
+    float fScale = MEIO_GetUIScale(oPC);
+    float fIconSize = 44.0f * fScale;
+    float fSlotWidth = 48.0f * fScale;
+    float fQuantityHeight = 12.0f;
+    float fRowHeight = fIconSize + fQuantityHeight + 1.0f;
+    float fLevelWidth = 34.0f * fScale;
+    json jRow = JsonArray();
+    json jLevel = NuiStyleForegroundColor(NuiLabel(NuiBind("spell_level"), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE)), NuiColor(225, 190, 95));
+    jRow = JsonArrayInsert(jRow, NuiWidth(jLevel, fLevelWidth));
     int iSlot;
     for (iSlot = 0; iSlot < iCapacity; iSlot++)
     {
-        jSpells = JsonArrayInsert(jSpells, MEIO_BuildSpellSlot(iLevel, iSlot));
+        jRow = JsonArrayInsert(jRow, MEIO_BuildSpellSlot(iSlot, fSlotWidth, fIconSize, fQuantityHeight));
     }
-    json jRow = JsonArray();
-    jRow = JsonArrayInsert(jRow, NuiWidth(NuiStyleForegroundColor(NuiLabel(JsonString(IntToString(iLevel)), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE)), NuiColor(225, 190, 95)), 34.0f));
-    jRow = JsonArrayInsert(jRow, NuiGroup(NuiRow(jSpells), FALSE, NUI_SCROLLBARS_X));
-    return NuiHeight(NuiRow(jRow), 82.0f);
+    json jRowElement = NuiPadding(NuiGroup(NuiRow(jRow), FALSE, NUI_SCROLLBARS_NONE), 0.0f);
+    jRowElement = NuiHeight(jRowElement, fRowHeight);
+    json jTemplate = JsonArray();
+    jTemplate = JsonArrayInsert(jTemplate, NuiListTemplateCell(jRowElement, fLevelWidth + fSlotWidth * IntToFloat(iCapacity), FALSE));
+    return NuiList(jTemplate, NuiBind("spell_level_count"), fRowHeight, FALSE, NUI_SCROLLBARS_BOTH);
 }
 
 json MEIO_BuildWindow(object oPC, json jCapacities, int iPotionCapacity, int iTab)
@@ -134,38 +156,39 @@ json MEIO_BuildWindow(object oPC, json jCapacities, int iPotionCapacity, int iTa
     jTabs = JsonArrayInsert(jTabs, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "tab_potions"))), "tab_potions"), 180.0f));
     jTabs = JsonArrayInsert(jTabs, NuiSpacer());
     jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiRow(jTabs), 30.0f));
+    string sCommandKey = iTab == MEIO_TAB_POTIONS ? "potions_command_hint" : "scrolls_command_hint";
+    json jCommandHint = NuiStyleForegroundColor(NuiLabel(JsonString(MEIO_GetText(oPC, sCommandKey)), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE)), NuiColor(180, 180, 180));
+    jRoot = JsonArrayInsert(jRoot, NuiHeight(jCommandHint, 22.0f));
     json jScrolls = JsonArray();
     json jSearch = JsonArray();
     jSearch = JsonArrayInsert(jSearch, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "search")), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), 70.0f));
     jSearch = JsonArrayInsert(jSearch, NuiTextEdit(JsonString(MEIO_GetText(oPC, "search_hint")), NuiBind("search"), 80, FALSE));
     jScrolls = JsonArrayInsert(jScrolls, NuiHeight(NuiRow(jSearch), 30.0f));
     json jFilters = JsonArray();
-    jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiCombo(MEIO_TargetEntries(oPC), NuiBind("target")), 500.0f));
+    jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiCombo(MEIO_TargetEntries(oPC), NuiBind("target")), 220.0f));
+    jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiCheck(JsonString(MEIO_GetText(oPC, "english_names")), NuiBind("english_names")), 205.0f));
+    jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiCheck(JsonString(MEIO_GetText(oPC, "show_caster_level")), NuiBind("show_caster_level")), 205.0f));
     jFilters = JsonArrayInsert(jFilters, NuiSpacer());
-    jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiLabel(NuiBind("result_count"), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 110.0f));
+    jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiLabel(NuiBind("result_count"), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 90.0f));
     jScrolls = JsonArrayInsert(jScrolls, NuiHeight(NuiRow(jFilters), 30.0f));
-    json jRows = JsonArray();
-    int iLevel;
-    for (iLevel = 0; iLevel <= 9; iLevel++)
-    {
-        jRows = JsonArrayInsert(jRows, MEIO_BuildLevelRow(jCapacities, iLevel));
-    }
-    jScrolls = JsonArrayInsert(jScrolls, NuiHeight(NuiGroup(NuiCol(jRows), TRUE, NUI_SCROLLBARS_Y), 322.0f));
+    jScrolls = JsonArrayInsert(jScrolls, NuiHeight(MEIO_BuildLevelList(oPC, jCapacities), 307.0f));
     json jScrollFooter = JsonArray();
-    jScrollFooter = JsonArrayInsert(jScrollFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "return_scrolls"))), "return_scrolls"), 190.0f));
+    jScrollFooter = JsonArrayInsert(jScrollFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "return_scrolls"))), "store_scrolls"), 170.0f));
+    jScrollFooter = JsonArrayInsert(jScrollFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "withdraw_all_scrolls"))), "withdraw_all_scrolls"), 170.0f));
     jScrollFooter = JsonArrayInsert(jScrollFooter, NuiSpacer());
-    jScrollFooter = JsonArrayInsert(jScrollFooter, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "withdraw_hint")), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 430.0f));
+    jScrollFooter = JsonArrayInsert(jScrollFooter, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "withdraw_hint")), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 350.0f));
     jScrolls = JsonArrayInsert(jScrolls, NuiHeight(NuiRow(jScrollFooter), 32.0f));
     if (iTab == MEIO_TAB_SCROLLS)
     {
         jRoot = JsonArrayInsert(jRoot, NuiCol(jScrolls));
     }
     json jPotions = JsonArray();
-    jPotions = JsonArrayInsert(jPotions, NuiHeight(MEIO_BuildPotionGrid(iPotionCapacity), 382.0f));
+    jPotions = JsonArrayInsert(jPotions, NuiHeight(MEIO_BuildPotionGrid(iPotionCapacity), 367.0f));
     json jPotionFooter = JsonArray();
-    jPotionFooter = JsonArrayInsert(jPotionFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "return_potions"))), "return_potions"), 190.0f));
+    jPotionFooter = JsonArrayInsert(jPotionFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "return_potions"))), "store_potions"), 170.0f));
+    jPotionFooter = JsonArrayInsert(jPotionFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "withdraw_all_potions"))), "withdraw_all_potions"), 170.0f));
     jPotionFooter = JsonArrayInsert(jPotionFooter, NuiSpacer());
-    jPotionFooter = JsonArrayInsert(jPotionFooter, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "potion_hint")), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 430.0f));
+    jPotionFooter = JsonArrayInsert(jPotionFooter, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "potion_hint")), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 350.0f));
     jPotions = JsonArrayInsert(jPotions, NuiHeight(NuiRow(jPotionFooter), 32.0f));
     if (iTab == MEIO_TAB_POTIONS)
     {
@@ -174,67 +197,106 @@ json MEIO_BuildWindow(object oPC, json jCapacities, int iPotionCapacity, int iTa
     return NuiWindow(NuiCol(jRoot), JsonString(MEIO_GetText(oPC, "window_title")), NuiRect(-1.0f, -1.0f, 760.0f, 500.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
 }
 
-string MEIO_BuildSpellTip(object oPC, json jEntry)
+string MEIO_BuildSpellTip(object oPC, json jEntry, int bEnglishNames, int bShowCasterLevel)
 {
-    string sName = JsonGetString(JsonObjectGet(jEntry, "name"));
-    string sDetails = JsonGetString(JsonObjectGet(jEntry, "alias"));
-    string sTip = sDetails == "" || sDetails == sName ? sName : sName + ": " + sDetails;
+    string sLocalizedName = JsonGetString(JsonObjectGet(jEntry, "name"));
+    string sEnglishName = JsonGetString(JsonObjectGet(jEntry, "alias"));
+    string sTip = bEnglishNames && sEnglishName != "" ? sEnglishName : sLocalizedName;
     int iCasterLevel = JsonGetInt(JsonObjectGet(jEntry, "caster_level"));
-    if (iCasterLevel > 0)
+    if (bShowCasterLevel && iCasterLevel > 0)
     {
         sTip += " (" + MEIO_GetText(oPC, "caster_level") + " " + IntToString(iCasterLevel) + ")";
     }
     return sTip;
 }
 
-void MEIO_SetEmptySlot(object oPC, int iToken, int iLevel, int iSlot)
-{
-    string sSuffix = MEIO_SlotSuffix(iLevel, iSlot);
-    NuiSetBind(oPC, iToken, "visible_" + sSuffix, JsonBool(FALSE));
-    NuiSetBind(oPC, iToken, "icon_" + sSuffix, JsonString(""));
-    NuiSetBind(oPC, iToken, "tip_" + sSuffix, JsonString(""));
-    NuiSetBind(oPC, iToken, "quantity_" + sSuffix, JsonString(""));
-}
-
 void MEIO_RefreshWindow(object oPC, int iToken)
 {
     json jIndex = GetLocalJson(oPC, MEIO_LOCAL_INDEX);
     json jFiltered = MEIO_FilterIndex(jIndex, NuiGetBind(oPC, iToken, "search"), JsonGetInt(NuiGetBind(oPC, iToken, "target")));
+    int bEnglishNames = JsonGetInt(NuiGetBind(oPC, iToken, "english_names"));
+    int bShowCasterLevel = JsonGetInt(NuiGetBind(oPC, iToken, "show_caster_level"));
     SetLocalJson(oPC, MEIO_LOCAL_FILTERED_INDEX, jFiltered);
     json jCapacities = GetLocalJson(oPC, MEIO_LOCAL_LEVEL_CAPACITIES);
-    json jDisplay = JsonObject();
-    int iLevel;
-    for (iLevel = 0; iLevel <= 9; iLevel++)
+    int iCapacity = MEIO_GetSpellRowCapacity(jCapacities);
+    json jLevels = JsonArray();
+    json jVisibleBySlot = JsonObject();
+    json jIconsBySlot = JsonObject();
+    json jTipsBySlot = JsonObject();
+    json jQuantitiesBySlot = JsonObject();
+    json jDisplayRows = JsonArray();
+    int iBindSlot;
+    for (iBindSlot = 0; iBindSlot < iCapacity; iBindSlot++)
     {
-        int iSlot = 0;
+        string sBindSlot = IntToString(iBindSlot);
+        jVisibleBySlot = JsonObjectSet(jVisibleBySlot, sBindSlot, JsonArray());
+        jIconsBySlot = JsonObjectSet(jIconsBySlot, sBindSlot, JsonArray());
+        jTipsBySlot = JsonObjectSet(jTipsBySlot, sBindSlot, JsonArray());
+        jQuantitiesBySlot = JsonObjectSet(jQuantitiesBySlot, sBindSlot, JsonArray());
+    }
+    int iLevel;
+    for (iLevel = 9; iLevel >= 0; iLevel--)
+    {
+        json jLevelEntries = JsonArray();
         int iIndex;
         for (iIndex = 0; iIndex < JsonGetLength(jFiltered); iIndex++)
         {
             json jEntry = JsonArrayGet(jFiltered, iIndex);
-            if (JsonGetInt(JsonObjectGet(jEntry, "level")) != iLevel)
+            if (JsonGetInt(JsonObjectGet(jEntry, "level")) == iLevel)
             {
-                continue;
+                jLevelEntries = JsonArrayInsert(jLevelEntries, jEntry);
             }
-            if (iSlot >= JsonGetInt(JsonArrayGet(jCapacities, iLevel)))
-            {
-                break;
-            }
-            string sSuffix = MEIO_SlotSuffix(iLevel, iSlot);
-            NuiSetBind(oPC, iToken, "visible_" + sSuffix, JsonBool(TRUE));
-            NuiSetBind(oPC, iToken, "icon_" + sSuffix, JsonObjectGet(jEntry, "icon"));
-            NuiSetBind(oPC, iToken, "tip_" + sSuffix, JsonString(MEIO_BuildSpellTip(oPC, jEntry)));
-            NuiSetBind(oPC, iToken, "quantity_" + sSuffix, JsonString("x" + IntToString(JsonGetInt(JsonObjectGet(jEntry, "quantity")))));
-            jDisplay = JsonObjectSet(jDisplay, "spell_" + sSuffix, jEntry);
-            iSlot++;
         }
-        int iCapacity = JsonGetInt(JsonArrayGet(jCapacities, iLevel));
-        while (iSlot < iCapacity)
+        int iLevelCount = JsonGetLength(jLevelEntries);
+        if (iLevelCount == 0)
         {
-            MEIO_SetEmptySlot(oPC, iToken, iLevel, iSlot);
-            iSlot++;
+            continue;
         }
+        jLevels = JsonArrayInsert(jLevels, JsonString(IntToString(iLevel)));
+        json jDisplayRow = JsonObject();
+        int iSlot;
+        for (iSlot = 0; iSlot < iCapacity; iSlot++)
+        {
+            string sSlot = IntToString(iSlot);
+            json jVisible = JsonObjectGet(jVisibleBySlot, sSlot);
+            json jIcons = JsonObjectGet(jIconsBySlot, sSlot);
+            json jTips = JsonObjectGet(jTipsBySlot, sSlot);
+            json jQuantities = JsonObjectGet(jQuantitiesBySlot, sSlot);
+            if (iSlot < iLevelCount)
+            {
+                json jEntry = JsonArrayGet(jLevelEntries, iSlot);
+                jVisible = JsonArrayInsert(jVisible, JsonBool(TRUE));
+                jIcons = JsonArrayInsert(jIcons, JsonObjectGet(jEntry, "icon"));
+                jTips = JsonArrayInsert(jTips, JsonString(MEIO_BuildSpellTip(oPC, jEntry, bEnglishNames, bShowCasterLevel)));
+                jQuantities = JsonArrayInsert(jQuantities, JsonString("x" + IntToString(JsonGetInt(JsonObjectGet(jEntry, "quantity")))));
+                jDisplayRow = JsonObjectSet(jDisplayRow, "spell_" + sSlot, jEntry);
+            }
+            else
+            {
+                jVisible = JsonArrayInsert(jVisible, JsonBool(FALSE));
+                jIcons = JsonArrayInsert(jIcons, JsonString(""));
+                jTips = JsonArrayInsert(jTips, JsonString(""));
+                jQuantities = JsonArrayInsert(jQuantities, JsonString(""));
+            }
+            jVisibleBySlot = JsonObjectSet(jVisibleBySlot, sSlot, jVisible);
+            jIconsBySlot = JsonObjectSet(jIconsBySlot, sSlot, jIcons);
+            jTipsBySlot = JsonObjectSet(jTipsBySlot, sSlot, jTips);
+            jQuantitiesBySlot = JsonObjectSet(jQuantitiesBySlot, sSlot, jQuantities);
+        }
+        jDisplayRows = JsonArrayInsert(jDisplayRows, jDisplayRow);
     }
-    SetLocalJson(oPC, MEIO_LOCAL_DISPLAY_ENTRIES, jDisplay);
+    int iSlot;
+    for (iSlot = 0; iSlot < iCapacity; iSlot++)
+    {
+        string sSlot = IntToString(iSlot);
+        NuiSetBind(oPC, iToken, "spell_visible_" + sSlot, JsonObjectGet(jVisibleBySlot, sSlot));
+        NuiSetBind(oPC, iToken, "spell_icon_" + sSlot, JsonObjectGet(jIconsBySlot, sSlot));
+        NuiSetBind(oPC, iToken, "spell_tip_" + sSlot, JsonObjectGet(jTipsBySlot, sSlot));
+        NuiSetBind(oPC, iToken, "spell_quantity_" + sSlot, JsonObjectGet(jQuantitiesBySlot, sSlot));
+    }
+    NuiSetBind(oPC, iToken, "spell_level", jLevels);
+    NuiSetBind(oPC, iToken, "spell_level_count", JsonInt(JsonGetLength(jLevels)));
+    SetLocalJson(oPC, MEIO_LOCAL_DISPLAY_ENTRIES, jDisplayRows);
     NuiSetBind(oPC, iToken, "result_count", JsonString(IntToString(JsonGetLength(jFiltered)) + " / " + IntToString(JsonGetLength(jIndex))));
 }
 
@@ -288,7 +350,39 @@ void MEIO_RebuildWindowIndex(object oPC, int iToken)
 {
     object oStorage = MEIO_EnsureStorage(oPC);
     object oPotionStorage = MEIO_EnsurePotionStorage(oPC);
-    SetLocalJson(oPC, MEIO_LOCAL_INDEX, MEIO_BuildIndex(oStorage));
+    json jIndex = MEIO_BuildIndex(oStorage);
+    if (GetLocalInt(oPC, MEIO_LOCAL_ACTIVE_TAB) == MEIO_TAB_SCROLLS)
+    {
+        int iRequiredCapacity;
+        int iLevel;
+        for (iLevel = 0; iLevel <= 9; iLevel++)
+        {
+            int iLevelCount = MEIO_CountLevel(jIndex, iLevel);
+            if (iLevelCount > iRequiredCapacity)
+            {
+                iRequiredCapacity = iLevelCount;
+            }
+        }
+        if (iRequiredCapacity > MEIO_GetSpellRowCapacity(GetLocalJson(oPC, MEIO_LOCAL_LEVEL_CAPACITIES)))
+        {
+            json jSearch = NuiGetBind(oPC, iToken, "search");
+            int iTarget = JsonGetInt(NuiGetBind(oPC, iToken, "target"));
+            int bEnglishNames = JsonGetInt(NuiGetBind(oPC, iToken, "english_names"));
+            int bShowCasterLevel = JsonGetInt(NuiGetBind(oPC, iToken, "show_caster_level"));
+            MEIO_OpenTab(oPC, MEIO_TAB_SCROLLS);
+            int iNewToken = NuiFindWindow(oPC, MEIO_WINDOW);
+            if (iNewToken > 0)
+            {
+                NuiSetBind(oPC, iNewToken, "search", jSearch);
+                NuiSetBind(oPC, iNewToken, "target", JsonInt(iTarget));
+                NuiSetBind(oPC, iNewToken, "english_names", JsonBool(bEnglishNames));
+                NuiSetBind(oPC, iNewToken, "show_caster_level", JsonBool(bShowCasterLevel));
+                MEIO_RefreshWindow(oPC, iNewToken);
+            }
+            return;
+        }
+    }
+    SetLocalJson(oPC, MEIO_LOCAL_INDEX, jIndex);
     SetLocalJson(oPC, MEIO_LOCAL_POTION_INDEX, MEIO_BuildPotionIndex(oPotionStorage));
     if (GetLocalInt(oPC, MEIO_LOCAL_ACTIVE_TAB) == MEIO_TAB_POTIONS)
     {
@@ -417,9 +511,13 @@ void MEIO_OpenTab(object oPC, int iTab)
         {
             NuiSetBind(oPC, iToken, "search", JsonString(""));
             NuiSetBind(oPC, iToken, "target", JsonInt(MEIO_TARGET_ALL));
+            NuiSetBind(oPC, iToken, "english_names", JsonBool(FALSE));
+            NuiSetBind(oPC, iToken, "show_caster_level", JsonBool(FALSE));
             MEIO_RefreshWindow(oPC, iToken);
             NuiSetBindWatch(oPC, iToken, "search", TRUE);
             NuiSetBindWatch(oPC, iToken, "target", TRUE);
+            NuiSetBindWatch(oPC, iToken, "english_names", TRUE);
+            NuiSetBindWatch(oPC, iToken, "show_caster_level", TRUE);
         }
         else
         {

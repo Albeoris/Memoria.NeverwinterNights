@@ -87,7 +87,7 @@ void MEIO_CopyRuntimeFlags(object oSource, object oCopy)
 object MEIO_ExtractStoredItem(object oPC, object oStorage, object oSource, int iBaseItem)
 {
     MEIO_Debug(oPC, "ExtractOne entered storage=" + ObjectToString(oStorage) + " " + MEIO_DebugItemState(oPC, oSource));
-    if (!MEIO_IsInScriptorium(oStorage, oSource) || !GetBaseItemFitsInInventory(iBaseItem, oPC))
+    if (!MEIO_IsInScriptorium(oStorage, oSource))
     {
         MEIO_Debug(oPC, "ExtractOne decision=fail inStorage=" + IntToString(MEIO_IsInScriptorium(oStorage, oSource)) + " fits=" + IntToString(GetBaseItemFitsInInventory(iBaseItem, oPC)));
         return OBJECT_INVALID;
@@ -158,9 +158,90 @@ object MEIO_ExtractPotionOne(object oPC, object oStorage, object oSource)
     return MEIO_ExtractStoredItem(oPC, oStorage, oSource, BASE_ITEM_POTIONS);
 }
 
+int MEIO_WithdrawStoredStack(object oPC, object oStorage, object oSource, int iBaseItem)
+{
+    if (!MEIO_IsInScriptorium(oStorage, oSource) || !GetBaseItemFitsInInventory(iBaseItem, oPC))
+    {
+        return -1;
+    }
+    int iSubtype = MEIO_GetOnlyCastSubtype(oSource);
+    string sKey = iBaseItem == BASE_ITEM_POTIONS ? MEIO_GetPotionKey(oSource, iSubtype) : MEIO_GetVariantKey(oSource, iSubtype);
+    int iBefore = iBaseItem == BASE_ITEM_POTIONS ? MEIO_CountPotionVariant(oPC, sKey) : MEIO_CountVariant(oPC, sKey);
+    int iSourceSize = GetItemStackSize(oSource);
+    object oCopy = CopyItem(oSource, oPC, TRUE);
+    int iAfter = iBaseItem == BASE_ITEM_POTIONS ? MEIO_CountPotionVariant(oPC, sKey) : MEIO_CountVariant(oPC, sKey);
+    int iMoved = iAfter - iBefore;
+    if (GetIsObjectValid(oCopy) && !MEIO_IsDirectlyIn(oCopy, oPC))
+    {
+        DestroyObject(oCopy);
+    }
+    if (iMoved <= 0)
+    {
+        return -1;
+    }
+    if (iMoved > iSourceSize)
+    {
+        iMoved = iSourceSize;
+    }
+    if (MEIO_IsDirectlyIn(oCopy, oPC))
+    {
+        MEIO_CopyRuntimeFlags(oSource, oCopy);
+        MEIO_MarkKeepOut(oPC, oCopy);
+    }
+    if (iMoved >= iSourceSize)
+    {
+        DestroyObject(oSource);
+    }
+    else
+    {
+        SetItemStackSize(oSource, iSourceSize - iMoved);
+    }
+    MEIO_ScheduleStorageSave(oPC);
+    return iMoved;
+}
+
+int MEIO_WithdrawStorageBatch(object oPC, int iBaseItem, int iLimit)
+{
+    object oStorage = iBaseItem == BASE_ITEM_POTIONS ? MEIO_EnsurePotionStorage(oPC) : MEIO_EnsureStorage(oPC);
+    int iAttempted;
+    int iMoved;
+    DeleteLocalInt(oPC, MEIO_LOCAL_BATCH_BLOCKED);
+    object oItem = GetFirstItemInInventory(oStorage);
+    while (GetIsObjectValid(oItem))
+    {
+        object oNext = GetNextItemInInventory(oStorage);
+        int bMatches = iBaseItem == BASE_ITEM_POTIONS ? MEIO_IsUsablePotion(oItem) : MEIO_IsScroll(oItem);
+        if (MEIO_IsDirectlyIn(oItem, oStorage) && bMatches)
+        {
+            int iItemMoved = MEIO_WithdrawStoredStack(oPC, oStorage, oItem, iBaseItem);
+            if (iItemMoved < 0)
+            {
+                SetLocalInt(oPC, MEIO_LOCAL_BATCH_BLOCKED, TRUE);
+                SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
+                return TRUE;
+            }
+            iMoved += iItemMoved;
+            iAttempted++;
+            if (iAttempted >= iLimit)
+            {
+                SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
+                return FALSE;
+            }
+        }
+        oItem = oNext;
+    }
+    SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
+    return TRUE;
+}
+
 int MEIO_WithdrawOne(object oPC, json jSelected)
 {
     MEIO_Debug(oPC, "WithdrawOne entered selection=" + JsonDump(jSelected));
+    if (MEIO_IsTransferBusy(oPC))
+    {
+        SendMessageToPC(oPC, MEIO_GetText(oPC, "transfer_busy"));
+        return FALSE;
+    }
     if (GetIsObjectValid(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)))
     {
         MEIO_Debug(oPC, "WithdrawOne decision=fail reason=reservation-already-active reserved=" + ObjectToString(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)));
@@ -195,6 +276,11 @@ int MEIO_WithdrawOne(object oPC, json jSelected)
 int MEIO_WithdrawPotionOne(object oPC, json jSelected)
 {
     MEIO_Debug(oPC, "WithdrawPotionOne entered selection=" + JsonDump(jSelected));
+    if (MEIO_IsTransferBusy(oPC))
+    {
+        SendMessageToPC(oPC, MEIO_GetText(oPC, "transfer_busy"));
+        return FALSE;
+    }
     if (GetIsObjectValid(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)))
     {
         return FALSE;
@@ -309,6 +395,11 @@ void MEIO_IssueUseAtLocation(object oPC, location lTarget)
 int MEIO_BeginCast(object oPC, json jSelected)
 {
     MEIO_Debug(oPC, "BeginCast entered selection=" + JsonDump(jSelected));
+    if (MEIO_IsTransferBusy(oPC))
+    {
+        SendMessageToPC(oPC, MEIO_GetText(oPC, "transfer_busy"));
+        return FALSE;
+    }
     if (GetIsObjectValid(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)))
     {
         MEIO_Debug(oPC, "BeginCast decision=fail reason=reservation-already-active reserved=" + ObjectToString(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)));
@@ -338,7 +429,11 @@ int MEIO_BeginCast(object oPC, json jSelected)
     SetLocalString(oPC, MEIO_LOCAL_RESERVED_KEY, IntToString(iSubtype));
     MEIO_Debug(oPC, "BeginCast extracted subtype=" + IntToString(iSubtype) + " spell=" + IntToString(iSpell) + " " + MEIO_DebugItemState(oPC, oReserved));
     int iWindow = NuiFindWindow(oPC, MEIO_WINDOW);
-    if (iWindow > 0) NuiDestroy(oPC, iWindow);
+    if (iWindow > 0)
+    {
+        NuiDestroy(oPC, iWindow);
+    }
+    MEIO_ScheduleExamineSuppression(oPC, MEIO_FindScriptorium(oPC), "scroll-use");
     if (Get2DAString("spells", "Range", iSpell) == "P")
     {
         MEIO_Debug(oPC, "BeginCast decision=personal-target");
@@ -358,6 +453,11 @@ int MEIO_BeginCast(object oPC, json jSelected)
 int MEIO_BeginPotionUse(object oPC, json jSelected)
 {
     MEIO_Debug(oPC, "BeginPotionUse entered selection=" + JsonDump(jSelected));
+    if (MEIO_IsTransferBusy(oPC))
+    {
+        SendMessageToPC(oPC, MEIO_GetText(oPC, "transfer_busy"));
+        return FALSE;
+    }
     if (GetIsObjectValid(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)))
     {
         return FALSE;
@@ -387,6 +487,7 @@ int MEIO_BeginPotionUse(object oPC, json jSelected)
     {
         NuiDestroy(oPC, iWindow);
     }
+    MEIO_ScheduleExamineSuppression(oPC, MEIO_FindScriptorium(oPC), "potion-use");
     MEIO_IssueUseOnObject(oPC, oPC);
     return TRUE;
 }

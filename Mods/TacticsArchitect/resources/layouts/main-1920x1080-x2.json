@@ -39,9 +39,14 @@
         "height": 28
       },
       {
+        "id": "command-hint",
+        "type": "control",
+        "height": 36
+      },
+      {
         "id": "content",
         "type": "row",
-        "height": 275,
+        "height": 239,
         "gap": 8,
         "children": [
           {

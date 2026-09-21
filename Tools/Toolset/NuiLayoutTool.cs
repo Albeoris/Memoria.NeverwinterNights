@@ -160,6 +160,7 @@ internal static class NuiLayoutTool
         double rowHeight = Number(node, "rowHeight", 30.0);
         int sampleRows = Math.Max(1, (int)Number(node, "sampleRows", Math.Floor(viewport.Height / rowHeight)));
         JsonArray cells = node["cells"]?.AsArray() ?? [];
+        if (cells.Count > 16) diagnostics.Add($"{Text(node, "id", "list")}: {cells.Count} template cells exceed the NUI limit of 16.");
         double fixedWidth = 0.0;
         double growTotal = 0.0;
         foreach (JsonNode? cellNode in cells)
@@ -182,6 +183,10 @@ internal static class NuiLayoutTool
                 Rect cellRect = new(x, viewport.Y + row * rowHeight, cellWidth, rowHeight);
                 string id = $"{Text(node, "id", "list")}.row{row}.{Text(cell, "id", "cell" + cellIndex)}";
                 elements.Add(new Element(id, "list-cell", cellRect, ToPhysical(cellRect, scale, physicalWindow)));
+                if (cell["child"] is JsonObject child)
+                {
+                    LayoutNode(child, cellRect, scale, physicalWindow, elements, diagnostics, id + ".child");
+                }
                 x += cellWidth;
             }
         }

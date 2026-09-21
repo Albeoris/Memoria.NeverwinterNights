@@ -8,6 +8,7 @@
   "configuration": {
     "name": "Inventory Organizer",
     "name_key": "mod_display_name",
+    "apply": "meio_apply",
     "localization": {
       "prefix": "meio"
     },
@@ -32,6 +33,17 @@
             "label_key": "sort_mode_manual"
           }
         ]
+      },
+      {
+        "type": "int",
+        "scope": "player",
+        "local": "MEIO_CFG_UI_SCALE",
+        "label": "Item scale (%)",
+        "label_key": "ui_scale_label",
+        "tooltip": "Sets the size of spell entries in Spatial Storage. Allowed range: 25-100%. The default is 50%.",
+        "tooltip_key": "ui_scale_tooltip",
+        "minimum": 25,
+        "maximum": 100
       },
       {
         "type": "bool",
