@@ -7,7 +7,16 @@
     "children": [
       { "id": "tabs", "type": "control", "height": 30 },
       { "id": "command-hint", "type": "control", "height": 22 },
-      { "id": "search", "type": "control", "height": 30 },
+      {
+        "id": "search",
+        "type": "row",
+        "height": 30,
+        "children": [
+          { "id": "search-label", "type": "control", "width": 70, "height": 30 },
+          { "id": "search-input", "type": "control", "grow": 1, "height": 30 },
+          { "id": "english-names", "type": "control", "width": 205, "height": 30 }
+        ]
+      },
       {
         "id": "book-grid",
         "type": "shelf",

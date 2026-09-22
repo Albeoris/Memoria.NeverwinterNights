@@ -6,14 +6,14 @@ Memoria Inventory Organizer adds **Spatial Storage** to every player character. 
 
 - Independently configures automatic storage of eligible newly acquired scrolls, potions, and books. Plot, cursed, zero-value, non-droppable, infinite, or enchanted books are never stored; local variables do not affect eligibility.
 - Imports all eligible carried scrolls and potions once when the character first receives Spatial Storage, using bounded batches every 0.1 seconds to stay within the VM instruction limit.
-- Provides separate Scrolls, Potions, and Books tabs with real item icons. Book search matches both localized and English titles, and duplicate copies can be burned in bounded batches.
+- Provides separate Scrolls, Potions, and Books tabs with real item icons. Book search always matches both localized and English titles; a checkbox selects which title is displayed. Left-click opens the book description without closing storage, and duplicate copies can be burned in bounded batches.
 - Displays the current physical contents as compact spell-icon rows grouped by spell level, omitting empty levels after every search, filter, addition, or removal, with localized names in tooltips.
 - Filters scrolls by self, ally/beneficial-area, or enemy/hostile-area targeting; search matches both the current language and the English 2DA label.
 - Keeps different cast-spell subtypes separate, so variants with different caster levels remain distinguishable.
 - Extracts one non-merging scroll for normal item-use targeting, then returns it on cancellation, interruption, or failed use when it remains available.
 - Withdraws one item with a right-click; buttons store carried items or withdraw every stored item in bounded asynchronous batches. Only one bulk transfer can run at a time, and withdrawal stops safely when the inventory is full.
 - Keeps cast and explicitly withdrawn scrolls outside automatic storage through item locals, a player-side object registry, and acquisition-safe temporary tags until they are consumed or explicitly returned.
-- Configures automatic storage on `OnAcquireItem` or request-only storage through Memoria Configuration Manager. Heartbeats never perform recurring inventory collection.
+- Configures automatic storage on `OnAcquireItem` or request-only storage through Memoria Configuration Manager. An optional setting keeps the window open after potions and personal-range scrolls. Heartbeats never perform recurring inventory collection.
 - Provides an opt-in debug-message setting that traces acquisition, extraction, casting, and storage decisions both in character chat and `nwengineLog.txt`.
 - Rejects contents that do not match their hidden store and drops them at the player character's location.
 

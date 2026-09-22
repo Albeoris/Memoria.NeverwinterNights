@@ -1,4 +1,6 @@
 {
+  "keep_untargeted_open_label": "Keep storage open for untargeted actions",
+  "keep_untargeted_open_tooltip": "Keeps Spatial Storage open after drinking a potion or casting a personal-range scroll.",
   "item_name": "Spatial Storage",
   "item_description": "A spatial vault that stores scrolls, potions, books, notes, and journals. Examine it to open the inventory.",
   "window_title": "Spatial Storage",

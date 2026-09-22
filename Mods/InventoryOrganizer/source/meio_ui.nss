@@ -244,6 +244,7 @@ json MEIO_BuildWindow(object oPC, json jCapacities, int iPotionCapacity, int iBo
     json jBookSearch = JsonArray();
     jBookSearch = JsonArrayInsert(jBookSearch, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "search")), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), 70.0f));
     jBookSearch = JsonArrayInsert(jBookSearch, NuiTextEdit(JsonString(MEIO_GetText(oPC, "book_search_hint")), NuiBind("book_search"), 80, FALSE));
+    jBookSearch = JsonArrayInsert(jBookSearch, NuiWidth(NuiCheck(JsonString(MEIO_GetText(oPC, "english_names")), NuiBind("book_english_names")), 205.0f));
     jBooks = JsonArrayInsert(jBooks, NuiHeight(NuiRow(jBookSearch), 30.0f));
     jBooks = JsonArrayInsert(jBooks, NuiHeight(MEIO_BuildBookGrid(iBookCapacity), 337.0f));
     json jBookFooter = JsonArray();
@@ -258,6 +259,24 @@ json MEIO_BuildWindow(object oPC, json jCapacities, int iPotionCapacity, int iBo
         jRoot = JsonArrayInsert(jRoot, NuiCol(jBooks));
     }
     return NuiWindow(NuiCol(jRoot), JsonString(MEIO_GetText(oPC, "window_title")), NuiRect(-1.0f, -1.0f, 760.0f, 500.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
+}
+
+json MEIO_BuildBookDescriptionWindow(json jBook, int bEnglishNames)
+{
+    json jRoot = JsonArray();
+    jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiText(JsonObjectGet(jBook, "description"), TRUE, NUI_SCROLLBARS_AUTO), 336.0f));
+    json jTitle = bEnglishNames && JsonGetString(JsonObjectGet(jBook, "alias")) != "" ? JsonObjectGet(jBook, "alias") : JsonObjectGet(jBook, "name");
+    return NuiWindow(NuiCol(jRoot), jTitle, NuiRect(-1.0f, -1.0f, 520.0f, 400.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
+}
+
+void MEIO_ShowBookDescription(object oPC, json jBook, int bEnglishNames)
+{
+    int iOldToken = NuiFindWindow(oPC, MEIO_BOOK_DESCRIPTION_WINDOW);
+    if (iOldToken > 0)
+    {
+        NuiDestroy(oPC, iOldToken);
+    }
+    NuiCreate(oPC, MEIO_BuildBookDescriptionWindow(jBook, bEnglishNames), MEIO_BOOK_DESCRIPTION_WINDOW, "memoria_noop");
 }
 
 string MEIO_BuildSpellTip(object oPC, json jEntry, int bEnglishNames, int bShowCasterLevel)
@@ -409,11 +428,11 @@ void MEIO_RefreshPotionWindow(object oPC, int iToken)
     SetLocalJson(oPC, MEIO_LOCAL_POTION_ENTRIES, jDisplay);
 }
 
-string MEIO_BuildBookTip(json jEntry)
+string MEIO_BuildBookTip(json jEntry, int bEnglishNames)
 {
     string sName = JsonGetString(JsonObjectGet(jEntry, "name"));
     string sEnglishName = JsonGetString(JsonObjectGet(jEntry, "alias"));
-    return sEnglishName == "" || sEnglishName == sName ? sName : sName + ": " + sEnglishName;
+    return bEnglishNames && sEnglishName != "" ? sEnglishName : sName;
 }
 
 void MEIO_SetEmptyBookSlot(object oPC, int iToken, int iSlot)
@@ -429,6 +448,7 @@ void MEIO_RefreshBookWindow(object oPC, int iToken)
 {
     json jIndex = GetLocalJson(oPC, MEIO_LOCAL_BOOK_INDEX);
     json jFiltered = MEIO_FilterBookIndex(jIndex, NuiGetBind(oPC, iToken, "book_search"));
+    int bEnglishNames = JsonGetInt(NuiGetBind(oPC, iToken, "book_english_names"));
     int iCapacity = GetLocalInt(oPC, MEIO_LOCAL_BOOK_CAPACITY);
     json jDisplay = JsonObject();
     int iSlot;
@@ -441,7 +461,7 @@ void MEIO_RefreshBookWindow(object oPC, int iToken)
             NuiSetBind(oPC, iToken, "book_visible_" + sSlot, JsonBool(TRUE));
             NuiSetBind(oPC, iToken, "book_icon_" + sSlot, JsonObjectGet(jEntry, "icon"));
             NuiSetBind(oPC, iToken, "book_quantity_" + sSlot, JsonString("x" + IntToString(JsonGetInt(JsonObjectGet(jEntry, "quantity")))));
-            NuiSetBind(oPC, iToken, "book_tip_" + sSlot, JsonString(MEIO_BuildBookTip(jEntry)));
+            NuiSetBind(oPC, iToken, "book_tip_" + sSlot, JsonString(MEIO_BuildBookTip(jEntry, bEnglishNames)));
             jDisplay = JsonObjectSet(jDisplay, "book_" + sSlot, jEntry);
         }
         else
@@ -495,11 +515,13 @@ void MEIO_RebuildWindowIndex(object oPC, int iToken)
     if (GetLocalInt(oPC, MEIO_LOCAL_ACTIVE_TAB) == MEIO_TAB_BOOKS && JsonGetLength(jBookIndex) > GetLocalInt(oPC, MEIO_LOCAL_BOOK_CAPACITY))
     {
         json jSearch = NuiGetBind(oPC, iToken, "book_search");
+        int bEnglishNames = JsonGetInt(NuiGetBind(oPC, iToken, "book_english_names"));
         MEIO_OpenTab(oPC, MEIO_TAB_BOOKS);
         int iNewToken = NuiFindWindow(oPC, MEIO_WINDOW);
         if (iNewToken > 0)
         {
             NuiSetBind(oPC, iNewToken, "book_search", jSearch);
+            NuiSetBind(oPC, iNewToken, "book_english_names", JsonBool(bEnglishNames));
             MEIO_RefreshBookWindow(oPC, iNewToken);
         }
         return;
@@ -577,9 +599,31 @@ void MEIO_RemoveOneFromPotionWindowIndex(object oPC, int iToken, json jSelected)
     MEIO_RefreshPotionWindow(oPC, iToken);
 }
 
-void MEIO_RemoveOneFromBookWindowIndex(object oPC, int iToken)
+void MEIO_RemoveOneFromBookWindowIndex(object oPC, int iToken, json jSelected)
 {
-    SetLocalJson(oPC, MEIO_LOCAL_BOOK_INDEX, MEIO_BuildBookIndex(MEIO_EnsureBookStorage(oPC)));
+    string sKey = JsonGetString(JsonObjectGet(jSelected, "key"));
+    json jIndex = GetLocalJson(oPC, MEIO_LOCAL_BOOK_INDEX);
+    json jUpdated = JsonArray();
+    int bRemoved;
+    int iIndex;
+    for (iIndex = 0; iIndex < JsonGetLength(jIndex); iIndex++)
+    {
+        json jEntry = JsonArrayGet(jIndex, iIndex);
+        if (!bRemoved && JsonGetString(JsonObjectGet(jEntry, "key")) == sKey)
+        {
+            int iQuantity = JsonGetInt(JsonObjectGet(jEntry, "quantity")) - 1;
+            if (iQuantity > 0)
+            {
+                jUpdated = JsonArrayInsert(jUpdated, JsonObjectSet(jEntry, "quantity", JsonInt(iQuantity)));
+            }
+            bRemoved = TRUE;
+        }
+        else
+        {
+            jUpdated = JsonArrayInsert(jUpdated, jEntry);
+        }
+    }
+    SetLocalJson(oPC, MEIO_LOCAL_BOOK_INDEX, jUpdated);
     MEIO_RefreshBookWindow(oPC, iToken);
 }
 
@@ -663,8 +707,10 @@ void MEIO_OpenTab(object oPC, int iTab)
         else
         {
             NuiSetBind(oPC, iToken, "book_search", JsonString(""));
+            NuiSetBind(oPC, iToken, "book_english_names", JsonBool(FALSE));
             MEIO_RefreshBookWindow(oPC, iToken);
             NuiSetBindWatch(oPC, iToken, "book_search", TRUE);
+            NuiSetBindWatch(oPC, iToken, "book_english_names", TRUE);
         }
     }
 }

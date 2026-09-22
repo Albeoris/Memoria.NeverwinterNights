@@ -29,6 +29,11 @@ void MEIO_RefreshBatchWindow(object oPC, int iToken)
     }
 }
 
+void MEIO_ScheduleMutationRefresh(object oPC, int iToken)
+{
+    DelayCommand(0.05f, MEIO_RefreshBatchWindow(oPC, iToken));
+}
+
 void MEIO_ReturnAllBatch(object oPC, int iToken, int iGeneration, int iBaseItem)
 {
     int iMode = iBaseItem == BASE_ITEM_POTIONS ? MEIO_TRANSFER_STORE_POTIONS : iBaseItem == BASE_ITEM_BOOK ? MEIO_TRANSFER_STORE_BOOKS : MEIO_TRANSFER_STORE_SCROLLS;
@@ -126,7 +131,7 @@ void main()
         MEIO_RefreshWindow(oPC, iToken);
         return;
     }
-    if (sEvent == "watch" && sElement == "book_search")
+    if (sEvent == "watch" && (sElement == "book_search" || sElement == "book_english_names"))
     {
         MEIO_RefreshBookWindow(oPC, iToken);
         return;
@@ -138,6 +143,7 @@ void main()
         if (JsonGetType(jSelected) == JSON_TYPE_OBJECT && MEIO_WithdrawOne(oPC, jSelected))
         {
             MEIO_RemoveOneFromWindowIndex(oPC, iToken, jSelected);
+            MEIO_ScheduleMutationRefresh(oPC, iToken);
         }
         return;
     }
@@ -148,6 +154,7 @@ void main()
         if (JsonGetType(jSelected) == JSON_TYPE_OBJECT && MEIO_WithdrawPotionOne(oPC, jSelected))
         {
             MEIO_RemoveOneFromPotionWindowIndex(oPC, iToken, jSelected);
+            MEIO_ScheduleMutationRefresh(oPC, iToken);
         }
         return;
     }
@@ -156,7 +163,8 @@ void main()
         json jSelected = MEIO_GetBookEventEntry(oPC, sElement);
         if (JsonGetType(jSelected) == JSON_TYPE_OBJECT && MEIO_WithdrawBookOne(oPC, jSelected))
         {
-            MEIO_RemoveOneFromBookWindowIndex(oPC, iToken);
+            MEIO_RemoveOneFromBookWindowIndex(oPC, iToken, jSelected);
+            MEIO_ScheduleMutationRefresh(oPC, iToken);
         }
         return;
     }
@@ -244,6 +252,15 @@ void main()
         MEIO_OpenTab(oPC, MEIO_TAB_BOOKS);
         return;
     }
+    if (GetSubString(sElement, 0, 5) == "book_")
+    {
+        json jSelected = MEIO_GetBookEventEntry(oPC, sElement);
+        if (JsonGetType(jSelected) == JSON_TYPE_OBJECT)
+        {
+            MEIO_ShowBookDescription(oPC, jSelected, JsonGetInt(NuiGetBind(oPC, iToken, "book_english_names")));
+        }
+        return;
+    }
     if (GetSubString(sElement, 0, 6) == "spell_")
     {
         json jSelected = MEIO_GetEventEntry(oPC, sElement);
@@ -251,6 +268,10 @@ void main()
         if (JsonGetType(jSelected) == JSON_TYPE_OBJECT && !MEIO_BeginCast(oPC, jSelected))
         {
             MEIO_RebuildWindowIndex(oPC, iToken);
+        }
+        else
+        {
+            MEIO_ScheduleMutationRefresh(oPC, iToken);
         }
         return;
     }
@@ -261,6 +282,10 @@ void main()
         if (JsonGetType(jSelected) == JSON_TYPE_OBJECT && !MEIO_BeginPotionUse(oPC, jSelected))
         {
             MEIO_RebuildWindowIndex(oPC, iToken);
+        }
+        else
+        {
+            MEIO_ScheduleMutationRefresh(oPC, iToken);
         }
     }
 }

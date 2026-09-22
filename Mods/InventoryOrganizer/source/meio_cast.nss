@@ -452,13 +452,18 @@ int MEIO_BeginCast(object oPC, json jSelected)
     }
     SetLocalString(oPC, MEIO_LOCAL_RESERVED_KEY, IntToString(iSubtype));
     MEIO_Debug(oPC, "BeginCast extracted subtype=" + IntToString(iSubtype) + " spell=" + IntToString(iSpell) + " " + MEIO_DebugItemState(oPC, oReserved));
+    int bPersonalTarget = Get2DAString("spells", "Range", iSpell) == "P";
+    int bKeepWindowOpen = bPersonalTarget && GetLocalInt(oPC, MEIO_CFG_KEEP_UNTARGETED_OPEN);
     int iWindow = NuiFindWindow(oPC, MEIO_WINDOW);
-    if (iWindow > 0)
+    if (iWindow > 0 && !bKeepWindowOpen)
     {
         NuiDestroy(oPC, iWindow);
     }
-    MEIO_ScheduleExamineSuppression(oPC, MEIO_FindScriptorium(oPC), "scroll-use");
-    if (Get2DAString("spells", "Range", iSpell) == "P")
+    if (!bKeepWindowOpen)
+    {
+        MEIO_ScheduleExamineSuppression(oPC, MEIO_FindScriptorium(oPC), "scroll-use");
+    }
+    if (bPersonalTarget)
     {
         MEIO_Debug(oPC, "BeginCast decision=personal-target");
         MEIO_IssueUseOnObject(oPC, oPC);
@@ -506,12 +511,16 @@ int MEIO_BeginPotionUse(object oPC, json jSelected)
         return FALSE;
     }
     SetLocalString(oPC, MEIO_LOCAL_RESERVED_KEY, IntToString(iSubtype));
+    int bKeepWindowOpen = GetLocalInt(oPC, MEIO_CFG_KEEP_UNTARGETED_OPEN);
     int iWindow = NuiFindWindow(oPC, MEIO_WINDOW);
-    if (iWindow > 0)
+    if (iWindow > 0 && !bKeepWindowOpen)
     {
         NuiDestroy(oPC, iWindow);
     }
-    MEIO_ScheduleExamineSuppression(oPC, MEIO_FindScriptorium(oPC), "potion-use");
+    if (!bKeepWindowOpen)
+    {
+        MEIO_ScheduleExamineSuppression(oPC, MEIO_FindScriptorium(oPC), "potion-use");
+    }
     MEIO_IssueUseOnObject(oPC, oPC);
     return TRUE;
 }

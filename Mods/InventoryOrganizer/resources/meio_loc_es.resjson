@@ -1,4 +1,6 @@
 {
+  "keep_untargeted_open_label": "Mantener abierto el almacén sin objetivo",
+  "keep_untargeted_open_tooltip": "Mantiene abierto el almacén espacial tras beber una poción o usar un pergamino de alcance personal.",
   "tab_books": "Libros",
   "books_command_hint": "Para abrir esta página, usa el comando: /memoria-io-books",
   "book_search_hint": "Título actual o inglés del libro",

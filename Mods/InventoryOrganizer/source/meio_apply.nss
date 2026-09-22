@@ -15,6 +15,7 @@ void main()
     int bEnglishNames;
     int bShowCasterLevel;
     json jBookSearch;
+    int bBookEnglishNames;
     if (iTab == MEIO_TAB_SCROLLS)
     {
         jSearch = NuiGetBind(oPC, iToken, "search");
@@ -25,6 +26,7 @@ void main()
     else if (iTab == MEIO_TAB_BOOKS)
     {
         jBookSearch = NuiGetBind(oPC, iToken, "book_search");
+        bBookEnglishNames = JsonGetInt(NuiGetBind(oPC, iToken, "book_english_names"));
     }
     MEIO_OpenTab(oPC, iTab);
     if (iTab == MEIO_TAB_SCROLLS)
@@ -45,6 +47,7 @@ void main()
         if (iNewToken > 0)
         {
             NuiSetBind(oPC, iNewToken, "book_search", jBookSearch);
+            NuiSetBind(oPC, iNewToken, "book_english_names", JsonBool(bBookEnglishNames));
             MEIO_RefreshBookWindow(oPC, iNewToken);
         }
     }

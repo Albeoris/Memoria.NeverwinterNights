@@ -54,6 +54,15 @@
       {
         "type": "bool",
         "scope": "player",
+        "local": "MEIO_CFG_KEEP_UNTARGETED_OPEN",
+        "label": "Keep storage open for untargeted actions",
+        "label_key": "keep_untargeted_open_label",
+        "tooltip": "Keeps Spatial Storage open after drinking a potion or casting a personal-range scroll.",
+        "tooltip_key": "keep_untargeted_open_tooltip"
+      },
+      {
+        "type": "bool",
+        "scope": "player",
         "local": "MEIO_CFG_DEBUG",
         "label": "Debug messages",
         "label_key": "debug_label",

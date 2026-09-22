@@ -1,4 +1,6 @@
 {
+  "keep_untargeted_open_label": "Garder la réserve ouverte sans cible",
+  "keep_untargeted_open_tooltip": "Garde la réserve spatiale ouverte après une potion ou un parchemin à portée personnelle.",
   "tab_books": "Livres",
   "books_command_hint": "Pour ouvrir cette page, utilisez la commande : /memoria-io-books",
   "book_search_hint": "Titre actuel ou anglais du livre",

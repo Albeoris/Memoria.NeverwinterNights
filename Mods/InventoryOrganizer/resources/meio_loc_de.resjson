@@ -1,4 +1,6 @@
 {
+  "keep_untargeted_open_label": "Lager bei Aktionen ohne Ziel offen lassen",
+  "keep_untargeted_open_tooltip": "Lässt das Dimensionslager nach einem Trank oder einer Schriftrolle mit persönlicher Reichweite geöffnet.",
   "tab_books": "Bücher",
   "books_command_hint": "Verwendet zum Öffnen dieser Seite den Befehl: /memoria-io-books",
   "book_search_hint": "Aktueller oder englischer Buchtitel",

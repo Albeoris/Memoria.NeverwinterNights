@@ -1,4 +1,6 @@
 {
+  "keep_untargeted_open_label": "Mantieni aperto il deposito senza bersaglio",
+  "keep_untargeted_open_tooltip": "Mantiene aperto il deposito spaziale dopo una pozione o una pergamena a raggio personale.",
   "tab_books": "Libri",
   "books_command_hint": "Per aprire questa pagina, usa il comando: /memoria-io-books",
   "book_search_hint": "Titolo corrente o inglese del libro",
