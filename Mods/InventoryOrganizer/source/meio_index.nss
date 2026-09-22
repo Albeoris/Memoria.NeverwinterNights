@@ -224,7 +224,6 @@ json MEIO_NewBookEntry(object oBook)
     jEntry = JsonObjectSet(jEntry, "name", JsonString(sName));
     jEntry = JsonObjectSet(jEntry, "alias", JsonString(sEnglishName));
     jEntry = JsonObjectSet(jEntry, "icon", JsonString(MEMORIA_GetItemIcon(oBook)));
-    jEntry = JsonObjectSet(jEntry, "description", JsonString(GetDescription(oBook, FALSE, TRUE)));
     jEntry = JsonObjectSet(jEntry, "quantity", JsonInt(GetItemStackSize(oBook)));
     jEntry = JsonObjectSet(jEntry, "search", JsonString(MEMORIA_GetJsonSearchText(JsonString(sName + " " + sEnglishName))));
     return jEntry;

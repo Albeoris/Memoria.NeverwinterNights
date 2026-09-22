@@ -40,5 +40,11 @@
   "save_label": "Сохранить",
   "cancel_label": "Отмена",
   "invalid_value_message": "Некорректное значение. Используйте числа в указанных диапазонах.",
-  "settings_saved_message": "Настройки MECM сохранены."
+  "settings_saved_message": "Настройки MECM сохранены.",
+  "companion_inventory_label": "Разрешить инвентарь спутников",
+  "companion_inventory_tooltip": "Позволяет открывать инвентарь спутников радиальной командой в кампаниях, где это обычно запрещено.",
+  "inventory_warning_title": "Предупреждение об инвентаре спутников",
+  "inventory_warning": "Все предметы, переданные спутнику, будут потеряны в конце главы. Вы уверены?",
+  "inventory_warning_yes": "Да, включить",
+  "inventory_warning_no": "Нет, отмена"
 }

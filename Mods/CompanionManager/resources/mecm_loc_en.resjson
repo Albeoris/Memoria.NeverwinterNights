@@ -40,5 +40,11 @@
   "save_label": "Save",
   "cancel_label": "Cancel",
   "invalid_value_message": "Invalid value. Use numbers within the ranges shown.",
-  "settings_saved_message": "MECM settings saved."
+  "settings_saved_message": "MECM settings saved.",
+  "companion_inventory_label": "Allow companion inventories",
+  "companion_inventory_tooltip": "Allows the Inventory radial command to open henchman inventories in campaigns that normally prohibit it.",
+  "inventory_warning_title": "Companion inventory warning",
+  "inventory_warning": "All items transferred to a companion will be lost at the end of the chapter. Are you sure?",
+  "inventory_warning_yes": "Yes, enable",
+  "inventory_warning_no": "No, cancel"
 }

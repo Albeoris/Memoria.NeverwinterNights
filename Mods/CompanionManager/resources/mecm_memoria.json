@@ -105,6 +105,15 @@
       {
         "type": "bool",
         "scope": "player",
+        "local": "MECM_CFG_COMPANION_INVENTORY",
+        "label": "Allow companion inventories",
+        "label_key": "companion_inventory_label",
+        "tooltip": "Allows the Inventory radial command to open henchman inventories in campaigns that normally prohibit it.",
+        "tooltip_key": "companion_inventory_tooltip"
+      },
+      {
+        "type": "bool",
+        "scope": "player",
         "local": "MECM_CFG_DEBUG",
         "label": "Enable diagnostics",
         "label_key": "debug_output_label",

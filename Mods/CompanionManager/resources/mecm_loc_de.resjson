@@ -40,5 +40,11 @@
   "save_label": "Speichern",
   "cancel_label": "Abbrechen",
   "invalid_value_message": "Ungültiger Wert. Bitte die angezeigten Bereiche beachten.",
-  "settings_saved_message": "MECM-Einstellungen gespeichert."
+  "settings_saved_message": "MECM-Einstellungen gespeichert.",
+  "companion_inventory_label": "Inventare von Gefährten zulassen",
+  "companion_inventory_tooltip": "Erlaubt den Inventarbefehl für Gefährten in Kampagnen, die ihn normalerweise sperren.",
+  "inventory_warning_title": "Warnung zum Gefährteninventar",
+  "inventory_warning": "Alle Gegenstände, die einem Gefährten übergeben werden, gehen am Ende des Kapitels verloren. Bist du sicher?",
+  "inventory_warning_yes": "Ja, aktivieren",
+  "inventory_warning_no": "Nein, abbrechen"
 }

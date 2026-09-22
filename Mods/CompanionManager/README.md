@@ -9,10 +9,11 @@ Companion Manager automatically sends companions and other allied creatures to u
 - Avoids traps, unreachable locks, busy companions, and targets already assigned to someone else.
 - Prevents companions from attacking locked doors and containers that should be unlocked or disarmed instead.
 - Supports henchmen, familiars, animal companions, summons, and dominated creatures.
+- Can optionally open henchman inventories in campaigns that normally prohibit it, after an explicit item-loss warning.
 
 ## Compatibility
 
-MECM works with most modules and override mods. Mods that automate locks or traps, control companion actions, or replace the module's `OnActivateItem` handler at runtime may interfere with it.
+MECM works with most modules and override mods. It does not replace original campaign scripts; optional inventory access is attached to each henchman's runtime `OnConversation` event through ESI and removed again when disabled. Mods that automate locks or traps, control companion actions, or replace event handlers at runtime may interfere with it.
 
 The [original LSE](https://steamcommunity.com/sharedfiles/filedetails/?id=2307769974) is incompatible with Memoria and its mods. Use the [Memoria edition](https://steamcommunity.com/sharedfiles/filedetails/?id=3803404663) instead.
 

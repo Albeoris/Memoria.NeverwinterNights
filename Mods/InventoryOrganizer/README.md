@@ -6,7 +6,7 @@ Memoria Inventory Organizer adds **Spatial Storage** to every player character. 
 
 - Independently configures automatic storage of eligible newly acquired scrolls, potions, and books. Plot, cursed, zero-value, non-droppable, infinite, or enchanted books are never stored; local variables do not affect eligibility.
 - Imports all eligible carried scrolls and potions once when the character first receives Spatial Storage, using bounded batches every 0.1 seconds to stay within the VM instruction limit.
-- Provides separate Scrolls, Potions, and Books tabs with real item icons. Book search always matches both localized and English titles; a checkbox selects which title is displayed. Left-click opens the book description without closing storage, and duplicate copies can be burned in bounded batches.
+- Provides separate Scrolls, Potions, and Books tabs with real item icons. Book search always matches both localized and English titles; a checkbox selects which title is displayed. Left-click opens a description window without closing storage; engine color tags are removed, every black-hidden marker is omitted regardless of its text, and acquisition metadata is highlighted. Duplicate copies can be burned in bounded batches.
 - Displays the current physical contents as compact spell-icon rows grouped by spell level, omitting empty levels after every search, filter, addition, or removal, with localized names in tooltips.
 - Filters scrolls by self, ally/beneficial-area, or enemy/hostile-area targeting; search matches both the current language and the English 2DA label.
 - Keeps different cast-spell subtypes separate, so variants with different caster levels remain distinguishable.

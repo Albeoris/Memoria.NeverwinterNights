@@ -9,6 +9,7 @@ Event Script Injector lets multiple override mods add behavior to game events wi
 - Retains Ravick's original `ESI_InjectToObject` API and resource names for existing integrations and saved games.
 - Rebuilds runtime registrations after a game or module is loaded.
 - Supports the module player-chat event while preserving and invoking the module's original chat script.
+- Supports creature `OnConversation` hooks, removable runtime registrations, and event consumption when a handler must suppress the original script.
 
 ## Compatibility
 

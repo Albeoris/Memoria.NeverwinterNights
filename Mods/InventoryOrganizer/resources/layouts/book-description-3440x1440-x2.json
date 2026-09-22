@@ -1,11 +1,11 @@
 {
   "screen": { "width": 3440, "height": 1440, "uiScale": 2.0 },
-  "window": { "logicalWidth": 520, "logicalHeight": 400, "titleHeight": 24, "padding": 8 },
+  "window": { "logicalWidth": 620, "logicalHeight": 460, "titleHeight": 24, "padding": 8 },
   "root": {
     "id": "book-description",
     "type": "column",
     "children": [
-      { "id": "description", "type": "control", "height": 336 }
+      { "id": "description-scroll", "type": "group", "height": 396, "scroll": true }
     ]
   }
 }

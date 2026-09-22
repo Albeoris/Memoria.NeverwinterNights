@@ -36,6 +36,7 @@ const string ESI_PARAM_PLACEMENT = "nPlacement";
 const string ESI_SCRIPT_AREA_INJECT = "esi_are_inject";
 
 const string ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DEATH = "crtdeath";
+const string ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DIALOGUE = "cre_conv";
 const string ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_SPAWN_IN = "crtspawn";
 const string ESI_EVENT_NUMBER_ALIAS_ENCOUNTER_ON_OBJECT_ENTER = "encenter";
 const string ESI_EVENT_NUMBER_ALIAS_MODULE_ON_ACQUIRE_ITEM = "modacqit";
@@ -56,6 +57,7 @@ const string ESI_LOCAL_SUFFIX_INJECTION_KEYS = "_KEYS";
 const string ESI_LOCAL_SUFFIX_INJECTION_MAP = "_MAP";
 const string ESI_LOCAL_SUFFIX_SCRIPT_ORIGINAL = "_ORIGINAL";
 const string ESI_LOCAL_SUFFIX_STORAGE_SCHEMA = "_SCHEMA";
+const string ESI_LOCAL_EVENT_CONSUMED = "ESI_EVENT_CONSUMED";
 const int ESI_STORAGE_SCHEMA = 2;
 
 const string ESI_SCRIPT_PREFIX_UNION = "esi_uni_";
@@ -102,6 +104,7 @@ string ESI_GetLocalNameStorageSchema(int nHandler)
 string ESI_GetEventNumberAlias(int nHandler)
 {
     return nHandler == EVENT_SCRIPT_CREATURE_ON_DEATH ? ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DEATH
+         : nHandler == EVENT_SCRIPT_CREATURE_ON_DIALOGUE ? ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DIALOGUE
          : nHandler == EVENT_SCRIPT_CREATURE_ON_SPAWN_IN ? ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_SPAWN_IN
          : nHandler == EVENT_SCRIPT_ENCOUNTER_ON_OBJECT_ENTER ? ESI_EVENT_NUMBER_ALIAS_ENCOUNTER_ON_OBJECT_ENTER
          : nHandler == EVENT_SCRIPT_MODULE_ON_ACQUIRE_ITEM ? ESI_EVENT_NUMBER_ALIAS_MODULE_ON_ACQUIRE_ITEM
@@ -310,6 +313,50 @@ int ESI_InjectToObject(object oObject, string sKey, int nHandler, string sScript
     return ESI_RegisterRuntimeHook(oObject, sKey, nHandler, sScript, nPlacement);
 }
 
+int ESI_UnregisterRuntimeHook(object oObject, string sKey, int nHandler, int nPlacement)
+{
+    if (!GetIsObjectValid(oObject) || sKey == STRING_EMPTY || ESI_GetEventNumberAlias(nHandler) == STRING_EMPTY || (nPlacement != ESI_INJECTION_PLACEMENT_FIRST && nPlacement != ESI_INJECTION_PLACEMENT_LAST)) return FALSE;
+    json jRegistry = ESI_GetRuntimeRegistry();
+    if (!ESI_IsRuntimeRegistry(jRegistry)) return FALSE;
+    json jSlots = JsonObjectGet(jRegistry, ESI_RUNTIME_FIELD_SLOTS);
+    string sSlot = ESI_GetRuntimeSlot(oObject, nHandler, nPlacement);
+    json jHooks = ESI_GetRuntimeHooks(jRegistry, oObject, nHandler, nPlacement);
+    int nIndex;
+    for (nIndex = JsonGetLength(jHooks) - 1; nIndex >= 0; nIndex--)
+    {
+        if (JsonGetString(JsonObjectGet(JsonArrayGet(jHooks, nIndex), ESI_RUNTIME_HOOK_KEY)) == sKey)
+            jHooks = JsonArrayDel(jHooks, nIndex);
+    }
+    if (JsonGetLength(jHooks) > 0)
+        jSlots = JsonObjectSet(jSlots, sSlot, jHooks);
+    else
+        jSlots = JsonObjectDel(jSlots, sSlot);
+    jRegistry = JsonObjectSet(jRegistry, ESI_RUNTIME_FIELD_SLOTS, jSlots);
+    if (!ESI_SetRuntimeRegistry(jRegistry)) return FALSE;
+    if (JsonGetLength(ESI_GetRuntimeHooks(jRegistry, oObject, nHandler, ESI_INJECTION_PLACEMENT_FIRST)) > 0 || JsonGetLength(ESI_GetRuntimeHooks(jRegistry, oObject, nHandler, ESI_INJECTION_PLACEMENT_LAST)) > 0) return TRUE;
+    string sUnionScript = ESI_GetUnionScript(nHandler);
+    if (GetEventScript(oObject, nHandler) == sUnionScript)
+        SetEventScript(oObject, nHandler, RAV_GetLocalString(oObject, ESI_GetLocalNameOriginalScript(nHandler)));
+    RAV_DeleteLocalString(oObject, ESI_GetLocalNameOriginalScript(nHandler));
+    DeleteLocalInt(oObject, ESI_GetLocalNameStorageSchema(nHandler));
+    return TRUE;
+}
+
+int ESI_RemoveFromObject(object oObject, string sKey, int nHandler, int nPlacement)
+{
+    return ESI_UnregisterRuntimeHook(oObject, sKey, nHandler, nPlacement);
+}
+
+void ESI_ConsumeEvent()
+{
+    SetLocalInt(OBJECT_SELF, ESI_LOCAL_EVENT_CONSUMED, TRUE);
+}
+
+int ESI_IsEventConsumed(object oObject)
+{
+    return GetLocalInt(oObject, ESI_LOCAL_EVENT_CONSUMED);
+}
+
 void ESI_InjectToModuleObjects(object oModule, string sKey, int nObjectType, int nHandler, string sScript, int nPlacement)
 {
     if (!GetIsObjectValid(oModule)) return;
@@ -365,15 +412,18 @@ void ESI_ExecuteRuntimeHooks(json jRegistry, object oObject, int nHandler, int n
     {
         string sScript = JsonGetString(JsonObjectGet(JsonArrayGet(jHooks, nIndex), ESI_RUNTIME_HOOK_SCRIPT));
         if (sScript != STRING_EMPTY) RAV_ExecuteScript(sScript, oObject);
+        if (ESI_IsEventConsumed(oObject)) return;
     }
 }
 
 void ESI_ExecuteEventScripts(object oObject, int nHandler)
 {
     RAV_PrintFunctionStrings("ESI_ExecuteEventScripts", oObject, ESI_GetEventNumberAlias(nHandler));
+    DeleteLocalInt(oObject, ESI_LOCAL_EVENT_CONSUMED);
     json jRegistry = ESI_GetRuntimeRegistry();
     if (ESI_IsRuntimeRegistry(jRegistry)) ESI_ExecuteRuntimeHooks(jRegistry, oObject, nHandler, ESI_INJECTION_PLACEMENT_FIRST);
     string sOriginalScript = RAV_GetLocalString(oObject, ESI_GetLocalNameOriginalScript(nHandler));
-    if (sOriginalScript != STRING_EMPTY) RAV_ExecuteScript(sOriginalScript, oObject);
-    if (ESI_IsRuntimeRegistry(jRegistry)) ESI_ExecuteRuntimeHooks(jRegistry, oObject, nHandler, ESI_INJECTION_PLACEMENT_LAST);
+    if (!ESI_IsEventConsumed(oObject) && sOriginalScript != STRING_EMPTY) RAV_ExecuteScript(sOriginalScript, oObject);
+    if (!ESI_IsEventConsumed(oObject) && ESI_IsRuntimeRegistry(jRegistry)) ESI_ExecuteRuntimeHooks(jRegistry, oObject, nHandler, ESI_INJECTION_PLACEMENT_LAST);
+    DeleteLocalInt(oObject, ESI_LOCAL_EVENT_CONSUMED);
 }

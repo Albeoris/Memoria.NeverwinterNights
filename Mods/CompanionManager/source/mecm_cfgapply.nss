@@ -15,5 +15,16 @@ void main()
     if (!GetLocalInt(oPC, MECM_LOCAL_HIGHLIGHT))
         MECM_ClearCachedHighlights(oPC);
     ExecuteScript("mecm_registry", oPC);
+    if (GetLocalInt(oPC, MECM_LOCAL_COMPANION_INVENTORY) && !GetLocalInt(oPC, MECM_LOCAL_COMPANION_INVENTORY_CONFIRMED))
+    {
+        SetLocalInt(oPC, MECM_LOCAL_COMPANION_INVENTORY, FALSE);
+        MECM_RemoveInventoryHooks(oPC);
+        ExecuteScript("mecm_invwarn", oPC);
+    }
+    else if (!GetLocalInt(oPC, MECM_LOCAL_COMPANION_INVENTORY))
+    {
+        DeleteLocalInt(oPC, MECM_LOCAL_COMPANION_INVENTORY_CONFIRMED);
+        MECM_RemoveInventoryHooks(oPC);
+    }
     ExecuteScript("mecm_lock", oPC);
 }

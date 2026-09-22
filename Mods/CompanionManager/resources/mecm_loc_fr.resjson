@@ -40,5 +40,11 @@
   "save_label": "Enregistrer",
   "cancel_label": "Annuler",
   "invalid_value_message": "Valeur incorrecte. Respectez les plages indiquées.",
-  "settings_saved_message": "Paramètres MECM enregistrés."
+  "settings_saved_message": "Paramètres MECM enregistrés.",
+  "companion_inventory_label": "Autoriser l'inventaire des compagnons",
+  "companion_inventory_tooltip": "Permet d'ouvrir l'inventaire des compagnons dans les campagnes qui l'interdisent normalement.",
+  "inventory_warning_title": "Avertissement sur l'inventaire du compagnon",
+  "inventory_warning": "Tous les objets confiés à un compagnon seront perdus à la fin du chapitre. Êtes-vous sûr ?",
+  "inventory_warning_yes": "Oui, activer",
+  "inventory_warning_no": "Non, annuler"
 }

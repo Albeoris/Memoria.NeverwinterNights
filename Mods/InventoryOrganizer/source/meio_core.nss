@@ -7,6 +7,7 @@
 #include "memoria_loc"
 #include "memoria_nui"
 #include "memoria_string"
+#include "x3_inc_string"
 
 const string MEIO_SCRIPTORIUM_RESREF = "meio_vault";
 const string MEIO_SCRIPTORIUM_TAG = "MEIO_VAULT";

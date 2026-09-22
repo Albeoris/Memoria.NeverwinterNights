@@ -261,22 +261,124 @@ json MEIO_BuildWindow(object oPC, json jCapacities, int iPotionCapacity, int iBo
     return NuiWindow(NuiCol(jRoot), JsonString(MEIO_GetText(oPC, "window_title")), NuiRect(-1.0f, -1.0f, 760.0f, 500.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
 }
 
-json MEIO_BuildBookDescriptionWindow(json jBook, int bEnglishNames)
+string MEIO_StripDescriptionColors(string sText)
 {
+    return RegExpReplace("<c[^>]*>|</c>", sText, "");
+}
+
+string MEIO_RemoveHiddenDescriptionText(string sText)
+{
+    string sProbe = "MEIO_HIDDEN_TEXT";
+    string sWrapped = StringToRGBString(sProbe, STRING_COLOR_BLACK);
+    int iProbe = FindSubString(sWrapped, sProbe);
+    if (iProbe < 0)
+    {
+        return sText;
+    }
+    string sOpen = GetSubString(sWrapped, 0, iProbe);
+    int iCloseStart = iProbe + GetStringLength(sProbe);
+    string sClose = GetSubString(sWrapped, iCloseStart, GetStringLength(sWrapped) - iCloseStart);
+    int iStart = FindSubString(sText, sOpen);
+    while (iStart >= 0)
+    {
+        int iEnd = FindSubString(sText, sClose, iStart + GetStringLength(sOpen));
+        if (iEnd < 0)
+        {
+            return sText;
+        }
+        int iAfter = iEnd + GetStringLength(sClose);
+        sText = GetSubString(sText, 0, iStart) + GetSubString(sText, iAfter, GetStringLength(sText) - iAfter);
+        iStart = FindSubString(sText, sOpen);
+    }
+    return sText;
+}
+
+int MEIO_FindLastDescriptionText(string sText, string sNeedle)
+{
+    int iLast = -1;
+    int iFound = FindSubString(sText, sNeedle);
+    while (iFound >= 0)
+    {
+        iLast = iFound;
+        iFound = FindSubString(sText, sNeedle, iFound + 1);
+    }
+    return iLast;
+}
+
+int MEIO_FindDescriptionLineStart(string sText, int iPosition)
+{
+    int iLineStart;
+    int iNewline = FindSubString(sText, "\n");
+    while (iNewline >= 0 && iNewline < iPosition)
+    {
+        iLineStart = iNewline + 1;
+        iNewline = FindSubString(sText, "\n", iNewline + 1);
+    }
+    return iLineStart;
+}
+
+float MEIO_GetDescriptionHeight(string sText)
+{
+    int iLines = 1 + GetStringLength(sText) / 54;
+    int iOffset;
+    int iNewline = FindSubString(sText, "\n");
+    while (iNewline >= 0)
+    {
+        iLines++;
+        iOffset = iNewline + 1;
+        iNewline = FindSubString(sText, "\n", iOffset);
+    }
+    return IntToFloat(iLines * 21 + 8);
+}
+
+json MEIO_BuildBookDescriptionWindow(object oBook, int bEnglishNames)
+{
+    string sDescription = GetDescription(oBook, FALSE, TRUE);
+    if (sDescription == "")
+    {
+        sDescription = GetDescription(oBook, TRUE, TRUE);
+    }
+    sDescription = MEIO_StripDescriptionColors(MEIO_RemoveHiddenDescriptionText(sDescription));
+    string sMain = sDescription;
+    string sMetadata;
+    string sAcquiredFrom = GetLocalString(oBook, "MELSE_ACQUIRED_FROM_NAME");
+    int iAcquiredFrom = sAcquiredFrom == "" ? -1 : MEIO_FindLastDescriptionText(sDescription, sAcquiredFrom);
+    if (iAcquiredFrom >= 0)
+    {
+        int iMetadataStart = MEIO_FindDescriptionLineStart(sDescription, iAcquiredFrom);
+        sMain = GetSubString(sDescription, 0, iMetadataStart);
+        sMetadata = GetSubString(sDescription, iMetadataStart, GetStringLength(sDescription) - iMetadataStart);
+    }
+    json jBlocks = JsonArray();
+    if (sMain != "")
+    {
+        jBlocks = JsonArrayInsert(jBlocks, NuiHeight(NuiText(JsonString(sMain), TRUE, NUI_SCROLLBARS_NONE), MEIO_GetDescriptionHeight(sMain)));
+    }
+    if (sMetadata != "")
+    {
+        json jMetadata = NuiStyleForegroundColor(NuiText(JsonString(sMetadata), TRUE, NUI_SCROLLBARS_NONE), NuiColor(30, 220, 70));
+        jBlocks = JsonArrayInsert(jBlocks, NuiHeight(jMetadata, MEIO_GetDescriptionHeight(sMetadata)));
+    }
     json jRoot = JsonArray();
-    jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiText(JsonObjectGet(jBook, "description"), TRUE, NUI_SCROLLBARS_AUTO), 336.0f));
-    json jTitle = bEnglishNames && JsonGetString(JsonObjectGet(jBook, "alias")) != "" ? JsonObjectGet(jBook, "alias") : JsonObjectGet(jBook, "name");
-    return NuiWindow(NuiCol(jRoot), jTitle, NuiRect(-1.0f, -1.0f, 520.0f, 400.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
+    jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiGroup(NuiCol(jBlocks), TRUE, NUI_SCROLLBARS_Y), 396.0f));
+    string sEnglishName = MEIO_GetBookEnglishName(oBook);
+    json jTitle = JsonString(bEnglishNames && sEnglishName != "" ? sEnglishName : GetName(oBook));
+    return NuiWindow(NuiCol(jRoot), jTitle, NuiRect(-1.0f, -1.0f, 620.0f, 460.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
 }
 
 void MEIO_ShowBookDescription(object oPC, json jBook, int bEnglishNames)
 {
+    object oBook = MEIO_ResolveBook(MEIO_EnsureBookStorage(oPC), JsonGetString(JsonObjectGet(jBook, "key")));
+    if (!GetIsObjectValid(oBook))
+    {
+        return;
+    }
     int iOldToken = NuiFindWindow(oPC, MEIO_BOOK_DESCRIPTION_WINDOW);
     if (iOldToken > 0)
     {
         NuiDestroy(oPC, iOldToken);
     }
-    NuiCreate(oPC, MEIO_BuildBookDescriptionWindow(jBook, bEnglishNames), MEIO_BOOK_DESCRIPTION_WINDOW, "memoria_noop");
+    NuiCreate(oPC, MEIO_BuildBookDescriptionWindow(oBook, bEnglishNames), MEIO_BOOK_DESCRIPTION_WINDOW, "memoria_noop");
 }
 
 string MEIO_BuildSpellTip(object oPC, json jEntry, int bEnglishNames, int bShowCasterLevel)

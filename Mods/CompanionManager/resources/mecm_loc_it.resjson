@@ -40,5 +40,11 @@
   "save_label": "Salva",
   "cancel_label": "Annulla",
   "invalid_value_message": "Valore non valido. Usa gli intervalli indicati.",
-  "settings_saved_message": "Impostazioni MECM salvate."
+  "settings_saved_message": "Impostazioni MECM salvate.",
+  "companion_inventory_label": "Consenti inventari dei compagni",
+  "companion_inventory_tooltip": "Permette di aprire l'inventario dei compagni nelle campagne che normalmente lo vietano.",
+  "inventory_warning_title": "Avviso sull'inventario del compagno",
+  "inventory_warning": "Tutti gli oggetti consegnati a un compagno andranno persi alla fine del capitolo. Sei sicuro?",
+  "inventory_warning_yes": "Sì, attiva",
+  "inventory_warning_no": "No, annulla"
 }

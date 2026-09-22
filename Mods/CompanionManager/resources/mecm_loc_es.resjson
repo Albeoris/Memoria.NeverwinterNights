@@ -40,5 +40,11 @@
   "save_label": "Guardar",
   "cancel_label": "Cancelar",
   "invalid_value_message": "Valor no válido. Usa los intervalos indicados.",
-  "settings_saved_message": "Ajustes de MECM guardados."
+  "settings_saved_message": "Ajustes de MECM guardados.",
+  "companion_inventory_label": "Permitir inventarios de compañeros",
+  "companion_inventory_tooltip": "Permite abrir el inventario de los compañeros en campañas que normalmente lo prohíben.",
+  "inventory_warning_title": "Aviso sobre el inventario del compañero",
+  "inventory_warning": "Todos los objetos entregados a un compañero se perderán al final del capítulo. ¿Seguro?",
+  "inventory_warning_yes": "Sí, activar",
+  "inventory_warning_no": "No, cancelar"
 }
