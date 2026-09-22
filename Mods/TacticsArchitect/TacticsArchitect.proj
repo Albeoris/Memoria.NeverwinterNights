@@ -2,7 +2,7 @@
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
         <ModId>METACT</ModId>
-        <Version>0.7.7</Version>
+        <Version>0.7.8</Version>
         <ModDisplayName>Memoria: Tactics Architect</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">

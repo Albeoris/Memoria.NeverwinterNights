@@ -1,5 +1,9 @@
+#include "metact_runtime"
+
 void main()
 {
-    ExecuteScript("metact_boot", OBJECT_SELF);
+    object oPC = OBJECT_SELF;
+    if (!GetIsObjectValid(oPC))
+        return;
+    METACT_Heartbeat(oPC);
 }
-

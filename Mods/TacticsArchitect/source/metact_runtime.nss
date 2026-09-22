@@ -1326,20 +1326,35 @@ void METACT_Schedule(object oPC)
     }
 }
 
+void METACT_SetHeartbeatDiagnostic(object oPC, string sStage)
+{
+    string sLocal = GetLocalString(oPC, "MEMORIA_HEARTBEAT_DIAGNOSTIC_TARGET");
+    if (sLocal == "")
+        sLocal = "MEMORIA_HEARTBEAT_DIAGNOSTIC";
+    SetLocalString(oPC, sLocal, sStage);
+}
+
 void METACT_Heartbeat(object oPC)
 {
-    if (!GetIsPC(oPC) || GetIsDM(oPC) || GetIsObjectValid(GetMaster(oPC)))
+    if (!GetIsObjectValid(oPC) || !GetIsPC(oPC) || GetIsDM(oPC) || GetIsObjectValid(GetMaster(oPC)))
         return;
+    METACT_SetHeartbeatDiagnostic(oPC, "METACT: installing event hooks");
     METACT_InstallHook();
+    METACT_SetHeartbeatDiagnostic(oPC, "METACT: checking configured tactics");
     if (METACT_HasRuntimeWork(oPC))
     {
+        METACT_SetHeartbeatDiagnostic(oPC, "METACT: rebuilding the party cache");
         METACT_BuildGroupCache(oPC);
+        METACT_SetHeartbeatDiagnostic(oPC, "METACT: evaluating tactics");
         METACT_RunDispatcher(oPC);
+        METACT_SetHeartbeatDiagnostic(oPC, "METACT: scheduling tactical updates");
         METACT_Schedule(oPC);
     }
+    METACT_SetHeartbeatDiagnostic(oPC, "METACT: completing initialization");
     if (!GetLocalInt(oPC, METACT_LOCAL_INSTALLED))
     {
         SetLocalInt(oPC, METACT_LOCAL_INSTALLED, TRUE);
         SendMessageToPC(oPC, METACT_GetText(METACT_TEXT_INSTALLED, oPC) + " " + METACT_VERSION);
     }
+    METACT_SetHeartbeatDiagnostic(oPC, "METACT heartbeat completed");
 }

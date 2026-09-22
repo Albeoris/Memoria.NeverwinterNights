@@ -1,2 +1,9 @@
 #include "metact_runtime"
-void main() { METACT_Heartbeat(OBJECT_SELF); }
+
+void main()
+{
+    object oPC = OBJECT_SELF;
+    if (!GetIsObjectValid(oPC))
+        return;
+    METACT_Heartbeat(oPC);
+}
