@@ -38,7 +38,8 @@ void MEIO_Heartbeat(object oPC)
         return;
     }
     MEIO_GetUIScalePercent(oPC);
-    MEIO_Debug(oPC, "Heartbeat entered; regular inventory sorting is disabled on heartbeat reserved=" + ObjectToString(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)) + " suppress=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_SORT)) + " sortMode=" + IntToString(GetLocalInt(oPC, MEIO_CFG_SORT_MODE)));
+    MEIO_EnsureAutomaticSettings(oPC);
+    MEIO_Debug(oPC, "Heartbeat entered; regular inventory sorting is disabled on heartbeat reserved=" + ObjectToString(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)) + " suppress=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_SORT)));
     MEMORIA_SetHeartbeatDiagnostic(oPC, "installing MEIO event hooks");
     MEIO_InstallHooks();
     MEIO_CleanupKeepOutRegistry(oPC);
@@ -52,6 +53,7 @@ void MEIO_Heartbeat(object oPC)
     object oScriptorium = MEIO_EnsureScriptorium(oPC);
     object oStorage = MEIO_EnsureStorage(oPC);
     object oPotionStorage = MEIO_EnsurePotionStorage(oPC);
+    object oBookStorage = MEIO_EnsureBookStorage(oPC);
     if (!ESI_IsRuntimeMarkerSet(oPC, MEIO_RUNTIME_RESERVATION))
     {
         if (GetIsObjectValid(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)))
@@ -66,7 +68,7 @@ void MEIO_Heartbeat(object oPC)
         }
         ESI_SetRuntimeMarker(oPC, MEIO_RUNTIME_RESERVATION);
     }
-    if (GetIsObjectValid(oScriptorium) && GetIsObjectValid(oStorage) && GetIsObjectValid(oPotionStorage))
+    if (GetIsObjectValid(oScriptorium) && GetIsObjectValid(oStorage) && GetIsObjectValid(oPotionStorage) && GetIsObjectValid(oBookStorage))
     {
         if (!GetLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_DONE))
         {
@@ -89,6 +91,8 @@ void MEIO_Heartbeat(object oPC)
         MEMORIA_SetHeartbeatDiagnostic(oPC, "validating Scriptorium contents");
         MEIO_ValidateContents(oPC, oStorage);
         MEIO_ValidatePotionContents(oPC, oPotionStorage);
+        MEIO_ValidateBookContents(oPC, oBookStorage);
+        MEIO_ProcessVaultContents(oPC, MEIO_INITIAL_IMPORT_BATCH_SIZE);
         MEIO_ReconcileDuplicates(oPC, oScriptorium);
     }
     object oReserved = GetLocalObject(oPC, MEIO_LOCAL_RESERVED);

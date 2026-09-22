@@ -165,11 +165,11 @@ int MEIO_WithdrawStoredStack(object oPC, object oStorage, object oSource, int iB
         return -1;
     }
     int iSubtype = MEIO_GetOnlyCastSubtype(oSource);
-    string sKey = iBaseItem == BASE_ITEM_POTIONS ? MEIO_GetPotionKey(oSource, iSubtype) : MEIO_GetVariantKey(oSource, iSubtype);
-    int iBefore = iBaseItem == BASE_ITEM_POTIONS ? MEIO_CountPotionVariant(oPC, sKey) : MEIO_CountVariant(oPC, sKey);
+    string sKey = iBaseItem == BASE_ITEM_POTIONS ? MEIO_GetPotionKey(oSource, iSubtype) : iBaseItem == BASE_ITEM_BOOK ? MEIO_GetBookKey(oSource) : MEIO_GetVariantKey(oSource, iSubtype);
+    int iBefore = iBaseItem == BASE_ITEM_POTIONS ? MEIO_CountPotionVariant(oPC, sKey) : iBaseItem == BASE_ITEM_BOOK ? MEIO_CountBookVariant(oPC, sKey) : MEIO_CountVariant(oPC, sKey);
     int iSourceSize = GetItemStackSize(oSource);
     object oCopy = CopyItem(oSource, oPC, TRUE);
-    int iAfter = iBaseItem == BASE_ITEM_POTIONS ? MEIO_CountPotionVariant(oPC, sKey) : MEIO_CountVariant(oPC, sKey);
+    int iAfter = iBaseItem == BASE_ITEM_POTIONS ? MEIO_CountPotionVariant(oPC, sKey) : iBaseItem == BASE_ITEM_BOOK ? MEIO_CountBookVariant(oPC, sKey) : MEIO_CountVariant(oPC, sKey);
     int iMoved = iAfter - iBefore;
     if (GetIsObjectValid(oCopy) && !MEIO_IsDirectlyIn(oCopy, oPC))
     {
@@ -202,7 +202,7 @@ int MEIO_WithdrawStoredStack(object oPC, object oStorage, object oSource, int iB
 
 int MEIO_WithdrawStorageBatch(object oPC, int iBaseItem, int iLimit)
 {
-    object oStorage = iBaseItem == BASE_ITEM_POTIONS ? MEIO_EnsurePotionStorage(oPC) : MEIO_EnsureStorage(oPC);
+    object oStorage = iBaseItem == BASE_ITEM_POTIONS ? MEIO_EnsurePotionStorage(oPC) : iBaseItem == BASE_ITEM_BOOK ? MEIO_EnsureBookStorage(oPC) : MEIO_EnsureStorage(oPC);
     int iAttempted;
     int iMoved;
     DeleteLocalInt(oPC, MEIO_LOCAL_BATCH_BLOCKED);
@@ -210,7 +210,7 @@ int MEIO_WithdrawStorageBatch(object oPC, int iBaseItem, int iLimit)
     while (GetIsObjectValid(oItem))
     {
         object oNext = GetNextItemInInventory(oStorage);
-        int bMatches = iBaseItem == BASE_ITEM_POTIONS ? MEIO_IsUsablePotion(oItem) : MEIO_IsScroll(oItem);
+        int bMatches = iBaseItem == BASE_ITEM_POTIONS ? MEIO_IsUsablePotion(oItem) : iBaseItem == BASE_ITEM_BOOK ? MEIO_IsBook(oItem) : MEIO_IsScroll(oItem);
         if (MEIO_IsDirectlyIn(oItem, oStorage) && bMatches)
         {
             int iItemMoved = MEIO_WithdrawStoredStack(oPC, oStorage, oItem, iBaseItem);
@@ -306,6 +306,30 @@ int MEIO_WithdrawPotionOne(object oPC, json jSelected)
     }
     MEIO_ClearReservation(oPC);
     SendMessageToPC(oPC, MEIO_GetText(oPC, "potion_withdrawn"));
+    return TRUE;
+}
+
+int MEIO_WithdrawBookOne(object oPC, json jSelected)
+{
+    if (MEIO_IsTransferBusy(oPC))
+    {
+        SendMessageToPC(oPC, MEIO_GetText(oPC, "transfer_busy"));
+        return FALSE;
+    }
+    object oStorage = MEIO_EnsureBookStorage(oPC);
+    object oSource = MEIO_ResolveBook(oStorage, JsonGetString(JsonObjectGet(jSelected, "key")));
+    if (!GetIsObjectValid(oSource))
+    {
+        SendMessageToPC(oPC, MEIO_GetText(oPC, "stale_entry"));
+        return FALSE;
+    }
+    int iMoved = MEIO_WithdrawStoredStack(oPC, oStorage, oSource, BASE_ITEM_BOOK);
+    if (iMoved < 0)
+    {
+        SendMessageToPC(oPC, MEIO_GetText(oPC, "no_space"));
+        return FALSE;
+    }
+    SendMessageToPC(oPC, MEIO_GetText(oPC, "book_withdrawn"));
     return TRUE;
 }
 

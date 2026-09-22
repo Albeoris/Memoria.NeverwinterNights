@@ -1,4 +1,6 @@
 {
+  "feature_loot_all_books_label": "Livres",
+  "feature_loot_all_books_tooltip": "Ramasse toujours les livres et les notes, sans tenir compte des filtres de prix et de poids.",
   "mod_display_name": "Looting System Enhanced",
   "treasure_area_hint": "Je devrais surveiller les trésors dans cette zone.",
   "treasure_area_clear": "Cette zone semble dépourvue de trésors.",

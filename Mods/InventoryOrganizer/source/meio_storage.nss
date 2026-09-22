@@ -3,6 +3,7 @@
 #include "meio_core"
 
 int MEIO_CopyAmount(object oSource, object oTarget, int iRequested);
+void MEIO_RebuildOpenWindowIndex(object oPC);
 
 int MEIO_CountVariant(object oContainer, string sKey)
 {
@@ -36,6 +37,21 @@ int MEIO_CountPotionVariant(object oContainer, string sKey)
             {
                 iCount += GetItemStackSize(oItem);
             }
+        }
+        oItem = GetNextItemInInventory(oContainer);
+    }
+    return iCount;
+}
+
+int MEIO_CountBookVariant(object oContainer, string sKey)
+{
+    int iCount;
+    object oItem = GetFirstItemInInventory(oContainer);
+    while (GetIsObjectValid(oItem))
+    {
+        if (MEIO_IsDirectlyIn(oItem, oContainer) && MEIO_IsBook(oItem) && MEIO_GetBookKey(oItem) == sKey)
+        {
+            iCount += GetItemStackSize(oItem);
         }
         oItem = GetNextItemInInventory(oContainer);
     }
@@ -122,6 +138,45 @@ object MEIO_EnsurePotionStorage(object oPC)
     SetTag(oStorage, MEIO_POTION_STORAGE_TAG);
     SetLocalObject(oStorage, MEIO_LOCAL_STORAGE_OWNER, oPC);
     SetLocalObject(oPC, MEIO_LOCAL_POTION_STORAGE, oStorage);
+    return oStorage;
+}
+
+object MEIO_FindRuntimeBookStorage(object oPC)
+{
+    object oStorage = GetLocalObject(oPC, MEIO_LOCAL_BOOK_STORAGE);
+    if (GetIsObjectValid(oStorage) && GetObjectType(oStorage) == OBJECT_TYPE_STORE && GetTag(oStorage) == MEIO_BOOK_STORAGE_TAG)
+    {
+        return oStorage;
+    }
+    int iIndex;
+    oStorage = GetObjectByTag(MEIO_BOOK_STORAGE_TAG, iIndex);
+    while (GetIsObjectValid(oStorage))
+    {
+        if (GetObjectType(oStorage) == OBJECT_TYPE_STORE && GetLocalObject(oStorage, MEIO_LOCAL_STORAGE_OWNER) == oPC)
+        {
+            SetLocalObject(oPC, MEIO_LOCAL_BOOK_STORAGE, oStorage);
+            return oStorage;
+        }
+        iIndex++;
+        oStorage = GetObjectByTag(MEIO_BOOK_STORAGE_TAG, iIndex);
+    }
+    return OBJECT_INVALID;
+}
+
+object MEIO_EnsureBookStorage(object oPC)
+{
+    object oStorage = MEIO_FindRuntimeBookStorage(oPC);
+    if (!GetIsObjectValid(oStorage))
+    {
+        oStorage = CreateObject(OBJECT_TYPE_STORE, MEIO_BOOK_STORAGE_RESREF, GetLocation(oPC), FALSE, MEIO_BOOK_STORAGE_TAG);
+    }
+    if (!GetIsObjectValid(oStorage))
+    {
+        return OBJECT_INVALID;
+    }
+    SetTag(oStorage, MEIO_BOOK_STORAGE_TAG);
+    SetLocalObject(oStorage, MEIO_LOCAL_STORAGE_OWNER, oPC);
+    SetLocalObject(oPC, MEIO_LOCAL_BOOK_STORAGE, oStorage);
     return oStorage;
 }
 
@@ -215,6 +270,44 @@ int MEIO_CopyPotionAmount(object oSource, object oTarget, int iRequested)
     }
     int iAfter = sKey == "" ? 0 : MEIO_CountPotionVariant(oTarget, sKey);
     int iMoved = iAfter - iBefore;
+    if (iMoved < 0)
+    {
+        iMoved = 0;
+    }
+    if (iMoved > iRequested)
+    {
+        iMoved = iRequested;
+    }
+    if (iMoved == 0 && GetIsObjectValid(oCopy) && !MEIO_IsDirectlyIn(oCopy, oTarget))
+    {
+        DestroyObject(oCopy);
+    }
+    return iMoved;
+}
+
+int MEIO_CopyBookAmount(object oSource, object oTarget, int iRequested)
+{
+    if (!GetIsObjectValid(oSource) || !GetIsObjectValid(oTarget) || iRequested <= 0)
+    {
+        return 0;
+    }
+    int iSourceSize = GetItemStackSize(oSource);
+    if (iRequested > iSourceSize)
+    {
+        iRequested = iSourceSize;
+    }
+    string sKey = MEIO_GetBookKey(oSource);
+    int iBefore = MEIO_CountBookVariant(oTarget, sKey);
+    if (iRequested < iSourceSize)
+    {
+        SetItemStackSize(oSource, iRequested);
+    }
+    object oCopy = CopyItem(oSource, oTarget, TRUE);
+    if (iRequested < iSourceSize)
+    {
+        SetItemStackSize(oSource, iSourceSize);
+    }
+    int iMoved = MEIO_CountBookVariant(oTarget, sKey) - iBefore;
     if (iMoved < 0)
     {
         iMoved = 0;
@@ -378,6 +471,45 @@ int MEIO_StorePotionAmountExplicit(object oPC, object oPotion, int iRequested)
     return MEIO_StorePotionAmountInternal(oPC, oPotion, iRequested, TRUE);
 }
 
+int MEIO_StoreBookAmountInternal(object oPC, object oBook, int iRequested, int bIgnoreSuppression)
+{
+    if (!MEIO_CanStoreBook(oBook) || !MEIO_IsDirectlyIn(oBook, oPC) || (!bIgnoreSuppression && GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_SORT)))
+    {
+        return 0;
+    }
+    object oStorage = MEIO_EnsureBookStorage(oPC);
+    if (!GetIsObjectValid(oStorage))
+    {
+        return 0;
+    }
+    MEIO_UnmarkKeepOut(oPC, oBook);
+    int iMoved = MEIO_CopyBookAmount(oBook, oStorage, iRequested);
+    if (iMoved > 0)
+    {
+        int iStack = GetItemStackSize(oBook);
+        if (iMoved >= iStack)
+        {
+            DestroyObject(oBook);
+        }
+        else
+        {
+            SetItemStackSize(oBook, iStack - iMoved);
+        }
+        MEIO_ScheduleStorageSave(oPC);
+    }
+    return iMoved;
+}
+
+int MEIO_StoreBookAmount(object oPC, object oBook, int iRequested)
+{
+    return MEIO_StoreBookAmountInternal(oPC, oBook, iRequested, FALSE);
+}
+
+int MEIO_StoreBookAmountExplicit(object oPC, object oBook, int iRequested)
+{
+    return MEIO_StoreBookAmountInternal(oPC, oBook, iRequested, TRUE);
+}
+
 int MEIO_DropCopy(object oPC, object oItem)
 {
     string sTag = GetTag(oItem);
@@ -512,13 +644,104 @@ int MEIO_StorePotionInventoryBatch(object oPC, int iLimit)
     return TRUE;
 }
 
+int MEIO_StoreBookInventoryBatch(object oPC, int iLimit)
+{
+    int iAttempted;
+    int iMoved;
+    object oItem = GetFirstItemInInventory(oPC);
+    while (GetIsObjectValid(oItem))
+    {
+        object oNext = GetNextItemInInventory(oPC);
+        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_CanStoreBook(oItem))
+        {
+            iAttempted++;
+            iMoved += MEIO_StoreBookAmountExplicit(oPC, oItem, GetItemStackSize(oItem));
+            if (iAttempted >= iLimit)
+            {
+                SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
+                return FALSE;
+            }
+        }
+        oItem = oNext;
+    }
+    SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
+    return TRUE;
+}
+
+void MEIO_BeginBookDuplicateBurn(object oPC)
+{
+    SetLocalInt(oPC, MEIO_LOCAL_BURN_GENERATION, GetLocalInt(oPC, MEIO_LOCAL_BURN_GENERATION) + 1);
+    SetLocalJson(oPC, MEIO_LOCAL_BURN_SEEN, JsonObject());
+}
+
+int MEIO_BurnBookDuplicatesBatch(object oPC, int iLimit)
+{
+    object oStorage = MEIO_EnsureBookStorage(oPC);
+    json jSeen = GetLocalJson(oPC, MEIO_LOCAL_BURN_SEEN);
+    int iGeneration = GetLocalInt(oPC, MEIO_LOCAL_BURN_GENERATION);
+    int iRemoved;
+    int iInspected;
+    object oItem = GetFirstItemInInventory(oStorage);
+    while (GetIsObjectValid(oItem))
+    {
+        object oNext = GetNextItemInInventory(oStorage);
+        if (MEIO_IsDirectlyIn(oItem, oStorage) && MEIO_IsBook(oItem) && GetLocalInt(oItem, MEIO_LOCAL_BURN_PROCESSED) != iGeneration)
+        {
+            SetLocalInt(oItem, MEIO_LOCAL_BURN_PROCESSED, iGeneration);
+            iInspected++;
+            string sKey = MEIO_GetBookKey(oItem);
+            int iKept = JsonGetInt(JsonObjectGet(jSeen, sKey));
+            int iStack = GetItemStackSize(oItem);
+            if (!iKept)
+            {
+                jSeen = JsonObjectSet(jSeen, sKey, JsonBool(TRUE));
+                if (iStack > 1)
+                {
+                    SetItemStackSize(oItem, 1);
+                    iRemoved += iStack - 1;
+                }
+            }
+            else
+            {
+                iRemoved += iStack;
+                DestroyObject(oItem);
+            }
+            if (iInspected >= iLimit)
+            {
+                SetLocalJson(oPC, MEIO_LOCAL_BURN_SEEN, jSeen);
+                SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iRemoved);
+                if (iRemoved > 0)
+                {
+                    MEIO_ScheduleStorageSave(oPC);
+                }
+                return FALSE;
+            }
+        }
+        oItem = oNext;
+    }
+    SetLocalJson(oPC, MEIO_LOCAL_BURN_SEEN, jSeen);
+    SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iRemoved);
+    if (iRemoved > 0)
+    {
+        MEIO_ScheduleStorageSave(oPC);
+    }
+    oItem = GetFirstItemInInventory(oStorage);
+    while (GetIsObjectValid(oItem))
+    {
+        DeleteLocalInt(oItem, MEIO_LOCAL_BURN_PROCESSED);
+        oItem = GetNextItemInInventory(oStorage);
+    }
+    DeleteLocalJson(oPC, MEIO_LOCAL_BURN_SEEN);
+    return TRUE;
+}
+
 void MEIO_MarkInitialImportItems(object oPC)
 {
     int iMarked;
     object oItem = GetFirstItemInInventory(oPC);
     while (GetIsObjectValid(oItem))
     {
-        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_CanStoreItem(oItem))
+        if (MEIO_IsDirectlyIn(oItem, oPC) && MEIO_CanStoreItem(oItem) && MEIO_IsAutomaticForItem(oPC, oItem))
         {
             SetLocalInt(oItem, MEIO_LOCAL_INITIAL_IMPORT_ITEM, TRUE);
             iMarked++;
@@ -541,7 +764,7 @@ int MEIO_StoreInitialInventoryBatch(object oPC, int iLimit)
             iAttempted++;
             int iRequested = GetItemStackSize(oItem);
             DeleteLocalInt(oItem, MEIO_LOCAL_INITIAL_IMPORT_ITEM);
-            int iItemMoved = MEIO_IsScroll(oItem) ? MEIO_StoreAmountExplicit(oPC, oItem, iRequested) : MEIO_StorePotionAmountExplicit(oPC, oItem, iRequested);
+            int iItemMoved = MEIO_IsScroll(oItem) ? MEIO_StoreAmountExplicit(oPC, oItem, iRequested) : MEIO_IsUsablePotion(oItem) ? MEIO_StorePotionAmountExplicit(oPC, oItem, iRequested) : MEIO_StoreBookAmountExplicit(oPC, oItem, iRequested);
             iMoved += iItemMoved;
             if (iItemMoved < iRequested && GetIsObjectValid(oItem))
             {
@@ -598,5 +821,100 @@ void MEIO_ValidatePotionContents(object oPC, object oStorage)
     if (bChanged)
     {
         MEIO_ScheduleStorageSave(oPC);
+    }
+}
+
+void MEIO_ValidateBookContents(object oPC, object oStorage)
+{
+    int bChanged;
+    object oItem = GetFirstItemInInventory(oStorage);
+    while (GetIsObjectValid(oItem))
+    {
+        object oNext = GetNextItemInInventory(oStorage);
+        if (MEIO_IsDirectlyIn(oItem, oStorage) && !MEIO_CanStoreBook(oItem))
+        {
+            MEIO_DropCopy(oPC, oItem);
+            bChanged = TRUE;
+        }
+        oItem = oNext;
+    }
+    if (bChanged)
+    {
+        MEIO_ScheduleStorageSave(oPC);
+    }
+}
+
+int MEIO_ReturnVaultItem(object oPC, object oItem)
+{
+    if (!GetBaseItemFitsInInventory(GetBaseItemType(oItem), oPC))
+    {
+        return FALSE;
+    }
+    object oCopy = CopyItem(oItem, oPC, TRUE);
+    if (!MEIO_IsDirectlyIn(oCopy, oPC))
+    {
+        if (GetIsObjectValid(oCopy))
+        {
+            DestroyObject(oCopy);
+        }
+        return FALSE;
+    }
+    MEIO_MarkKeepOut(oPC, oCopy);
+    DestroyObject(oItem);
+    return TRUE;
+}
+
+int MEIO_StoreVaultItem(object oPC, object oItem)
+{
+    object oTarget = MEIO_IsScroll(oItem) ? MEIO_EnsureStorage(oPC) : MEIO_IsUsablePotion(oItem) ? MEIO_EnsurePotionStorage(oPC) : MEIO_IsBook(oItem) ? MEIO_EnsureBookStorage(oPC) : OBJECT_INVALID;
+    if (!GetIsObjectValid(oTarget) || !MEIO_CanStoreItem(oItem))
+    {
+        return FALSE;
+    }
+    int iRequested = GetItemStackSize(oItem);
+    int iMoved = MEIO_IsScroll(oItem) ? MEIO_CopyAmount(oItem, oTarget, iRequested) : MEIO_IsUsablePotion(oItem) ? MEIO_CopyPotionAmount(oItem, oTarget, iRequested) : MEIO_CopyBookAmount(oItem, oTarget, iRequested);
+    if (iMoved <= 0)
+    {
+        return FALSE;
+    }
+    if (iMoved >= GetItemStackSize(oItem))
+    {
+        DestroyObject(oItem);
+    }
+    else
+    {
+        SetItemStackSize(oItem, GetItemStackSize(oItem) - iMoved);
+    }
+    MEIO_ScheduleStorageSave(oPC);
+    return TRUE;
+}
+
+void MEIO_ProcessVaultContents(object oPC, int iLimit)
+{
+    if (MEIO_IsTransferBusy(oPC))
+    {
+        return;
+    }
+    object oVault = MEIO_FindScriptorium(oPC);
+    if (!GetIsObjectValid(oVault))
+    {
+        return;
+    }
+    int iAttempted;
+    int bChanged;
+    object oItem = GetFirstItemInInventory(oVault);
+    while (GetIsObjectValid(oItem) && iAttempted < iLimit)
+    {
+        object oNext = GetNextItemInInventory(oVault);
+        if (MEIO_IsDirectlyIn(oItem, oVault))
+        {
+            iAttempted++;
+            bChanged = MEIO_StoreVaultItem(oPC, oItem) || MEIO_ReturnVaultItem(oPC, oItem) || bChanged;
+        }
+        oItem = oNext;
+    }
+    if (bChanged)
+    {
+        MEIO_RebuildOpenWindowIndex(oPC);
     }
 }

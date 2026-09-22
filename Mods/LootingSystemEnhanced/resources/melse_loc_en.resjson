@@ -1,4 +1,6 @@
 {
+  "feature_loot_all_books_label": "Books",
+  "feature_loot_all_books_tooltip": "Always picks up books, notes, and journals, ignoring the configured item price and weight filters.",
   "mod_display_name": "Looting System Enhanced",
   "treasure_area_hint": "I should keep an eye out for treasure in this area.",
   "treasure_area_clear": "This area appears to be free from treasure.",

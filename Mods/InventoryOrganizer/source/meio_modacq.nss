@@ -1,11 +1,31 @@
-#include "meio_storage"
+#include "meio_ui"
 
 void main()
 {
-    object oPC = GetModuleItemAcquiredBy();
+    object oAcquiredBy = GetModuleItemAcquiredBy();
     object oItem = GetModuleItemAcquired();
     int iAcquired = GetModuleItemAcquiredStackSize();
-    MEIO_Debug(oPC, "OnAcquire entered acquired=" + IntToString(iAcquired) + " from=" + ObjectToString(GetModuleItemAcquiredFrom()) + " suppress=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_SORT)) + " suppressGeneration=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_GENERATION)) + " sortMode=" + IntToString(GetLocalInt(oPC, MEIO_CFG_SORT_MODE)) + " " + MEIO_DebugItemState(oPC, oItem));
+    object oVault = oAcquiredBy;
+    if (GetTag(oVault) != MEIO_SCRIPTORIUM_TAG)
+    {
+        object oPossessor = GetItemPossessor(oItem, TRUE);
+        if (GetTag(oPossessor) == MEIO_SCRIPTORIUM_TAG)
+        {
+            oVault = oPossessor;
+        }
+    }
+    object oPC = oAcquiredBy;
+    if (GetTag(oVault) == MEIO_SCRIPTORIUM_TAG)
+    {
+        oPC = GetItemPossessor(oVault, TRUE);
+        if (MEIO_IsPC(oPC))
+        {
+            MEIO_Debug(oPC, "OnAcquire decision=process-vault-item " + MEIO_DebugItemState(oPC, oItem));
+            MEIO_ProcessVaultContents(oPC, MEIO_INITIAL_IMPORT_BATCH_SIZE);
+        }
+        return;
+    }
+    MEIO_Debug(oPC, "OnAcquire entered acquired=" + IntToString(iAcquired) + " from=" + ObjectToString(GetModuleItemAcquiredFrom()) + " suppress=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_SORT)) + " suppressGeneration=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_GENERATION)) + " " + MEIO_DebugItemState(oPC, oItem));
     if (!MEIO_IsPC(oPC))
     {
         MEIO_Debug(oPC, "OnAcquire decision=ignore reason=not-supported-player");
@@ -26,9 +46,9 @@ void main()
         MEIO_Debug(oPC, "OnAcquire decision=ignore reason=keep-out " + MEIO_DebugItemState(oPC, oItem));
         return;
     }
-    if (GetLocalInt(oPC, MEIO_CFG_SORT_MODE) == MEIO_SORT_MODE_MANUAL)
+    if (!MEIO_IsAutomaticForItem(oPC, oItem))
     {
-        MEIO_Debug(oPC, "OnAcquire decision=ignore reason=manual-mode " + MEIO_DebugItemState(oPC, oItem));
+        MEIO_Debug(oPC, "OnAcquire decision=ignore reason=automatic-storage-disabled-for-type " + MEIO_DebugItemState(oPC, oItem));
         return;
     }
     if (!MEIO_CanStoreItem(oItem))
@@ -46,6 +66,6 @@ void main()
         iAcquired = GetItemStackSize(oItem);
     }
     MEIO_Debug(oPC, "OnAcquire decision=store requested=" + IntToString(iAcquired) + " " + MEIO_DebugItemState(oPC, oItem));
-    int iMoved = MEIO_IsScroll(oItem) ? MEIO_StoreAmount(oPC, oItem, iAcquired) : MEIO_StorePotionAmount(oPC, oItem, iAcquired);
+    int iMoved = MEIO_IsScroll(oItem) ? MEIO_StoreAmount(oPC, oItem, iAcquired) : MEIO_IsUsablePotion(oItem) ? MEIO_StorePotionAmount(oPC, oItem, iAcquired) : MEIO_StoreBookAmount(oPC, oItem, iAcquired);
     MEIO_Debug(oPC, "OnAcquire store-finished moved=" + IntToString(iMoved) + " " + MEIO_DebugItemState(oPC, oItem));
 }

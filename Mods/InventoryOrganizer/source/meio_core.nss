@@ -14,14 +14,17 @@ const string MEIO_STORAGE_RESREF = "meio_storage";
 const string MEIO_STORAGE_TAG = "MEIO_STORAGE";
 const string MEIO_POTION_STORAGE_RESREF = "meio_potions";
 const string MEIO_POTION_STORAGE_TAG = "MEIO_POTIONS";
+const string MEIO_BOOK_STORAGE_RESREF = "meio_books";
+const string MEIO_BOOK_STORAGE_TAG = "MEIO_BOOKS";
 const string MEIO_WINDOW = "meio_vault";
 const string MEIO_LOCAL_SCRIPTORIUM = "MEIO_VAULT_OBJECT";
 const string MEIO_LOCAL_STORAGE = "MEIO_STORAGE_OBJECT";
 const string MEIO_LOCAL_POTION_STORAGE = "MEIO_POTION_STORAGE_OBJECT";
+const string MEIO_LOCAL_BOOK_STORAGE = "MEIO_BOOK_STORAGE_OBJECT";
 const string MEIO_LOCAL_STORAGE_OWNER = "MEIO_STORAGE_OWNER";
 const string MEIO_LOCAL_SCHEMA = "MEIO_SCHEMA";
-const string MEIO_LOCAL_INITIAL_IMPORT_DONE = "MEIO_INITIAL_IMPORT_V3_DONE";
-const string MEIO_LOCAL_INITIAL_IMPORT_SNAPSHOT_DONE = "MEIO_INITIAL_IMPORT_V3_SNAPSHOT";
+const string MEIO_LOCAL_INITIAL_IMPORT_DONE = "MEIO_INITIAL_IMPORT_V4_DONE";
+const string MEIO_LOCAL_INITIAL_IMPORT_SNAPSHOT_DONE = "MEIO_INITIAL_IMPORT_V4_SNAPSHOT";
 const string MEIO_LOCAL_INITIAL_IMPORT_ITEM = "MEIO_INITIAL_IMPORT_ITEM";
 const string MEIO_LOCAL_INITIAL_IMPORT_RUNNING = "MEIO_INITIAL_IMPORT_RUNNING";
 const string MEIO_LOCAL_INITIAL_IMPORT_GENERATION = "MEIO_INITIAL_IMPORT_GENERATION";
@@ -38,12 +41,21 @@ const string MEIO_LOCAL_FILTERED_INDEX = "MEIO_FILTERED_INDEX";
 const string MEIO_LOCAL_DISPLAY_ENTRIES = "MEIO_DISPLAY_ENTRIES";
 const string MEIO_LOCAL_POTION_INDEX = "MEIO_POTION_INDEX";
 const string MEIO_LOCAL_POTION_ENTRIES = "MEIO_POTION_ENTRIES";
+const string MEIO_LOCAL_BOOK_INDEX = "MEIO_BOOK_INDEX";
+const string MEIO_LOCAL_BOOK_ENTRIES = "MEIO_BOOK_ENTRIES";
 const string MEIO_LOCAL_LEVEL_CAPACITIES = "MEIO_LEVEL_CAPACITIES";
 const string MEIO_LOCAL_POTION_CAPACITY = "MEIO_POTION_CAPACITY";
+const string MEIO_LOCAL_BOOK_CAPACITY = "MEIO_BOOK_CAPACITY";
 const string MEIO_LOCAL_ACTIVE_TAB = "MEIO_ACTIVE_TAB";
 const string MEIO_LOCAL_TRANSFER_MODE = "MEIO_TRANSFER_MODE";
 const string MEIO_LOCAL_BATCH_BLOCKED = "MEIO_BATCH_BLOCKED";
-const string MEIO_CFG_SORT_MODE = "MEIO_CFG_SORT_MODE";
+const string MEIO_LOCAL_BURN_SEEN = "MEIO_BURN_SEEN";
+const string MEIO_LOCAL_BURN_GENERATION = "MEIO_BURN_GENERATION";
+const string MEIO_LOCAL_BURN_PROCESSED = "MEIO_BURN_PROCESSED";
+const string MEIO_CFG_AUTO_SCROLLS = "MEIO_CFG_AUTO_SCROLLS";
+const string MEIO_CFG_AUTO_POTIONS = "MEIO_CFG_AUTO_POTIONS";
+const string MEIO_CFG_AUTO_BOOKS = "MEIO_CFG_AUTO_BOOKS";
+const string MEIO_CFG_AUTO_INITIALIZED = "MEIO_CFG_AUTO_INITIALIZED";
 const string MEIO_CFG_UI_SCALE = "MEIO_CFG_UI_SCALE";
 const string MEIO_CFG_DEBUG = "MEIO_CFG_DEBUG";
 const string MEIO_LOCAL_RESERVED = "MEIO_RESERVED";
@@ -67,8 +79,7 @@ const int MEIO_TARGET_ALLY = 2;
 const int MEIO_TARGET_ENEMY = 3;
 const int MEIO_TAB_SCROLLS = 0;
 const int MEIO_TAB_POTIONS = 1;
-const int MEIO_SORT_MODE_AUTOMATIC = 0;
-const int MEIO_SORT_MODE_MANUAL = 1;
+const int MEIO_TAB_BOOKS = 2;
 const int MEIO_INITIAL_IMPORT_BATCH_SIZE = 4;
 const int MEIO_UI_SCALE_MINIMUM = 25;
 const int MEIO_UI_SCALE_MAXIMUM = 100;
@@ -80,6 +91,21 @@ const int MEIO_TRANSFER_STORE_POTIONS = 2;
 const int MEIO_TRANSFER_WITHDRAW_SCROLLS = 3;
 const int MEIO_TRANSFER_WITHDRAW_POTIONS = 4;
 const int MEIO_TRANSFER_INITIAL_IMPORT = 5;
+const int MEIO_TRANSFER_STORE_BOOKS = 6;
+const int MEIO_TRANSFER_WITHDRAW_BOOKS = 7;
+const int MEIO_TRANSFER_BURN_BOOKS = 8;
+
+void MEIO_EnsureAutomaticSettings(object oPC)
+{
+    if (GetLocalInt(oPC, MEIO_CFG_AUTO_INITIALIZED))
+    {
+        return;
+    }
+    SetLocalInt(oPC, MEIO_CFG_AUTO_SCROLLS, TRUE);
+    SetLocalInt(oPC, MEIO_CFG_AUTO_POTIONS, TRUE);
+    SetLocalInt(oPC, MEIO_CFG_AUTO_BOOKS, TRUE);
+    SetLocalInt(oPC, MEIO_CFG_AUTO_INITIALIZED, TRUE);
+}
 
 int MEIO_GetUIScalePercent(object oPC)
 {
@@ -243,11 +269,32 @@ int MEIO_IsPotion(object oItem)
     return GetIsObjectValid(oItem) && GetBaseItemType(oItem) == BASE_ITEM_POTIONS;
 }
 
+int MEIO_IsBook(object oItem)
+{
+    return GetIsObjectValid(oItem) && GetBaseItemType(oItem) == BASE_ITEM_BOOK;
+}
+
+int MEIO_HasItemProperties(object oItem)
+{
+    return GetIsItemPropertyValid(GetFirstItemProperty(oItem));
+}
+
+int MEIO_CanStoreBook(object oItem)
+{
+    return MEIO_IsBook(oItem) && !GetPlotFlag(oItem) && !GetItemCursedFlag(oItem) && GetGoldPieceValue(oItem) > 0 && GetDroppableFlag(oItem) && !GetInfiniteFlag(oItem) && !MEIO_HasItemProperties(oItem);
+}
+
 int MEIO_IsUsablePotion(object oItem);
 
 int MEIO_CanStoreItem(object oItem)
 {
-    return GetIsObjectValid(oItem) && !GetPlotFlag(oItem) && !GetItemCursedFlag(oItem) && GetGoldPieceValue(oItem) > 0 && (MEIO_IsScroll(oItem) || MEIO_IsUsablePotion(oItem));
+    return GetIsObjectValid(oItem) && !GetPlotFlag(oItem) && !GetItemCursedFlag(oItem) && GetGoldPieceValue(oItem) > 0 && (MEIO_IsScroll(oItem) || MEIO_IsUsablePotion(oItem) || MEIO_CanStoreBook(oItem));
+}
+
+int MEIO_IsAutomaticForItem(object oPC, object oItem)
+{
+    MEIO_EnsureAutomaticSettings(oPC);
+    return MEIO_IsScroll(oItem) ? GetLocalInt(oPC, MEIO_CFG_AUTO_SCROLLS) : MEIO_IsUsablePotion(oItem) ? GetLocalInt(oPC, MEIO_CFG_AUTO_POTIONS) : MEIO_IsBook(oItem) ? GetLocalInt(oPC, MEIO_CFG_AUTO_BOOKS) : FALSE;
 }
 
 int MEIO_IsTransferBusy(object oPC)
@@ -365,6 +412,23 @@ string MEIO_GetVariantKey(object oScroll, int iSubtype)
 string MEIO_GetPotionKey(object oPotion, int iSubtype)
 {
     return GetResRef(oPotion) + "|" + IntToString(iSubtype) + "|" + IntToString(MEIO_GetPotionIconAppearance(oPotion, ITEM_APPR_WEAPON_MODEL_BOTTOM)) + "|" + IntToString(MEIO_GetPotionIconAppearance(oPotion, ITEM_APPR_WEAPON_MODEL_MIDDLE)) + "|" + IntToString(MEIO_GetPotionIconAppearance(oPotion, ITEM_APPR_WEAPON_MODEL_TOP));
+}
+
+string MEIO_GetBookEnglishName(object oBook)
+{
+    json jName = JsonPointer(ObjectToJson(oBook), "/LocalizedName/value");
+    string sName = JsonGetString(JsonObjectGet(jName, "0"));
+    if (sName == "")
+    {
+        jName = JsonPointer(TemplateToJson(GetResRef(oBook), RESTYPE_UTI), "/LocalizedName/value");
+        sName = JsonGetString(JsonObjectGet(jName, "0"));
+    }
+    return sName == "" ? GetName(oBook, TRUE) : sName;
+}
+
+string MEIO_GetBookKey(object oBook)
+{
+    return GetResRef(oBook) + "|" + GetTag(oBook) + "|" + GetName(oBook) + "|" + MEIO_GetBookEnglishName(oBook) + "|" + GetDescription(oBook, TRUE, TRUE) + "|" + IntToString(GetItemAppearance(oBook, ITEM_APPR_TYPE_SIMPLE_MODEL, 0));
 }
 
 int MEIO_GetCasterLevel(int iSubtype)

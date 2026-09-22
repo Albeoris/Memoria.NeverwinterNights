@@ -1,4 +1,6 @@
 {
+  "feature_loot_all_books_label": "Bücher",
+  "feature_loot_all_books_tooltip": "Hebt Bücher und Notizen unabhängig von den Preis- und Gewichtsfiltern immer auf.",
   "mod_display_name": "Looting System Enhanced",
   "treasure_area_hint": "Ich sollte mich nach Schätzen umsehen.",
   "treasure_area_clear": "Diese Gegend scheint frei von Schätzen zu sein.",

@@ -214,3 +214,85 @@ object MEIO_ResolvePotion(object oStorage, string sKey, int iSubtype)
     }
     return OBJECT_INVALID;
 }
+
+json MEIO_NewBookEntry(object oBook)
+{
+    string sName = GetName(oBook);
+    string sEnglishName = MEIO_GetBookEnglishName(oBook);
+    json jEntry = JsonObject();
+    jEntry = JsonObjectSet(jEntry, "key", JsonString(MEIO_GetBookKey(oBook)));
+    jEntry = JsonObjectSet(jEntry, "name", JsonString(sName));
+    jEntry = JsonObjectSet(jEntry, "alias", JsonString(sEnglishName));
+    jEntry = JsonObjectSet(jEntry, "icon", JsonString(MEMORIA_GetItemIcon(oBook)));
+    jEntry = JsonObjectSet(jEntry, "quantity", JsonInt(GetItemStackSize(oBook)));
+    jEntry = JsonObjectSet(jEntry, "search", JsonString(MEMORIA_GetJsonSearchText(JsonString(sName + " " + sEnglishName))));
+    return jEntry;
+}
+
+json MEIO_BuildBookIndex(object oStorage)
+{
+    json jIndex = JsonArray();
+    object oItem = GetFirstItemInInventory(oStorage);
+    while (GetIsObjectValid(oItem))
+    {
+        if (MEIO_IsDirectlyIn(oItem, oStorage) && MEIO_CanStoreBook(oItem))
+        {
+            string sKey = MEIO_GetBookKey(oItem);
+            int iFound = -1;
+            int iIndex;
+            for (iIndex = 0; iIndex < JsonGetLength(jIndex); iIndex++)
+            {
+                if (JsonGetString(JsonObjectGet(JsonArrayGet(jIndex, iIndex), "key")) == sKey)
+                {
+                    iFound = iIndex;
+                }
+            }
+            if (iFound >= 0)
+            {
+                json jEntry = JsonArrayGet(jIndex, iFound);
+                jEntry = JsonObjectSet(jEntry, "quantity", JsonInt(JsonGetInt(JsonObjectGet(jEntry, "quantity")) + GetItemStackSize(oItem)));
+                jIndex = JsonArraySet(jIndex, iFound, jEntry);
+            }
+            else
+            {
+                jIndex = JsonArrayInsert(jIndex, MEIO_NewBookEntry(oItem));
+            }
+        }
+        oItem = GetNextItemInInventory(oStorage);
+    }
+    return jIndex;
+}
+
+json MEIO_FilterBookIndex(json jIndex, json jSearch)
+{
+    string sSearch = MEMORIA_GetJsonSearchText(jSearch);
+    if (sSearch == "")
+    {
+        return jIndex;
+    }
+    json jFiltered = JsonArray();
+    int iIndex;
+    for (iIndex = 0; iIndex < JsonGetLength(jIndex); iIndex++)
+    {
+        json jEntry = JsonArrayGet(jIndex, iIndex);
+        if (FindSubString(JsonGetString(JsonObjectGet(jEntry, "search")), sSearch) >= 0)
+        {
+            jFiltered = JsonArrayInsert(jFiltered, jEntry);
+        }
+    }
+    return jFiltered;
+}
+
+object MEIO_ResolveBook(object oStorage, string sKey)
+{
+    object oItem = GetFirstItemInInventory(oStorage);
+    while (GetIsObjectValid(oItem))
+    {
+        if (MEIO_IsDirectlyIn(oItem, oStorage) && MEIO_IsBook(oItem) && MEIO_GetBookKey(oItem) == sKey)
+        {
+            return oItem;
+        }
+        oItem = GetNextItemInInventory(oStorage);
+    }
+    return OBJECT_INVALID;
+}

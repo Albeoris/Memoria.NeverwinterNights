@@ -14,25 +14,31 @@
     },
     "options": [
       {
-        "type": "choice",
+        "type": "bool",
         "scope": "player",
-        "local": "MEIO_CFG_SORT_MODE",
-        "label": "Item storage mode",
-        "label_key": "sort_mode_label",
-        "tooltip": "Automatically store every acquired scroll and potion, or only store them when requested from the Spatial Storage window.",
-        "tooltip_key": "sort_mode_tooltip",
-        "choices": [
-          {
-            "value": 0,
-            "label": "Automatic",
-            "label_key": "sort_mode_automatic"
-          },
-          {
-            "value": 1,
-            "label": "Only on request",
-            "label_key": "sort_mode_manual"
-          }
-        ]
+        "local": "MEIO_CFG_AUTO_SCROLLS",
+        "label": "Automatically store scrolls",
+        "label_key": "auto_scrolls_label",
+        "tooltip": "Moves eligible acquired scrolls to Spatial Storage.",
+        "tooltip_key": "auto_scrolls_tooltip"
+      },
+      {
+        "type": "bool",
+        "scope": "player",
+        "local": "MEIO_CFG_AUTO_POTIONS",
+        "label": "Automatically store potions",
+        "label_key": "auto_potions_label",
+        "tooltip": "Moves eligible acquired potions to Spatial Storage.",
+        "tooltip_key": "auto_potions_tooltip"
+      },
+      {
+        "type": "bool",
+        "scope": "player",
+        "local": "MEIO_CFG_AUTO_BOOKS",
+        "label": "Automatically store books",
+        "label_key": "auto_books_label",
+        "tooltip": "Moves eligible acquired books, notes, and journals to Spatial Storage.",
+        "tooltip_key": "auto_books_tooltip"
       },
       {
         "type": "int",

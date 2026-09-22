@@ -156,6 +156,17 @@
         "width": 150
       },
       {
+        "type": "bool",
+        "scope": "module",
+        "local": "MELSE_FEATURE_LOOT_ALL_BOOKS",
+        "label": "Books",
+        "label_key": "feature_loot_all_books_label",
+        "tooltip": "Always picks up books, notes, and journals, ignoring the configured item price and weight filters.",
+        "tooltip_key": "feature_loot_all_books_tooltip",
+        "layout": "inline",
+        "width": 150
+      },
+      {
         "type": "int",
         "scope": "module",
         "local": "MELSE_PARAM_DELAY_CORPSE_DECAY",

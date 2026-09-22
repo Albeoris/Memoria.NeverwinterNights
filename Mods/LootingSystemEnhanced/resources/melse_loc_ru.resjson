@@ -1,4 +1,6 @@
 {
+  "feature_loot_all_books_label": "Книги",
+  "feature_loot_all_books_tooltip": "Всегда подбирает книги, записки и заметки, игнорируя настроенные ограничения стоимости и веса.",
   "mod_display_name": "Looting System Enhanced",
   "treasure_area_hint": "Стоит присмотреться к сокровищам в этой местности.",
   "treasure_area_clear": "Похоже, в этой местности сокровищ нет.",

@@ -1,4 +1,6 @@
 {
+  "feature_loot_all_books_label": "Libros",
+  "feature_loot_all_books_tooltip": "Recoge siempre libros y notas, ignorando los filtros de precio y peso configurados.",
   "mod_display_name": "Looting System Enhanced",
   "treasure_area_hint": "Debería estar atento a los tesoros en esta zona.",
   "treasure_area_clear": "Esta zona parece estar libre de tesoros.",

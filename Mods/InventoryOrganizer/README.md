@@ -1,12 +1,12 @@
 # Memoria Inventory Organizer (MEIO)
 
-Memoria Inventory Organizer adds **Spatial Storage** to every player character. The visible chest item is a UI handle; scrolls and potions live in separate hidden stores belonging to the current game state. Both stores are saved and restored with the save game, and their contents remain ordinary NWN item objects with complete runtime state.
+Memoria Inventory Organizer adds **Spatial Storage** to every player character. The visible chest item is both a UI handle and an intake container; scrolls, potions, and books live in separate hidden stores belonging to the current game state. All stores are saved and restored with the save game, and their contents remain ordinary NWN item objects with complete runtime state.
 
 ## Features
 
-- Automatically stores eligible newly acquired scrolls and potions, including the acquired portion of a merged stack. Plot, cursed, and zero-value items are never stored.
+- Independently configures automatic storage of eligible newly acquired scrolls, potions, and books. Plot, cursed, zero-value, non-droppable, infinite, or enchanted books are never stored; local variables do not affect eligibility.
 - Imports all eligible carried scrolls and potions once when the character first receives Spatial Storage, using bounded batches every 0.1 seconds to stay within the VM instruction limit.
-- Provides separate Scrolls and Potions tabs; potion icons reproduce the three layered inventory appearance parts.
+- Provides separate Scrolls, Potions, and Books tabs with real item icons. Book search matches both localized and English titles, and duplicate copies can be burned in bounded batches.
 - Displays the current physical contents as compact spell-icon rows grouped by spell level, omitting empty levels after every search, filter, addition, or removal, with localized names in tooltips.
 - Filters scrolls by self, ally/beneficial-area, or enemy/hostile-area targeting; search matches both the current language and the English 2DA label.
 - Keeps different cast-spell subtypes separate, so variants with different caster levels remain distinguishable.
@@ -21,11 +21,11 @@ Custom scrolls are supported when they contain exactly one `ITEM_PROPERTY_CAST_S
 
 ## Usage
 
-Spatial Storage is an ordinary chest without a special power. **Examine** from its radial menu opens the NUI immediately without entering the action queue; the standard description panel stays suppressed whether the NUI is closed manually or by using an item. `/memoria-io-scrolls` and `/memoria-io-potions` open the corresponding tab from chat and can be assigned as quickbar chat macros.
+Spatial Storage is an ordinary chest without a special power. **Examine** from its radial menu opens the NUI immediately without entering the action queue; the standard description panel stays suppressed whether the NUI is closed manually or by using an item. `/memoria-io-scrolls`, `/memoria-io-potions`, and `/memoria-io-books` open the corresponding tab from chat and can be assigned as quickbar chat macros. Eligible managed items placed directly into the chest are absorbed into their virtual stores; every other item is returned to the character when inventory space is available.
 
 ## Uninstallation without losing stored items
 
-Do not remove MEIO while Spatial Storage still contains items: its hidden stores are inaccessible without the mod. Open both tabs and use **Withdraw all scrolls** and **Withdraw all potions**. If the inventory becomes full, free enough space and repeat until both pages are empty. Save the game to a new slot, verify that every required item is in the character inventory, exit the game, and only then remove MEIO from `override` or unsubscribe from it.
+Do not remove MEIO while Spatial Storage still contains items: its hidden stores are inaccessible without the mod. Open all three tabs and use **All to inventory** on each one. If the inventory becomes full, free enough space and repeat until every page is empty. Also empty the visible chest itself. Save the game to a new slot, verify that every required item is in the character inventory, exit the game, and only then remove MEIO from `override` or unsubscribe from it.
 
 ## Compatibility
 
