@@ -152,6 +152,16 @@ jobs:
           $configText = $null
           $manifests = @(Get-ChildItem -LiteralPath 'artifacts/publish' -Filter 'steam-workshop.vdf' -File -Recurse | Sort-Object FullName)
           if ($manifests.Count -eq 0) { throw 'No Steam Workshop manifests were downloaded.' }
+          Write-Output "Steam Workshop upload order ($($manifests.Count) items):"
+          for ($index = 0; $index -lt $manifests.Count; $index++) {
+            $manifest = $manifests[$index]
+            $manifestText = [IO.File]::ReadAllText($manifest.FullName, [Text.Encoding]::UTF8)
+            $titleMatch = [regex]::Match($manifestText, '(?m)^\s*"title"\s+"(?<value>[^"]*)"\s*$')
+            $publishedFileIdMatch = [regex]::Match($manifestText, '(?m)^\s*"publishedfileid"\s+"(?<value>\d+)"\s*$')
+            $title = if ($titleMatch.Success) { $titleMatch.Groups['value'].Value } else { '<unknown title>' }
+            $publishedFileId = if ($publishedFileIdMatch.Success) { $publishedFileIdMatch.Groups['value'].Value } else { '<unknown ID>' }
+            Write-Output "[$($index + 1)] $title (Workshop ID: $publishedFileId): $($manifest.FullName)"
+          }
           $steamArguments = @('+@ShutdownOnFailedCommand', '1', '+@NoPromptForPassword', '1', '+login', $steamUsername)
           foreach ($manifest in $manifests) {
             $steamArguments += '+workshop_build_item'
