@@ -43,6 +43,8 @@ int METACT_CanSpellHitAllies(int iSpell)
 
 int METACT_GetActionSpellLevel(json jAction, int iSpell)
 {
+    if (iSpell < 0)
+        return -1;
     json jStoredLevel = JsonObjectGet(jAction, "level");
     if (JsonGetType(jStoredLevel) == JSON_TYPE_INTEGER)
     {

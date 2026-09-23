@@ -195,6 +195,7 @@ json MEIO_BuildLevelList(object oPC, json jCapacities)
 
 json MEIO_BuildKeyItemList(int iItemCapacity)
 {
+    float fRowSpacing = 2.0f;
     json jRow = JsonArray();
     json jContainer = NuiTooltip(NuiImage(NuiBind("key_container_icon"), JsonInt(NUI_ASPECT_FIT), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE)), NuiBind("key_container_tip"));
     jRow = JsonArrayInsert(jRow, NuiWidth(NuiHeight(jContainer, 48.0f), 52.0f));
@@ -212,7 +213,8 @@ json MEIO_BuildKeyItemList(int iItemCapacity)
     json jRowElement = NuiPadding(NuiGroup(NuiRow(jRow), FALSE, NUI_SCROLLBARS_NONE), 0.0f);
     jRowElement = NuiHeight(jRowElement, 52.0f);
     json jTemplate = JsonArray();
-    jTemplate = JsonArrayInsert(jTemplate, NuiListTemplateCell(jRowElement, 52.0f + 44.0f * IntToFloat(iItemCapacity), TRUE));
+    float fContentWidth = 52.0f + (44.0f + fRowSpacing) * IntToFloat(iItemCapacity);
+    jTemplate = JsonArrayInsert(jTemplate, NuiListTemplateCell(jRowElement, fContentWidth, TRUE));
     return NuiList(jTemplate, NuiBind("key_container_count"), 54.0f, FALSE, NUI_SCROLLBARS_BOTH);
 }
 
@@ -291,6 +293,7 @@ json MEIO_BuildWindow(object oPC, json jCapacities, int iPotionCapacity, int iBo
         jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "remove_empty_key_container"))), "remove_empty_key_container"), 170.0f));
         jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "store_key_items"))), "store_key_items"), 170.0f));
         jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "withdraw_key_items"))), "withdraw_key_items"), 170.0f));
+        jFooter = JsonArrayInsert(jFooter, NuiSpacer());
         jKeyItems = JsonArrayInsert(jKeyItems, NuiHeight(NuiRow(jFooter), 32.0f));
         jRoot = JsonArrayInsert(jRoot, NuiCol(jKeyItems));
     }

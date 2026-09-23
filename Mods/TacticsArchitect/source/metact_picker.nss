@@ -201,7 +201,7 @@ json METACT_AddFeatCandidates(json jCandidates, object oActor)
         jCandidate = JsonObjectSet(jCandidate, "icon", JsonString(sIcon));
         jCandidate = JsonObjectSet(jCandidate, "detail", JsonString(sName));
         jCandidate = JsonObjectSet(jCandidate, "search", JsonString(METACT_JsonSearchText(JsonString(sName + " " + Get2DAString("feat", "LABEL", iFeat)))));
-        jCandidate = JsonObjectSet(jCandidate, "target_self", JsonBool(Get2DAString("feat", "TARGETSELF", iFeat) == "1"));
+        jCandidate = JsonObjectSet(jCandidate, "target_self", JsonBool(MEMORIA_IsFeatTargetSelf(iFeat)));
         jCandidate = JsonObjectSet(jCandidate, "item_resref", JsonString(""));
         jCandidate = JsonObjectSet(jCandidate, "item_property", JsonInt(-1));
         jCandidates = JsonArrayInsert(jCandidates, jCandidate);

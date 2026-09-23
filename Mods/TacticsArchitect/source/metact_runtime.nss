@@ -1108,14 +1108,32 @@ int METACT_ExecuteAction(object oActor, object oPC, json jAction, json jConditio
     {
         int iFeat = JsonGetInt(JsonObjectGet(jAction, "feat"));
         int iSpell = JsonGetInt(JsonObjectGet(jAction, "spell"));
-        if (iFeat < 0 || !GetHasFeat(iFeat, oActor)) return METACT_Fail(oActor, "feat_unavailable");
+        if (iFeat < 0 || !GetHasFeat(iFeat, oActor))
+            return METACT_Fail(oActor, "feat_unavailable");
+        int iActionMode = METACT_GetFeatActionMode(iFeat);
+        if (iActionMode >= 0)
+        {
+            if (iFeat == FEAT_FLURRY_OF_BLOWS && !GetIsInCombat(oActor))
+                return METACT_Fail(oActor, "requires_combat");
+            if (GetActionMode(oActor, iActionMode))
+                return METACT_Fail(oActor, "action_mode_already_active");
+            SetActionMode(oActor, iActionMode, TRUE);
+            return TRUE;
+        }
         int iAssociateType = iSpell >= 0 ? METACT_GetSpellAssociateType(iSpell) : -1;
         if (iAssociateType >= 0 && GetIsObjectValid(GetAssociate(iAssociateType, oActor))) return METACT_Fail(oActor, iAssociateType == ASSOCIATE_TYPE_FAMILIAR ? "familiar_already_present" : "summon_already_present");
         DeleteLocalObject(oActor, METACT_LOCAL_EVAL_TARGET);
         DeleteLocalLocation(oActor, METACT_LOCAL_EVAL_LOCATION);
         DeleteLocalInt(oActor, METACT_LOCAL_EVAL_IS_LOCATION);
-        if (JsonGetInt(JsonObjectGet(jAction, "feat_target_self"))) SetLocalObject(oActor, METACT_LOCAL_EVAL_TARGET, oActor);
-        else if (!METACT_ResolveTarget(oActor, oPC, jAction, iSpell, METACT_GetActionSpellLevel(jAction, iSpell), METAMAGIC_NONE, 1, jPriorities, jCondition)) return FALSE;
+        if (MEMORIA_IsFeatTargetSelf(iFeat))
+            SetLocalObject(oActor, METACT_LOCAL_EVAL_TARGET, oActor);
+        else
+        {
+            if (iSpell < 0 && JsonGetString(JsonObjectGet(jAction, "target")) == "self")
+                jAction = JsonObjectSet(jAction, "target", JsonString("auto"));
+            if (!METACT_ResolveTarget(oActor, oPC, jAction, iSpell, METACT_GetActionSpellLevel(jAction, iSpell), METAMAGIC_NONE, 1, jPriorities, jCondition))
+                return FALSE;
+        }
         if (METACT_DeferAction(oActor, oPC)) return TRUE;
         METACT_BeginOwnedAction(oActor, oPC, ACTION_USEOBJECT);
         if (GetLocalInt(oActor, METACT_LOCAL_EVAL_IS_LOCATION)) AssignCommand(oActor, ActionUseFeat(iFeat, OBJECT_INVALID, 0, GetLocalLocation(oActor, METACT_LOCAL_EVAL_LOCATION)));
@@ -1141,6 +1159,8 @@ string METACT_DebugReasonText(object oPC, string sReason)
 {
     int bRussian = FALSE;
     if (sReason == "allies_moving") return "waiting for nearby allies to stop moving";
+    if (sReason == "requires_combat") return "requires combat";
+    if (sReason == "action_mode_already_active") return "combat mode is already active";
     if (FindSubString(sReason, "ally_trajectory:") == 0) return "an ally may enter the spell area: " + GetSubString(sReason, 16, GetStringLength(sReason) - 16);
     if (sReason == "ally_trajectory") return bRussian ? "Союзник может попасть в область заклинания" : "an ally may enter the spell area";
     if (sReason == "not_enough_predicted_enemies") return bRussian ? "К моменту попадания враги не образуют достаточное скопление" : "too few enemies are predicted to remain clustered at impact";

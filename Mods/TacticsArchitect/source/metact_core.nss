@@ -1,12 +1,13 @@
 // Tactics Architect (METACT) - persistent model, integration and party registry.
 #include "esi_lib"
 #include "memoria_core"
+#include "memoria_feat"
 #include "memoria_group"
 #include "memoria_item"
 #include "memoria_locale"
 #include "memoria_loc"
 
-const string METACT_VERSION = "0.7.8";
+const string METACT_VERSION = "0.7.11";
 const string METACT_LOC_PREFIX = "metact";
 const string METACT_ESI_KEY_GUI = "metact.module.gui";
 const string METACT_ESI_KEY_TARGET = "metact.module.target";
@@ -73,6 +74,12 @@ const int METACT_PRIORITY_SCOPE_ACTION = 2;
 const float METACT_HEARTBEAT_SECONDS = 6.0f;
 const float METACT_INTERVAL = 0.5f;
 const int METACT_MAX_AOE_TARGETS = 16;
+
+int METACT_GetFeatActionMode(int iFeat)
+{
+    return MEMORIA_GetFeatActionMode(iFeat);
+}
+
 const int METACT_MAX_AOE_CANDIDATE_ENEMIES = 12;
 const float METACT_AOE_PROJECTILE_SPEED = 20.0f;
 const float METACT_AOE_ALLY_MARGIN = 0.75f;

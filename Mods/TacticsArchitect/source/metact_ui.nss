@@ -830,9 +830,13 @@ json METACT_TargetEntries(object oPC, json jAction, json jRule)
     json jEntries = JsonArray();
     string sKind = JsonGetString(JsonObjectGet(jAction, "kind"));
     if (sKind == "") return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_AUTO, oPC), METACT_TARGET_AUTO));
-    if (sKind == "familiar" || sKind == "equip" || (sKind == "feat" && JsonGetInt(JsonObjectGet(jAction, "feat_target_self")))) return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_SELF, oPC), METACT_TARGET_SELF));
+    int iFeat = JsonGetInt(JsonObjectGet(jAction, "feat"));
+    if (sKind == "familiar" || sKind == "equip" || (sKind == "feat" && (MEMORIA_IsFeatTargetSelf(iFeat) || METACT_GetFeatActionMode(iFeat) >= 0)))
+        return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_SELF, oPC), METACT_TARGET_SELF));
     if (sKind == "attack") return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_BY_PRIORITIES, oPC), METACT_TARGET_AUTO));
     int iSpell = JsonGetInt(JsonObjectGet(jAction, "spell"));
+    if (sKind == "feat" && iSpell < 0)
+        return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_BY_PRIORITIES, oPC), METACT_TARGET_AUTO));
     if (METACT_GetSpellRole(iSpell) == METACT_ROLE_SUMMON || Get2DAString("spells", "Range", iSpell) == "P") return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_SELF, oPC), METACT_TARGET_SELF));
     if (METACT_IsSpellHostile(iSpell) && METACT_IsSpellArea(iSpell)) return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_CLUSTER, oPC), METACT_TARGET_CLUSTER));
     if (METACT_IsSpellHostile(iSpell)) return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_TARGET_BY_PRIORITIES, oPC), METACT_TARGET_AUTO));

@@ -17,12 +17,13 @@
         "cells": [
           {
             "id": "container-row",
-            "width": 580,
+            "width": 604,
             "grow": 1,
             "child": {
               "id": "container-row-layout",
               "type": "row",
               "height": 52,
+              "gap": 2,
               "children": [
                 { "id": "container-icon", "type": "control", "width": 52, "height": 48 },
                 { "id": "item-1", "type": "control", "width": 44, "height": 44 },
@@ -50,7 +51,8 @@
           { "id": "new-container", "type": "control", "width": 170, "height": 32 },
           { "id": "remove-empty", "type": "control", "width": 170, "height": 32 },
           { "id": "store-all", "type": "control", "width": 170, "height": 32 },
-          { "id": "retrieve-all", "type": "control", "width": 170, "height": 32 }
+          { "id": "retrieve-all", "type": "control", "width": 170, "height": 32 },
+          { "id": "footer-spacer", "type": "spacer", "grow": 1 }
         ]
       }
     ]
