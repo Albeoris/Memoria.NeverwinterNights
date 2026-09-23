@@ -7,7 +7,6 @@ Memoria Configuration Manager provides one persistent inventory item and a share
 - Collects the settings of all compatible Memoria mods in one NUI menu.
 - Supports player-specific and module-wide booleans, numbers, choices, action buttons, validation, and mod diagnostics.
 - Stores settings on the character or module so they persist in saved games and during the transition between modules.
-- Opens contextual help for an option with the right mouse button instead of showing unsolicited hover tooltips.
 - Opens directly with `/memoria-config`; the command can be assigned as a quickbar chat macro.
 
 ## Compatibility

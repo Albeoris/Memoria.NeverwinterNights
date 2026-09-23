@@ -2,7 +2,7 @@
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
         <ModId>MECONFIG</ModId>
-        <Version>1.2.8</Version>
+        <Version>1.2.9</Version>
         <ModDisplayName>Memoria: Configuration Manager</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">

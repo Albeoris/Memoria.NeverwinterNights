@@ -6,6 +6,8 @@ namespace Memoria.NeverwinterNights.Toolset;
 
 internal static partial class Publisher
 {
+    private const int WorkshopDescriptionMaxUtf8Bytes = 7999;
+
     public static async Task<int> PublishAsync(ProjectContext context, string[] arguments)
     {
         if (arguments.Length == 0) return Fail("publish: specify a generated mod input file.");
@@ -88,6 +90,8 @@ internal static partial class Publisher
         if (relativeReadmePath.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) || Path.IsPathRooted(relativeReadmePath)) throw new InvalidDataException($"README.md must be inside the repository: {readmePath}");
         string readmeUrl = $"https://github.com/{inputs.ApiSnapshotRepository}/blob/main/{string.Join('/', relativeReadmePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Select(Uri.EscapeDataString))}";
         string description = MarkdownToSteam.Convert(await File.ReadAllTextAsync(readmePath, Encoding.UTF8), readmeUrl);
+        int descriptionUtf8Bytes = Encoding.UTF8.GetByteCount(EscapeVdf(description));
+        if (descriptionUtf8Bytes > WorkshopDescriptionMaxUtf8Bytes) throw new InvalidDataException($"Workshop description for {displayName} is {descriptionUtf8Bytes} UTF-8 bytes; Steam allows at most {WorkshopDescriptionMaxUtf8Bytes} bytes plus the terminating null byte.");
 
         string manifest = Path.Combine(packageRoot, "steam-workshop.vdf");
         string[] lines = ["\"workshopitem\"", "{", VdfEntry("appid", appId.ToString()), VdfEntry("publishedfileid", publishedFileId.ToString()), VdfEntry("contentfolder", Path.GetFullPath(workshopRoot)), VdfEntry("title", displayName), VdfEntry("description", description), "}"];
@@ -104,7 +108,7 @@ internal static partial class Publisher
     {
         // SteamCMD does not enable KeyValues escape sequences for Workshop manifests, so \" would terminate the quoted token instead of escaping it.
         // Keep real line breaks in descriptions and replace embedded quotes with their display-safe Unicode equivalent.
-        return value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "＂", StringComparison.Ordinal).Replace("\t", "    ", StringComparison.Ordinal);
+        return value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\uFF02", StringComparison.Ordinal).Replace("\t", "    ", StringComparison.Ordinal);
     }
 
     private static string SanitizeDirectoryName(string value)
