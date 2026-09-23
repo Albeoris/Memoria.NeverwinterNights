@@ -193,70 +193,106 @@ json MEIO_BuildLevelList(object oPC, json jCapacities)
     return NuiList(jTemplate, NuiBind("spell_level_count"), fRowHeight, FALSE, NUI_SCROLLBARS_BOTH);
 }
 
-json MEIO_BuildWindow(object oPC, json jCapacities, int iPotionCapacity, int iBookCapacity, int iTab)
+json MEIO_BuildKeyItemList(int iItemCapacity)
+{
+    json jRow = JsonArray();
+    json jContainer = NuiTooltip(NuiImage(NuiBind("key_container_icon"), JsonInt(NUI_ASPECT_FIT), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE)), NuiBind("key_container_tip"));
+    jRow = JsonArrayInsert(jRow, NuiWidth(NuiHeight(jContainer, 48.0f), 52.0f));
+    int iSlot;
+    for (iSlot = 0; iSlot < iItemCapacity; iSlot++)
+    {
+        string sSlot = IntToString(iSlot);
+        json jDraw = JsonArray();
+        jDraw = JsonArrayInsert(jDraw, NuiDrawListImage(JsonBool(TRUE), NuiBind("key_item_icon_" + sSlot), NuiBind("key_item_rect_" + sSlot), JsonInt(NUI_ASPECT_FIT), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE)));
+        jDraw = JsonArrayInsert(jDraw, NuiDrawListRect(NuiBind("key_item_cursed_" + sSlot), NuiColor(220, 45, 35), JsonBool(FALSE), JsonFloat(2.0f), NuiRect(1.0f, 1.0f, 42.0f, 42.0f)));
+        json jButton = NuiDrawList(NuiId(NuiButton(JsonString("")), "key_item_" + sSlot), JsonBool(TRUE), jDraw);
+        json jItem = NuiTooltip(jButton, NuiBind("key_item_tip_" + sSlot));
+        jRow = JsonArrayInsert(jRow, NuiWidth(NuiHeight(NuiVisible(jItem, NuiBind("key_item_visible_" + sSlot)), 44.0f), 48.0f));
+    }
+    json jRowElement = NuiPadding(NuiGroup(NuiRow(jRow), FALSE, NUI_SCROLLBARS_NONE), 0.0f);
+    jRowElement = NuiHeight(jRowElement, 52.0f);
+    json jTemplate = JsonArray();
+    jTemplate = JsonArrayInsert(jTemplate, NuiListTemplateCell(jRowElement, 52.0f + 48.0f * IntToFloat(iItemCapacity), TRUE));
+    return NuiList(jTemplate, NuiBind("key_container_count"), 54.0f, FALSE, NUI_SCROLLBARS_BOTH);
+}
+
+json MEIO_BuildWindow(object oPC, json jCapacities, int iPotionCapacity, int iBookCapacity, int iKeyItemCapacity, int iTab)
 {
     json jRoot = JsonArray();
     json jTabs = JsonArray();
     jTabs = JsonArrayInsert(jTabs, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "tab_scrolls"))), "tab_scrolls"), 180.0f));
     jTabs = JsonArrayInsert(jTabs, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "tab_potions"))), "tab_potions"), 180.0f));
     jTabs = JsonArrayInsert(jTabs, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "tab_books"))), "tab_books"), 180.0f));
+    jTabs = JsonArrayInsert(jTabs, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "tab_key_items"))), "tab_key_items"), 180.0f));
     jTabs = JsonArrayInsert(jTabs, NuiSpacer());
     jRoot = JsonArrayInsert(jRoot, NuiHeight(NuiRow(jTabs), 30.0f));
-    string sCommandKey = iTab == MEIO_TAB_POTIONS ? "potions_command_hint" : iTab == MEIO_TAB_BOOKS ? "books_command_hint" : "scrolls_command_hint";
+    string sCommandKey = iTab == MEIO_TAB_POTIONS ? "potions_command_hint" : iTab == MEIO_TAB_BOOKS ? "books_command_hint" : iTab == MEIO_TAB_KEY_ITEMS ? "key_items_command_hint" : "scrolls_command_hint";
     json jCommandHint = NuiStyleForegroundColor(NuiLabel(JsonString(MEIO_GetText(oPC, sCommandKey)), JsonInt(NUI_HALIGN_CENTER), JsonInt(NUI_VALIGN_MIDDLE)), NuiColor(180, 180, 180));
     jRoot = JsonArrayInsert(jRoot, NuiHeight(jCommandHint, 22.0f));
-    json jScrolls = JsonArray();
-    json jSearch = JsonArray();
-    jSearch = JsonArrayInsert(jSearch, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "search")), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), 70.0f));
-    jSearch = JsonArrayInsert(jSearch, NuiTextEdit(JsonString(MEIO_GetText(oPC, "search_hint")), NuiBind("search"), 80, FALSE));
-    jScrolls = JsonArrayInsert(jScrolls, NuiHeight(NuiRow(jSearch), 30.0f));
-    json jFilters = JsonArray();
-    jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiCombo(MEIO_TargetEntries(oPC), NuiBind("target")), 220.0f));
-    jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiCheck(JsonString(MEIO_GetText(oPC, "english_names")), NuiBind("english_names")), 205.0f));
-    jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiCheck(JsonString(MEIO_GetText(oPC, "show_caster_level")), NuiBind("show_caster_level")), 205.0f));
-    jFilters = JsonArrayInsert(jFilters, NuiSpacer());
-    jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiLabel(NuiBind("result_count"), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 90.0f));
-    jScrolls = JsonArrayInsert(jScrolls, NuiHeight(NuiRow(jFilters), 30.0f));
-    jScrolls = JsonArrayInsert(jScrolls, NuiHeight(MEIO_BuildLevelList(oPC, jCapacities), 307.0f));
-    json jScrollFooter = JsonArray();
-    jScrollFooter = JsonArrayInsert(jScrollFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "return_scrolls"))), "store_scrolls"), 170.0f));
-    jScrollFooter = JsonArrayInsert(jScrollFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "withdraw_all_scrolls"))), "withdraw_all_scrolls"), 170.0f));
-    jScrollFooter = JsonArrayInsert(jScrollFooter, NuiSpacer());
-    jScrollFooter = JsonArrayInsert(jScrollFooter, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "withdraw_hint")), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 350.0f));
-    jScrolls = JsonArrayInsert(jScrolls, NuiHeight(NuiRow(jScrollFooter), 32.0f));
     if (iTab == MEIO_TAB_SCROLLS)
     {
+        json jScrolls = JsonArray();
+        json jSearch = JsonArray();
+        jSearch = JsonArrayInsert(jSearch, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "search")), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), 70.0f));
+        jSearch = JsonArrayInsert(jSearch, NuiTextEdit(JsonString(MEIO_GetText(oPC, "search_hint")), NuiBind("search"), 80, FALSE));
+        jScrolls = JsonArrayInsert(jScrolls, NuiHeight(NuiRow(jSearch), 30.0f));
+        json jFilters = JsonArray();
+        jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiCombo(MEIO_TargetEntries(oPC), NuiBind("target")), 220.0f));
+        jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiCheck(JsonString(MEIO_GetText(oPC, "english_names")), NuiBind("english_names")), 205.0f));
+        jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiCheck(JsonString(MEIO_GetText(oPC, "show_caster_level")), NuiBind("show_caster_level")), 205.0f));
+        jFilters = JsonArrayInsert(jFilters, NuiSpacer());
+        jFilters = JsonArrayInsert(jFilters, NuiWidth(NuiLabel(NuiBind("result_count"), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 90.0f));
+        jScrolls = JsonArrayInsert(jScrolls, NuiHeight(NuiRow(jFilters), 30.0f));
+        jScrolls = JsonArrayInsert(jScrolls, NuiHeight(MEIO_BuildLevelList(oPC, jCapacities), 307.0f));
+        json jFooter = JsonArray();
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "return_scrolls"))), "store_scrolls"), 170.0f));
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "withdraw_all_scrolls"))), "withdraw_all_scrolls"), 170.0f));
+        jFooter = JsonArrayInsert(jFooter, NuiSpacer());
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "withdraw_hint")), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 350.0f));
+        jScrolls = JsonArrayInsert(jScrolls, NuiHeight(NuiRow(jFooter), 32.0f));
         jRoot = JsonArrayInsert(jRoot, NuiCol(jScrolls));
     }
-    json jPotions = JsonArray();
-    jPotions = JsonArrayInsert(jPotions, NuiHeight(MEIO_BuildPotionGrid(iPotionCapacity), 367.0f));
-    json jPotionFooter = JsonArray();
-    jPotionFooter = JsonArrayInsert(jPotionFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "return_potions"))), "store_potions"), 170.0f));
-    jPotionFooter = JsonArrayInsert(jPotionFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "withdraw_all_potions"))), "withdraw_all_potions"), 170.0f));
-    jPotionFooter = JsonArrayInsert(jPotionFooter, NuiSpacer());
-    jPotionFooter = JsonArrayInsert(jPotionFooter, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "potion_hint")), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 350.0f));
-    jPotions = JsonArrayInsert(jPotions, NuiHeight(NuiRow(jPotionFooter), 32.0f));
-    if (iTab == MEIO_TAB_POTIONS)
+    else if (iTab == MEIO_TAB_POTIONS)
     {
+        json jPotions = JsonArray();
+        jPotions = JsonArrayInsert(jPotions, NuiHeight(MEIO_BuildPotionGrid(iPotionCapacity), 367.0f));
+        json jFooter = JsonArray();
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "return_potions"))), "store_potions"), 170.0f));
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "withdraw_all_potions"))), "withdraw_all_potions"), 170.0f));
+        jFooter = JsonArrayInsert(jFooter, NuiSpacer());
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "potion_hint")), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 350.0f));
+        jPotions = JsonArrayInsert(jPotions, NuiHeight(NuiRow(jFooter), 32.0f));
         jRoot = JsonArrayInsert(jRoot, NuiCol(jPotions));
     }
-    json jBooks = JsonArray();
-    json jBookSearch = JsonArray();
-    jBookSearch = JsonArrayInsert(jBookSearch, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "search")), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), 70.0f));
-    jBookSearch = JsonArrayInsert(jBookSearch, NuiTextEdit(JsonString(MEIO_GetText(oPC, "book_search_hint")), NuiBind("book_search"), 80, FALSE));
-    jBookSearch = JsonArrayInsert(jBookSearch, NuiWidth(NuiCheck(JsonString(MEIO_GetText(oPC, "english_names")), NuiBind("book_english_names")), 205.0f));
-    jBooks = JsonArrayInsert(jBooks, NuiHeight(NuiRow(jBookSearch), 30.0f));
-    jBooks = JsonArrayInsert(jBooks, NuiHeight(MEIO_BuildBookGrid(iBookCapacity), 337.0f));
-    json jBookFooter = JsonArray();
-    jBookFooter = JsonArrayInsert(jBookFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "return_books"))), "store_books"), 150.0f));
-    jBookFooter = JsonArrayInsert(jBookFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "withdraw_all_books"))), "withdraw_all_books"), 150.0f));
-    jBookFooter = JsonArrayInsert(jBookFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "burn_duplicates"))), "burn_duplicates"), 150.0f));
-    jBookFooter = JsonArrayInsert(jBookFooter, NuiSpacer());
-    jBookFooter = JsonArrayInsert(jBookFooter, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "book_hint")), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 230.0f));
-    jBooks = JsonArrayInsert(jBooks, NuiHeight(NuiRow(jBookFooter), 32.0f));
-    if (iTab == MEIO_TAB_BOOKS)
+    else if (iTab == MEIO_TAB_BOOKS)
     {
+        json jBooks = JsonArray();
+        json jBookSearch = JsonArray();
+        jBookSearch = JsonArrayInsert(jBookSearch, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "search")), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), 70.0f));
+        jBookSearch = JsonArrayInsert(jBookSearch, NuiTextEdit(JsonString(MEIO_GetText(oPC, "book_search_hint")), NuiBind("book_search"), 80, FALSE));
+        jBookSearch = JsonArrayInsert(jBookSearch, NuiWidth(NuiCheck(JsonString(MEIO_GetText(oPC, "english_names")), NuiBind("book_english_names")), 205.0f));
+        jBooks = JsonArrayInsert(jBooks, NuiHeight(NuiRow(jBookSearch), 30.0f));
+        jBooks = JsonArrayInsert(jBooks, NuiHeight(MEIO_BuildBookGrid(iBookCapacity), 337.0f));
+        json jFooter = JsonArray();
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "return_books"))), "store_books"), 150.0f));
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "withdraw_all_books"))), "withdraw_all_books"), 150.0f));
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "burn_duplicates"))), "burn_duplicates"), 150.0f));
+        jFooter = JsonArrayInsert(jFooter, NuiSpacer());
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiLabel(JsonString(MEIO_GetText(oPC, "book_hint")), JsonInt(NUI_HALIGN_RIGHT), JsonInt(NUI_VALIGN_MIDDLE)), 230.0f));
+        jBooks = JsonArrayInsert(jBooks, NuiHeight(NuiRow(jFooter), 32.0f));
         jRoot = JsonArrayInsert(jRoot, NuiCol(jBooks));
+    }
+    else
+    {
+        json jKeyItems = JsonArray();
+        jKeyItems = JsonArrayInsert(jKeyItems, NuiHeight(MEIO_BuildKeyItemList(iKeyItemCapacity), 367.0f));
+        json jFooter = JsonArray();
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "new_key_container"))), "new_key_container"), 170.0f));
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "remove_empty_key_container"))), "remove_empty_key_container"), 170.0f));
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "store_key_items"))), "store_key_items"), 170.0f));
+        jFooter = JsonArrayInsert(jFooter, NuiWidth(NuiId(NuiButton(JsonString(MEIO_GetText(oPC, "withdraw_key_items"))), "withdraw_key_items"), 170.0f));
+        jKeyItems = JsonArrayInsert(jKeyItems, NuiHeight(NuiRow(jFooter), 32.0f));
+        jRoot = JsonArrayInsert(jRoot, NuiCol(jKeyItems));
     }
     return NuiWindow(NuiCol(jRoot), JsonString(MEIO_GetText(oPC, "window_title")), NuiRect(-1.0f, -1.0f, 760.0f, 500.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
 }
@@ -379,6 +415,21 @@ void MEIO_ShowBookDescription(object oPC, json jBook, int bEnglishNames)
         NuiDestroy(oPC, iOldToken);
     }
     NuiCreate(oPC, MEIO_BuildBookDescriptionWindow(oBook, bEnglishNames), MEIO_BOOK_DESCRIPTION_WINDOW, "memoria_noop");
+}
+
+void MEIO_ShowKeyItemDescription(object oPC, json jItem)
+{
+    object oItem = MEIO_ResolveDisplayedKeyItem(oPC, jItem);
+    if (!GetIsObjectValid(oItem))
+    {
+        return;
+    }
+    int iOldToken = NuiFindWindow(oPC, MEIO_BOOK_DESCRIPTION_WINDOW);
+    if (iOldToken > 0)
+    {
+        NuiDestroy(oPC, iOldToken);
+    }
+    NuiCreate(oPC, MEIO_BuildBookDescriptionWindow(oItem, FALSE), MEIO_BOOK_DESCRIPTION_WINDOW, "memoria_noop");
 }
 
 string MEIO_BuildSpellTip(object oPC, json jEntry, int bEnglishNames, int bShowCasterLevel)
@@ -574,8 +625,95 @@ void MEIO_RefreshBookWindow(object oPC, int iToken)
     SetLocalJson(oPC, MEIO_LOCAL_BOOK_ENTRIES, jDisplay);
 }
 
+void MEIO_RefreshKeyItemWindow(object oPC, int iToken)
+{
+    json jIndex = GetLocalJson(oPC, MEIO_LOCAL_KEY_INDEX);
+    int iContainerCapacity = GetLocalInt(oPC, MEIO_LOCAL_KEY_CONTAINER_CAPACITY);
+    int iItemCapacity = GetLocalInt(oPC, MEIO_LOCAL_KEY_ITEM_CAPACITY);
+    json jContainerIcons = JsonArray();
+    json jContainerTips = JsonArray();
+    json jVisibleBySlot = JsonObject();
+    json jIconsBySlot = JsonObject();
+    json jTipsBySlot = JsonObject();
+    json jRectsBySlot = JsonObject();
+    json jCursedBySlot = JsonObject();
+    json jDisplayRows = JsonArray();
+    int iSlot;
+    for (iSlot = 0; iSlot < iItemCapacity; iSlot++)
+    {
+        string sSlot = IntToString(iSlot);
+        jVisibleBySlot = JsonObjectSet(jVisibleBySlot, sSlot, JsonArray());
+        jIconsBySlot = JsonObjectSet(jIconsBySlot, sSlot, JsonArray());
+        jTipsBySlot = JsonObjectSet(jTipsBySlot, sSlot, JsonArray());
+        jRectsBySlot = JsonObjectSet(jRectsBySlot, sSlot, JsonArray());
+        jCursedBySlot = JsonObjectSet(jCursedBySlot, sSlot, JsonArray());
+    }
+    int iContainer;
+    for (iContainer = 0; iContainer < iContainerCapacity; iContainer++)
+    {
+        json jEntry = iContainer < JsonGetLength(jIndex) ? JsonArrayGet(jIndex, iContainer) : JsonObject();
+        json jItems = JsonObjectGet(jEntry, "items");
+        json jDisplayRow = JsonObject();
+        jContainerIcons = JsonArrayInsert(jContainerIcons, iContainer < JsonGetLength(jIndex) ? JsonObjectGet(jEntry, "icon") : JsonString(""));
+        jContainerTips = JsonArrayInsert(jContainerTips, iContainer < JsonGetLength(jIndex) ? JsonObjectGet(jEntry, "name") : JsonString(""));
+        for (iSlot = 0; iSlot < iItemCapacity; iSlot++)
+        {
+            string sSlot = IntToString(iSlot);
+            json jVisible = JsonObjectGet(jVisibleBySlot, sSlot);
+            json jIcons = JsonObjectGet(jIconsBySlot, sSlot);
+            json jTips = JsonObjectGet(jTipsBySlot, sSlot);
+            json jRects = JsonObjectGet(jRectsBySlot, sSlot);
+            json jCursed = JsonObjectGet(jCursedBySlot, sSlot);
+            int bVisible = iContainer < JsonGetLength(jIndex) && iSlot < JsonGetLength(jItems);
+            json jItem = bVisible ? JsonArrayGet(jItems, iSlot) : JsonObject();
+            int bCursed = bVisible && JsonGetInt(JsonObjectGet(jItem, "cursed"));
+            string sTip = bVisible ? JsonGetString(JsonObjectGet(jItem, "name")) : "";
+            if (bCursed)
+            {
+                sTip += "\n" + MEIO_GetText(oPC, "cursed_key_item_locked");
+            }
+            jVisibleBySlot = JsonObjectSet(jVisibleBySlot, sSlot, JsonArrayInsert(jVisible, JsonBool(bVisible)));
+            jIconsBySlot = JsonObjectSet(jIconsBySlot, sSlot, JsonArrayInsert(jIcons, bVisible ? JsonObjectGet(jItem, "icon") : JsonString("")));
+            jTipsBySlot = JsonObjectSet(jTipsBySlot, sSlot, JsonArrayInsert(jTips, JsonString(sTip)));
+            jRectsBySlot = JsonObjectSet(jRectsBySlot, sSlot, JsonArrayInsert(jRects, bVisible && JsonGetInt(JsonObjectGet(jItem, "small")) ? NuiRect(6.0f, 6.0f, 32.0f, 32.0f) : NuiRect(0.0f, 0.0f, 44.0f, 44.0f)));
+            jCursedBySlot = JsonObjectSet(jCursedBySlot, sSlot, JsonArrayInsert(jCursed, JsonBool(bCursed)));
+            if (bVisible)
+            {
+                jDisplayRow = JsonObjectSet(jDisplayRow, "key_item_" + sSlot, jItem);
+            }
+        }
+        jDisplayRows = JsonArrayInsert(jDisplayRows, jDisplayRow);
+    }
+    NuiSetBind(oPC, iToken, "key_container_icon", jContainerIcons);
+    NuiSetBind(oPC, iToken, "key_container_tip", jContainerTips);
+    for (iSlot = 0; iSlot < iItemCapacity; iSlot++)
+    {
+        string sSlot = IntToString(iSlot);
+        NuiSetBind(oPC, iToken, "key_item_visible_" + sSlot, JsonObjectGet(jVisibleBySlot, sSlot));
+        NuiSetBind(oPC, iToken, "key_item_icon_" + sSlot, JsonObjectGet(jIconsBySlot, sSlot));
+        NuiSetBind(oPC, iToken, "key_item_tip_" + sSlot, JsonObjectGet(jTipsBySlot, sSlot));
+        NuiSetBind(oPC, iToken, "key_item_rect_" + sSlot, JsonObjectGet(jRectsBySlot, sSlot));
+        NuiSetBind(oPC, iToken, "key_item_cursed_" + sSlot, JsonObjectGet(jCursedBySlot, sSlot));
+    }
+    NuiSetBind(oPC, iToken, "key_container_count", JsonInt(JsonGetLength(jIndex)));
+    SetLocalJson(oPC, MEIO_LOCAL_KEY_ENTRIES, jDisplayRows);
+    MEIO_Debug(oPC, "Key item window refreshed token=" + IntToString(iToken) + " rows=" + IntToString(JsonGetLength(jIndex)) + " rowCapacity=" + IntToString(iContainerCapacity) + " itemCapacity=" + IntToString(iItemCapacity));
+}
+
 void MEIO_RebuildWindowIndex(object oPC, int iToken)
 {
+    if (GetLocalInt(oPC, MEIO_LOCAL_ACTIVE_TAB) == MEIO_TAB_KEY_ITEMS)
+    {
+        json jKeyIndex = MEIO_BuildKeyItemIndex(oPC);
+        if (JsonGetLength(jKeyIndex) > GetLocalInt(oPC, MEIO_LOCAL_KEY_CONTAINER_CAPACITY) || MEIO_GetKeyItemCapacity(jKeyIndex) > GetLocalInt(oPC, MEIO_LOCAL_KEY_ITEM_CAPACITY))
+        {
+            MEIO_OpenTab(oPC, MEIO_TAB_KEY_ITEMS);
+            return;
+        }
+        SetLocalJson(oPC, MEIO_LOCAL_KEY_INDEX, jKeyIndex);
+        MEIO_RefreshKeyItemWindow(oPC, iToken);
+        return;
+    }
     object oStorage = MEIO_EnsureStorage(oPC);
     object oPotionStorage = MEIO_EnsurePotionStorage(oPC);
     object oBookStorage = MEIO_EnsureBookStorage(oPC);
@@ -738,13 +876,43 @@ void MEIO_RebuildOpenWindowIndex(object oPC)
     }
 }
 
+void MEIO_OpenKeyItemsTab(object oPC)
+{
+    object oScriptorium = MEIO_EnsureScriptorium(oPC);
+    if (!GetIsObjectValid(oScriptorium))
+    {
+        return;
+    }
+    json jIndex = MEIO_BuildKeyItemIndex(oPC);
+    int iContainerCapacity = JsonGetLength(jIndex);
+    int iItemCapacity = MEIO_GetKeyItemCapacity(jIndex);
+    SetLocalJson(oPC, MEIO_LOCAL_KEY_INDEX, jIndex);
+    SetLocalInt(oPC, MEIO_LOCAL_KEY_CONTAINER_CAPACITY, iContainerCapacity);
+    SetLocalInt(oPC, MEIO_LOCAL_KEY_ITEM_CAPACITY, iItemCapacity);
+    int iOld = NuiFindWindow(oPC, MEIO_WINDOW);
+    if (iOld > 0)
+    {
+        NuiDestroy(oPC, iOld);
+    }
+    int iToken = MEMORIA_NUI_Create(oPC, MEIO_BuildWindow(oPC, JsonArray(), 0, 0, iItemCapacity, MEIO_TAB_KEY_ITEMS), MEIO_WINDOW, "meio_nuievt");
+    if (iToken > 0)
+    {
+        MEIO_RefreshKeyItemWindow(oPC, iToken);
+    }
+}
+
 void MEIO_OpenTab(object oPC, int iTab)
 {
-    if (iTab != MEIO_TAB_POTIONS && iTab != MEIO_TAB_BOOKS)
+    if (iTab != MEIO_TAB_POTIONS && iTab != MEIO_TAB_BOOKS && iTab != MEIO_TAB_KEY_ITEMS)
     {
         iTab = MEIO_TAB_SCROLLS;
     }
     SetLocalInt(oPC, MEIO_LOCAL_ACTIVE_TAB, iTab);
+    if (iTab == MEIO_TAB_KEY_ITEMS)
+    {
+        MEIO_OpenKeyItemsTab(oPC);
+        return;
+    }
     object oScriptorium = MEIO_EnsureScriptorium(oPC);
     object oStorage = MEIO_EnsureStorage(oPC);
     object oPotionStorage = MEIO_EnsurePotionStorage(oPC);
@@ -787,7 +955,7 @@ void MEIO_OpenTab(object oPC, int iTab)
     {
         NuiDestroy(oPC, iOld);
     }
-    int iToken = MEMORIA_NUI_Create(oPC, MEIO_BuildWindow(oPC, jCapacities, iPotionCapacity, iBookCapacity, iTab), MEIO_WINDOW, "meio_nuievt");
+    int iToken = MEMORIA_NUI_Create(oPC, MEIO_BuildWindow(oPC, jCapacities, iPotionCapacity, iBookCapacity, 12, iTab), MEIO_WINDOW, "meio_nuievt");
     if (iToken > 0)
     {
         if (iTab == MEIO_TAB_SCROLLS)
@@ -806,7 +974,7 @@ void MEIO_OpenTab(object oPC, int iTab)
         {
             MEIO_RefreshPotionWindow(oPC, iToken);
         }
-        else
+        else if (iTab == MEIO_TAB_BOOKS)
         {
             NuiSetBind(oPC, iToken, "book_search", JsonString(""));
             NuiSetBind(oPC, iToken, "book_english_names", JsonBool(FALSE));

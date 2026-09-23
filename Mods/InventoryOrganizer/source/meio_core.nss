@@ -17,6 +17,8 @@ const string MEIO_POTION_STORAGE_RESREF = "meio_potions";
 const string MEIO_POTION_STORAGE_TAG = "MEIO_POTIONS";
 const string MEIO_BOOK_STORAGE_RESREF = "meio_books";
 const string MEIO_BOOK_STORAGE_TAG = "MEIO_BOOKS";
+const string MEIO_KEY_CONTAINER_RESREF = "meio_keys";
+const string MEIO_KEY_CONTAINER_TAG = "MEIO_KEY_CONTAINER";
 const string MEIO_WINDOW = "meio_vault";
 const string MEIO_BOOK_DESCRIPTION_WINDOW = "meio_book_description";
 const string MEIO_LOCAL_SCRIPTORIUM = "MEIO_VAULT_OBJECT";
@@ -45,9 +47,19 @@ const string MEIO_LOCAL_POTION_INDEX = "MEIO_POTION_INDEX";
 const string MEIO_LOCAL_POTION_ENTRIES = "MEIO_POTION_ENTRIES";
 const string MEIO_LOCAL_BOOK_INDEX = "MEIO_BOOK_INDEX";
 const string MEIO_LOCAL_BOOK_ENTRIES = "MEIO_BOOK_ENTRIES";
+const string MEIO_LOCAL_KEY_INDEX = "MEIO_KEY_INDEX";
+const string MEIO_LOCAL_KEY_ENTRIES = "MEIO_KEY_ENTRIES";
 const string MEIO_LOCAL_LEVEL_CAPACITIES = "MEIO_LEVEL_CAPACITIES";
 const string MEIO_LOCAL_POTION_CAPACITY = "MEIO_POTION_CAPACITY";
 const string MEIO_LOCAL_BOOK_CAPACITY = "MEIO_BOOK_CAPACITY";
+const string MEIO_LOCAL_KEY_CONTAINER_CAPACITY = "MEIO_KEY_CONTAINER_CAPACITY";
+const string MEIO_LOCAL_KEY_ITEM_CAPACITY = "MEIO_KEY_ITEM_CAPACITY";
+const string MEIO_LOCAL_KEY_CONTAINER_SCHEMA = "MEIO_KEY_CONTAINER_SCHEMA";
+const string MEIO_LOCAL_KEY_MOVE_PENDING = "MEIO_KEY_MOVE_PENDING";
+const string MEIO_LOCAL_KEY_BATCH_GENERATION = "MEIO_KEY_BATCH_GENERATION";
+const string MEIO_LOCAL_KEY_PENDING_ITEM = "MEIO_KEY_PENDING_ITEM";
+const string MEIO_LOCAL_KEY_TRANSFER_LEASE = "MEIO_KEY_TRANSFER_LEASE";
+const string MEIO_LOCAL_HEARTBEAT_COUNTER = "MEIO_HEARTBEAT_COUNTER";
 const string MEIO_LOCAL_ACTIVE_TAB = "MEIO_ACTIVE_TAB";
 const string MEIO_LOCAL_TRANSFER_MODE = "MEIO_TRANSFER_MODE";
 const string MEIO_LOCAL_BATCH_BLOCKED = "MEIO_BATCH_BLOCKED";
@@ -83,6 +95,7 @@ const int MEIO_TARGET_ENEMY = 3;
 const int MEIO_TAB_SCROLLS = 0;
 const int MEIO_TAB_POTIONS = 1;
 const int MEIO_TAB_BOOKS = 2;
+const int MEIO_TAB_KEY_ITEMS = 3;
 const int MEIO_INITIAL_IMPORT_BATCH_SIZE = 4;
 const int MEIO_UI_SCALE_MINIMUM = 25;
 const int MEIO_UI_SCALE_MAXIMUM = 100;
@@ -97,6 +110,9 @@ const int MEIO_TRANSFER_INITIAL_IMPORT = 5;
 const int MEIO_TRANSFER_STORE_BOOKS = 6;
 const int MEIO_TRANSFER_WITHDRAW_BOOKS = 7;
 const int MEIO_TRANSFER_BURN_BOOKS = 8;
+const int MEIO_TRANSFER_STORE_KEY_ITEMS = 9;
+const int MEIO_TRANSFER_WITHDRAW_KEY_ITEMS = 10;
+const int MEIO_KEY_CONTAINER_SCHEMA = 1;
 
 void MEIO_EnsureAutomaticSettings(object oPC)
 {
@@ -275,6 +291,44 @@ int MEIO_IsPotion(object oItem)
 int MEIO_IsBook(object oItem)
 {
     return GetIsObjectValid(oItem) && GetBaseItemType(oItem) == BASE_ITEM_BOOK;
+}
+
+int MEIO_IsKeyItem(object oItem)
+{
+    return GetIsObjectValid(oItem) && (GetPlotFlag(oItem) || GetGoldPieceValue(oItem) == 0);
+}
+
+int MEIO_IsCursedItem(object oItem)
+{
+    return GetIsObjectValid(oItem) && GetItemCursedFlag(oItem);
+}
+
+int MEIO_IsRecallStone(object oItem)
+{
+    return GetIsObjectValid(oItem) && (GetTag(oItem) == "NW_IT_RECALL" || GetResRef(oItem) == "nw_it_recall");
+}
+
+int MEIO_IsKeyItemContainer(object oItem)
+{
+    return GetIsObjectValid(oItem) && GetBaseItemType(oItem) == BASE_ITEM_LARGEBOX && GetResRef(oItem) == MEIO_KEY_CONTAINER_RESREF && GetTag(oItem) == MEIO_KEY_CONTAINER_TAG && GetLocalInt(oItem, MEIO_LOCAL_KEY_CONTAINER_SCHEMA) == MEIO_KEY_CONTAINER_SCHEMA;
+}
+
+int MEIO_IsMemoriaItem(object oItem)
+{
+    if (!GetIsObjectValid(oItem))
+    {
+        return FALSE;
+    }
+    if (MEIO_IsKeyItemContainer(oItem))
+    {
+        return TRUE;
+    }
+    return GetBaseItemType(oItem) == BASE_ITEM_LARGEBOX && GetResRef(oItem) == MEIO_SCRIPTORIUM_RESREF && GetTag(oItem) == MEIO_SCRIPTORIUM_TAG;
+}
+
+int MEIO_CanStoreKeyItem(object oItem)
+{
+    return MEIO_IsKeyItem(oItem) && !MEIO_IsCursedItem(oItem) && !MEIO_IsMemoriaItem(oItem) && !MEIO_IsRecallStone(oItem);
 }
 
 int MEIO_HasItemProperties(object oItem)

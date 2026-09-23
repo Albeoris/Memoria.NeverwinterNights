@@ -21,6 +21,17 @@ json MEIO_GetBookEventEntry(object oPC, string sElement)
     return JsonObjectGet(GetLocalJson(oPC, MEIO_LOCAL_BOOK_ENTRIES), sElement);
 }
 
+json MEIO_GetKeyItemEventEntry(object oPC, string sElement)
+{
+    json jRows = GetLocalJson(oPC, MEIO_LOCAL_KEY_ENTRIES);
+    int iRow = NuiGetEventArrayIndex();
+    if (JsonGetType(jRows) != JSON_TYPE_ARRAY || iRow < 0 || iRow >= JsonGetLength(jRows))
+    {
+        return JsonNull();
+    }
+    return JsonObjectGet(JsonArrayGet(jRows, iRow), sElement);
+}
+
 void MEIO_RefreshBatchWindow(object oPC, int iToken)
 {
     if (NuiFindWindow(oPC, MEIO_WINDOW) == iToken)
@@ -111,6 +122,7 @@ void main()
     string sEvent = NuiGetEventType();
     string sElement = NuiGetEventElement();
     MEIO_Debug(oPC, "NUI event type=\"" + sEvent + "\" element=\"" + sElement + "\" token=" + IntToString(iToken));
+    MEIO_RecoverStaleKeyTransfer(oPC);
     if (sEvent == "close")
     {
         MEIO_ScheduleExamineSuppression(oPC, MEIO_FindScriptorium(oPC), "nui-close");
@@ -121,9 +133,13 @@ void main()
         DeleteLocalJson(oPC, MEIO_LOCAL_POTION_ENTRIES);
         DeleteLocalJson(oPC, MEIO_LOCAL_BOOK_INDEX);
         DeleteLocalJson(oPC, MEIO_LOCAL_BOOK_ENTRIES);
+        DeleteLocalJson(oPC, MEIO_LOCAL_KEY_INDEX);
+        DeleteLocalJson(oPC, MEIO_LOCAL_KEY_ENTRIES);
         DeleteLocalJson(oPC, MEIO_LOCAL_LEVEL_CAPACITIES);
         DeleteLocalInt(oPC, MEIO_LOCAL_POTION_CAPACITY);
         DeleteLocalInt(oPC, MEIO_LOCAL_BOOK_CAPACITY);
+        DeleteLocalInt(oPC, MEIO_LOCAL_KEY_CONTAINER_CAPACITY);
+        DeleteLocalInt(oPC, MEIO_LOCAL_KEY_ITEM_CAPACITY);
         return;
     }
     if (sEvent == "watch" && (sElement == "search" || sElement == "target" || sElement == "english_names" || sElement == "show_caster_level"))
@@ -164,6 +180,16 @@ void main()
         if (JsonGetType(jSelected) == JSON_TYPE_OBJECT && MEIO_WithdrawBookOne(oPC, jSelected))
         {
             MEIO_RemoveOneFromBookWindowIndex(oPC, iToken, jSelected);
+            MEIO_ScheduleMutationRefresh(oPC, iToken);
+        }
+        return;
+    }
+    if (sEvent == "mousedown" && GetSubString(sElement, 0, 9) == "key_item_" && JsonGetInt(JsonObjectGet(NuiGetEventPayload(), "mouse_btn")) == NUI_MOUSE_BUTTON_RIGHT)
+    {
+        json jSelected = MEIO_GetKeyItemEventEntry(oPC, sElement);
+        MEIO_Debug(oPC, "NUI decision=move-key-item selection=" + JsonDump(jSelected));
+        if (JsonGetType(jSelected) == JSON_TYPE_OBJECT && MEIO_MoveDisplayedKeyItem(oPC, jSelected))
+        {
             MEIO_ScheduleMutationRefresh(oPC, iToken);
         }
         return;
@@ -252,12 +278,67 @@ void main()
         MEIO_OpenTab(oPC, MEIO_TAB_BOOKS);
         return;
     }
+    if (sElement == "tab_key_items")
+    {
+        DelayCommand(0.1f, MEIO_OpenTab(oPC, MEIO_TAB_KEY_ITEMS));
+        return;
+    }
+    if (sElement == "new_key_container")
+    {
+        DelayCommand(0.1f, MEIO_CreateKeyItemContainerFromUI(oPC));
+        return;
+    }
+    if (sElement == "remove_empty_key_container")
+    {
+        DelayCommand(0.1f, MEIO_RemoveEmptyKeyItemContainerFromUI(oPC));
+        return;
+    }
+    if (sElement == "store_key_items")
+    {
+        if (!MEIO_HasKeyItemContainer(oPC))
+        {
+            SendMessageToPC(oPC, MEIO_GetText(oPC, "no_key_container"));
+            return;
+        }
+        if (!MEIO_BeginTransfer(oPC, MEIO_TRANSFER_STORE_KEY_ITEMS, TRUE))
+        {
+            return;
+        }
+        int iGeneration = GetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION) + 1;
+        SetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION, iGeneration);
+        SetLocalInt(oPC, MEIO_LOCAL_RETURN_TOTAL, 0);
+        MEIO_TouchKeyTransfer(oPC);
+        DelayCommand(0.1f, MEIO_StartKeyItemStoreBatch(oPC, iGeneration));
+        return;
+    }
+    if (sElement == "withdraw_key_items")
+    {
+        if (!MEIO_BeginTransfer(oPC, MEIO_TRANSFER_WITHDRAW_KEY_ITEMS, TRUE))
+        {
+            return;
+        }
+        int iGeneration = GetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION) + 1;
+        SetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION, iGeneration);
+        SetLocalInt(oPC, MEIO_LOCAL_RETURN_TOTAL, 0);
+        MEIO_TouchKeyTransfer(oPC);
+        DelayCommand(0.1f, MEIO_StartKeyItemWithdrawal(oPC, iGeneration));
+        return;
+    }
     if (GetSubString(sElement, 0, 5) == "book_")
     {
         json jSelected = MEIO_GetBookEventEntry(oPC, sElement);
         if (JsonGetType(jSelected) == JSON_TYPE_OBJECT)
         {
             MEIO_ShowBookDescription(oPC, jSelected, JsonGetInt(NuiGetBind(oPC, iToken, "book_english_names")));
+        }
+        return;
+    }
+    if (GetSubString(sElement, 0, 9) == "key_item_")
+    {
+        json jSelected = MEIO_GetKeyItemEventEntry(oPC, sElement);
+        if (JsonGetType(jSelected) == JSON_TYPE_OBJECT)
+        {
+            MEIO_ShowKeyItemDescription(oPC, jSelected);
         }
         return;
     }

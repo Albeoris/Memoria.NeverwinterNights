@@ -1,0 +1,58 @@
+{
+  "screen": { "width": 3440, "height": 1440, "uiScale": 2.0 },
+  "window": { "logicalWidth": 760, "logicalHeight": 500, "titleHeight": 24, "padding": 8 },
+  "root": {
+    "id": "spatial-storage-key-items",
+    "type": "column",
+    "children": [
+      { "id": "tabs", "type": "control", "height": 30 },
+      { "id": "command-hint", "type": "control", "height": 22 },
+      {
+        "id": "key-container-list",
+        "type": "list",
+        "height": 367,
+        "rowHeight": 54,
+        "sampleRows": 6,
+        "scrollbars": "both",
+        "cells": [
+          {
+            "id": "container-row",
+            "width": 628,
+            "grow": 1,
+            "child": {
+              "id": "container-row-layout",
+              "type": "row",
+              "height": 52,
+              "children": [
+                { "id": "container-icon", "type": "control", "width": 52, "height": 48 },
+                { "id": "item-1", "type": "control", "width": 48, "height": 44 },
+                { "id": "item-2", "type": "control", "width": 48, "height": 44 },
+                { "id": "item-3", "type": "control", "width": 48, "height": 44 },
+                { "id": "item-4", "type": "control", "width": 48, "height": 44 },
+                { "id": "item-5", "type": "control", "width": 48, "height": 44 },
+                { "id": "item-6", "type": "control", "width": 48, "height": 44 },
+                { "id": "item-7", "type": "control", "width": 48, "height": 44 },
+                { "id": "item-8", "type": "control", "width": 48, "height": 44 },
+                { "id": "item-9", "type": "control", "width": 48, "height": 44 },
+                { "id": "item-10", "type": "control", "width": 48, "height": 44 },
+                { "id": "item-11", "type": "control", "width": 48, "height": 44 },
+                { "id": "item-12", "type": "control", "width": 48, "height": 44 }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "footer",
+        "type": "row",
+        "height": 32,
+        "children": [
+          { "id": "new-container", "type": "control", "width": 170, "height": 32 },
+          { "id": "remove-empty", "type": "control", "width": 170, "height": 32 },
+          { "id": "store-all", "type": "control", "width": 170, "height": 32 },
+          { "id": "retrieve-all", "type": "control", "width": 170, "height": 32 }
+        ]
+      }
+    ]
+  }
+}

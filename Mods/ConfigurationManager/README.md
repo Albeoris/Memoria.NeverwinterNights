@@ -14,6 +14,8 @@ Memoria Configuration Manager provides one persistent inventory item and a share
 
 MECONFIG works with Memoria mods that register a `configuration` section in their manifest; other mods are unaffected. Its item activation and player-chat hooks require Event Script Injector 2.1 or newer. Mods that replace the module's `OnActivateItem` handler at runtime may prevent its inventory item from opening.
 
+MECONFIG reserves Miscellaneous Small appearance `241` and icon resource `iit_smlmisc_241.tga` for the Memoria Configuration item. A mod that uses the same appearance or resource creates only a soft conflict: functionality remains intact, but one of the items may display the wrong icon depending on override load order.
+
 The [original LSE](https://steamcommunity.com/sharedfiles/filedetails/?id=2307769974) is incompatible with Memoria and its mods. Use the [Memoria edition](https://steamcommunity.com/sharedfiles/filedetails/?id=3803404663) instead.
 
 ## Installation

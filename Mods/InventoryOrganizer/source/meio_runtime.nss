@@ -37,6 +37,8 @@ void MEIO_Heartbeat(object oPC)
     {
         return;
     }
+    SetLocalInt(oPC, MEIO_LOCAL_HEARTBEAT_COUNTER, GetLocalInt(oPC, MEIO_LOCAL_HEARTBEAT_COUNTER) + 1);
+    MEIO_RecoverStaleKeyTransfer(oPC);
     MEIO_GetUIScalePercent(oPC);
     MEIO_EnsureAutomaticSettings(oPC);
     MEIO_Debug(oPC, "Heartbeat entered; regular inventory sorting is disabled on heartbeat reserved=" + ObjectToString(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)) + " suppress=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_SUPPRESS_SORT)));

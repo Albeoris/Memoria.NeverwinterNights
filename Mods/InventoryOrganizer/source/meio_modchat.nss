@@ -23,4 +23,9 @@ void main()
         SetPCChatMessage("");
         MEIO_OpenTab(oPC, MEIO_TAB_BOOKS);
     }
+    else if (sMessage == "/memoria-io-key-items")
+    {
+        SetPCChatMessage("");
+        MEIO_OpenTab(oPC, MEIO_TAB_KEY_ITEMS);
+    }
 }

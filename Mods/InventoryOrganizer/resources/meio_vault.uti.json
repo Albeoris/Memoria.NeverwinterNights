@@ -10,7 +10,7 @@
   "Description": { "type": "cexolocstring", "value": { "0": "A spatial vault that automatically stores and provides quick access to scrolls and potions." } },
   "Identified": { "type": "byte", "value": 1 },
   "LocalizedName": { "type": "cexolocstring", "value": { "0": "Spatial Storage" } },
-  "ModelPart1": { "type": "byte", "value": 1 },
+  "ModelPart1": { "type": "byte", "value": 242 },
   "PaletteID": { "type": "byte", "value": 8 },
   "Plot": { "type": "byte", "value": 1 },
   "PropertiesList": { "type": "list", "value": [] },

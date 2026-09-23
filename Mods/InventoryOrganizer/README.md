@@ -1,12 +1,13 @@
 # Memoria Inventory Organizer (MEIO)
 
-Memoria Inventory Organizer adds **Spatial Storage** to every player character. The visible chest item is both a UI handle and an intake container; scrolls, potions, and books live in separate hidden stores belonging to the current game state. All stores are saved and restored with the save game, and their contents remain ordinary NWN item objects with complete runtime state.
+Memoria Inventory Organizer adds **Spatial Storage** to every player character. The visible chest item is both a UI handle and an intake container; scrolls, potions, and books live in separate hidden stores belonging to the current game state. Key items remain as their original physical objects in player-created inventory containers so campaign possession checks continue to work. All stores and containers are saved with the game.
 
 ## Features
 
 - Independently configures automatic storage of eligible newly acquired scrolls, potions, and books. Plot, cursed, zero-value, non-droppable, infinite, or enchanted books are never stored; local variables do not affect eligibility.
 - Imports all eligible carried scrolls and potions once when the character first receives Spatial Storage, using bounded batches every 0.1 seconds to stay within the VM instruction limit.
 - Provides separate Scrolls, Potions, and Books tabs with real item icons. Book search always matches both localized and English titles; a checkbox selects which title is displayed. Left-click opens a description window without closing storage; engine color tags are removed, every black-hidden marker is omitted regardless of its text, and acquisition metadata is highlighted. Duplicate copies can be burned in bounded batches.
+- Provides a Key Items tab with one row per physical container. Players explicitly create containers, remove empty ones, store all eligible top-level key items, or retrieve their original objects. Plot or zero-value items qualify; Recall Stones and MEIO service items are excluded. Cursed key items remain visible with a locked frame but cannot be moved. Left-click opens item information; right-click moves an eligible item between the top-level inventory and any directly owned bag while protecting extracted items from automatic return.
 - Displays the current physical contents as compact spell-icon rows grouped by spell level, omitting empty levels after every search, filter, addition, or removal, with localized names in tooltips.
 - Filters scrolls by self, ally/beneficial-area, or enemy/hostile-area targeting; search matches both the current language and the English 2DA label.
 - Keeps different cast-spell subtypes separate, so variants with different caster levels remain distinguishable.
@@ -21,15 +22,17 @@ Custom scrolls are supported when they contain exactly one `ITEM_PROPERTY_CAST_S
 
 ## Usage
 
-Spatial Storage is an ordinary chest without a special power. **Examine** from its radial menu opens the NUI immediately without entering the action queue; the standard description panel stays suppressed whether the NUI is closed manually or by using an item. `/memoria-io-scrolls`, `/memoria-io-potions`, and `/memoria-io-books` open the corresponding tab from chat and can be assigned as quickbar chat macros. Eligible managed items placed directly into the chest are absorbed into their virtual stores; every other item is returned to the character when inventory space is available.
+Spatial Storage is an ordinary chest without a special power. **Examine** from its radial menu opens the NUI immediately without entering the action queue; the standard description panel stays suppressed whether the NUI is closed manually or by using an item. `/memoria-io-scrolls`, `/memoria-io-potions`, `/memoria-io-books`, and `/memoria-io-key-items` open the corresponding tab from chat and can be assigned as quickbar chat macros. Eligible managed items placed directly into the chest are absorbed into their virtual stores; every other item is returned to the character when inventory space is available.
 
 ## Uninstallation without losing stored items
 
-Do not remove MEIO while Spatial Storage still contains items: its hidden stores are inaccessible without the mod. Open all three tabs and use **All to inventory** on each one. If the inventory becomes full, free enough space and repeat until every page is empty. Also empty the visible chest itself. Save the game to a new slot, verify that every required item is in the character inventory, exit the game, and only then remove MEIO from `override` or unsubscribe from it.
+Do not remove MEIO while Spatial Storage still contains items: its hidden stores are inaccessible without the mod. Open all four tabs and use **All to inventory** on each one. If the inventory becomes full, free enough space and repeat until every page is empty. Remove the empty key-item containers and empty the visible chest itself. Save the game to a new slot, verify that every required item is in the character inventory, exit the game, and only then remove MEIO from `override` or unsubscribe from it.
 
 ## Compatibility
 
 MEIO requires Memoria and Event Script Injector 2.1 or newer. Its module acquire-item, GUI, player-target, and player-chat handlers are registered through ESI and do not replace module scripts directly. The chat handler runs after the module's original handler. Stored contents are scoped to the current save game and are never synchronized through a profile-wide campaign database.
+
+MEIO reserves Big Box appearances `242` and `243` and icon resources `iit_bigbox_242.tga` and `iit_bigbox_243.tga` for Spatial Storage and Key Item Storage. A mod that uses either appearance or resource creates only a soft conflict: storage functionality remains intact, but one of the items may display the wrong icon depending on override load order.
 
 ## Installation
 

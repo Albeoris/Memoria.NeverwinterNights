@@ -1,6 +1,6 @@
 // Dynamic Scriptorium index built exclusively from current physical contents.
 
-#include "meio_storage"
+#include "meio_keys"
 
 int MEIO_GetSpellTargetCategory(int iSpell)
 {
