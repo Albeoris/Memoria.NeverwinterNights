@@ -207,12 +207,12 @@ json MEIO_BuildKeyItemList(int iItemCapacity)
         jDraw = JsonArrayInsert(jDraw, NuiDrawListRect(NuiBind("key_item_cursed_" + sSlot), NuiColor(220, 45, 35), JsonBool(FALSE), JsonFloat(2.0f), NuiRect(1.0f, 1.0f, 42.0f, 42.0f)));
         json jButton = NuiDrawList(NuiId(NuiButton(JsonString("")), "key_item_" + sSlot), JsonBool(TRUE), jDraw);
         json jItem = NuiTooltip(jButton, NuiBind("key_item_tip_" + sSlot));
-        jRow = JsonArrayInsert(jRow, NuiWidth(NuiHeight(NuiVisible(jItem, NuiBind("key_item_visible_" + sSlot)), 44.0f), 48.0f));
+        jRow = JsonArrayInsert(jRow, NuiWidth(NuiHeight(NuiVisible(jItem, NuiBind("key_item_visible_" + sSlot)), 44.0f), 44.0f));
     }
     json jRowElement = NuiPadding(NuiGroup(NuiRow(jRow), FALSE, NUI_SCROLLBARS_NONE), 0.0f);
     jRowElement = NuiHeight(jRowElement, 52.0f);
     json jTemplate = JsonArray();
-    jTemplate = JsonArrayInsert(jTemplate, NuiListTemplateCell(jRowElement, 52.0f + 48.0f * IntToFloat(iItemCapacity), TRUE));
+    jTemplate = JsonArrayInsert(jTemplate, NuiListTemplateCell(jRowElement, 52.0f + 44.0f * IntToFloat(iItemCapacity), TRUE));
     return NuiList(jTemplate, NuiBind("key_container_count"), 54.0f, FALSE, NUI_SCROLLBARS_BOTH);
 }
 

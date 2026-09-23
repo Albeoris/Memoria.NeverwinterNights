@@ -17,7 +17,7 @@
         "cells": [
           {
             "id": "container-row",
-            "width": 628,
+            "width": 580,
             "grow": 1,
             "child": {
               "id": "container-row-layout",
@@ -25,18 +25,18 @@
               "height": 52,
               "children": [
                 { "id": "container-icon", "type": "control", "width": 52, "height": 48 },
-                { "id": "item-1", "type": "control", "width": 48, "height": 44 },
-                { "id": "item-2", "type": "control", "width": 48, "height": 44 },
-                { "id": "item-3", "type": "control", "width": 48, "height": 44 },
-                { "id": "item-4", "type": "control", "width": 48, "height": 44 },
-                { "id": "item-5", "type": "control", "width": 48, "height": 44 },
-                { "id": "item-6", "type": "control", "width": 48, "height": 44 },
-                { "id": "item-7", "type": "control", "width": 48, "height": 44 },
-                { "id": "item-8", "type": "control", "width": 48, "height": 44 },
-                { "id": "item-9", "type": "control", "width": 48, "height": 44 },
-                { "id": "item-10", "type": "control", "width": 48, "height": 44 },
-                { "id": "item-11", "type": "control", "width": 48, "height": 44 },
-                { "id": "item-12", "type": "control", "width": 48, "height": 44 }
+                { "id": "item-1", "type": "control", "width": 44, "height": 44 },
+                { "id": "item-2", "type": "control", "width": 44, "height": 44 },
+                { "id": "item-3", "type": "control", "width": 44, "height": 44 },
+                { "id": "item-4", "type": "control", "width": 44, "height": 44 },
+                { "id": "item-5", "type": "control", "width": 44, "height": 44 },
+                { "id": "item-6", "type": "control", "width": 44, "height": 44 },
+                { "id": "item-7", "type": "control", "width": 44, "height": 44 },
+                { "id": "item-8", "type": "control", "width": 44, "height": 44 },
+                { "id": "item-9", "type": "control", "width": 44, "height": 44 },
+                { "id": "item-10", "type": "control", "width": 44, "height": 44 },
+                { "id": "item-11", "type": "control", "width": 44, "height": 44 },
+                { "id": "item-12", "type": "control", "width": 44, "height": 44 }
               ]
             }
           }
