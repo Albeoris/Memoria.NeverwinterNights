@@ -1,5 +1,16 @@
 // Shared feat helpers for Memoria mods.
 
+/// @brief Returns the localized display name of a feat.
+/// @param iFeat FEAT_* value to inspect.
+/// @return The localized feat name, or an empty string when the feat row or name is unavailable.
+string MEMORIA_GetFeatName(int iFeat)
+{
+    if (iFeat < 0) return "";
+    string sNameStrRef = Get2DAString("feat", "FEAT", iFeat);
+    if (sNameStrRef == "" || sNameStrRef == "****") return "";
+    return GetStringByStrRef(StringToInt(sNameStrRef));
+}
+
 // Parry is skill-driven, while Defensive Stance is a COMBAT_MODE_* value rather than an ACTION_MODE_* state.
 /// @brief Maps a persistent combat-mode feat to the corresponding NWN action mode.
 /// @param iFeat FEAT_* value to inspect.

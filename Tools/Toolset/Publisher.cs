@@ -8,6 +8,12 @@ internal static partial class Publisher
 {
     private const int WorkshopDescriptionMaxUtf8Bytes = 7999;
 
+    internal static async Task ValidateWorkshopDescriptionAsync(ProjectContext context, ModProjectInputs inputs)
+    {
+        if (string.IsNullOrWhiteSpace(inputs.WorkshopPublishedFileId)) return;
+        await CreateWorkshopDescriptionAsync(context, inputs, inputs.ModDisplayName!);
+    }
+
     public static async Task<int> PublishAsync(ProjectContext context, string[] arguments)
     {
         if (arguments.Length == 0) return Fail("publish: specify a generated mod input file.");
@@ -83,8 +89,18 @@ internal static partial class Publisher
         if (string.IsNullOrWhiteSpace(inputs.WorkshopPublishedFileId)) return null;
         if (!ulong.TryParse(inputs.WorkshopAppId, out ulong appId) || appId == 0) throw new InvalidDataException("WorkshopAppId must be a positive integer.");
         if (!ulong.TryParse(inputs.WorkshopPublishedFileId, out ulong publishedFileId) || publishedFileId == 0) throw new InvalidDataException("WorkshopPublishedFileId must be the positive ID of an existing item. The release pipeline never creates Workshop items implicitly.");
+        string description = await CreateWorkshopDescriptionAsync(context, inputs, displayName);
+
+        string manifest = Path.Combine(packageRoot, "steam-workshop.vdf");
+        string[] lines = ["\"workshopitem\"", "{", VdfEntry("appid", appId.ToString()), VdfEntry("publishedfileid", publishedFileId.ToString()), VdfEntry("contentfolder", Path.GetFullPath(workshopRoot)), VdfEntry("title", displayName), VdfEntry("description", description), "}"];
+        await File.WriteAllLinesAsync(manifest, lines, new UTF8Encoding(false));
+        return manifest;
+    }
+
+    private static async Task<string> CreateWorkshopDescriptionAsync(ProjectContext context, ModProjectInputs inputs, string displayName)
+    {
         string[] readmes = inputs.Documents.Where(document => Path.GetFileName(document).Equals("README.md", StringComparison.OrdinalIgnoreCase)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-        if (readmes.Length != 1) throw new InvalidDataException($"Publish requires exactly one README.md PackageDocument; found {readmes.Length}.");
+        if (readmes.Length != 1) throw new InvalidDataException($"Workshop packaging requires exactly one README.md PackageDocument; found {readmes.Length}.");
         string readmePath = readmes[0];
         string relativeReadmePath = Path.GetRelativePath(context.RepositoryRoot, readmePath);
         if (relativeReadmePath.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) || Path.IsPathRooted(relativeReadmePath)) throw new InvalidDataException($"README.md must be inside the repository: {readmePath}");
@@ -92,11 +108,7 @@ internal static partial class Publisher
         string description = MarkdownToSteam.Convert(await File.ReadAllTextAsync(readmePath, Encoding.UTF8), readmeUrl);
         int descriptionUtf8Bytes = Encoding.UTF8.GetByteCount(EscapeVdf(description));
         if (descriptionUtf8Bytes > WorkshopDescriptionMaxUtf8Bytes) throw new InvalidDataException($"Workshop description for {displayName} is {descriptionUtf8Bytes} UTF-8 bytes; Steam allows at most {WorkshopDescriptionMaxUtf8Bytes} bytes plus the terminating null byte.");
-
-        string manifest = Path.Combine(packageRoot, "steam-workshop.vdf");
-        string[] lines = ["\"workshopitem\"", "{", VdfEntry("appid", appId.ToString()), VdfEntry("publishedfileid", publishedFileId.ToString()), VdfEntry("contentfolder", Path.GetFullPath(workshopRoot)), VdfEntry("title", displayName), VdfEntry("description", description), "}"];
-        await File.WriteAllLinesAsync(manifest, lines, new UTF8Encoding(false));
-        return manifest;
+        return description;
     }
 
     private static string VdfEntry(string key, string value)

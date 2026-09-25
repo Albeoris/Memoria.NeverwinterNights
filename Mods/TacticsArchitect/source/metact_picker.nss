@@ -181,8 +181,7 @@ json METACT_AddFeatCandidates(json jCandidates, object oActor)
     for (iFeat = 0; iFeat < Get2DARowCount("feat"); iFeat++)
     {
         if (!METACT_IsActionableFeat(oActor, iFeat)) continue;
-        string sNameStrRef = Get2DAString("feat", "FEAT", iFeat);
-        string sName = sNameStrRef == "" || sNameStrRef == "****" ? "" : GetStringByStrRef(StringToInt(sNameStrRef));
+        string sName = MEMORIA_GetFeatName(iFeat);
         if (sName == "") continue;
         string sIcon = Get2DAString("feat", "ICON", iFeat);
         if (sIcon == "" || sIcon == "****") sIcon = "ife_alertness";

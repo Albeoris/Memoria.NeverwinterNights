@@ -978,7 +978,7 @@ int METACT_CanTakeAction(object oActor, object oPC)
             return FALSE;
         }
         if (GetIsObjectValid(GetLocalObject(oActor, METACT_LOCAL_PENDING_EQUIP_ITEM))) return FALSE;
-        if (iCurrent == iExpected || iCurrent == ACTION_MOVETOPOINT || iCurrent == ACTION_CASTSPELL || iCurrent == ACTION_ITEMCASTSPELL)
+        if (iCurrent == iExpected || iCurrent == ACTION_ATTACKOBJECT || iCurrent == ACTION_MOVETOPOINT || iCurrent == ACTION_CASTSPELL || iCurrent == ACTION_ITEMCASTSPELL)
             return FALSE;
         METACT_EndOwnedAction(oActor);
         return FALSE;
@@ -990,7 +990,7 @@ int METACT_CanTakeAction(object oActor, object oPC)
         DeleteLocalInt(oActor, METACT_LOCAL_MANUAL);
     }
     if (oActor == oPC)
-        return iCurrent == ACTION_INVALID || iCurrent == ACTION_FOLLOW || iCurrent == ACTION_WAIT || iCurrent == ACTION_RANDOMWALK;
+        return iCurrent == ACTION_INVALID || iCurrent == ACTION_ATTACKOBJECT || iCurrent == ACTION_FOLLOW || iCurrent == ACTION_WAIT || iCurrent == ACTION_RANDOMWALK;
     return TRUE;
 }
 
@@ -1145,6 +1145,7 @@ int METACT_ExecuteAction(object oActor, object oPC, json jAction, json jConditio
     {
         object oEnemy = GetLocalObject(oActor, METACT_LOCAL_EVAL_TARGET);
         if (!GetIsObjectValid(oEnemy)) return METACT_Fail(oActor, "no_sensible_enemy");
+        if (GetCurrentAction(oActor) == ACTION_ATTACKOBJECT) return TRUE;
         METACT_BeginOwnedAction(oActor, oPC, ACTION_ATTACKOBJECT);
         SetLocalObject(oActor, METACT_LOCAL_ACTIVE_TARGET, oEnemy);
         SetLocalInt(oActor, METACT_LOCAL_ACTIVE_TARGET_SET, TRUE);
@@ -1206,6 +1207,12 @@ string METACT_DebugActionText(json jAction)
 {
     string sKind = JsonGetString(JsonObjectGet(jAction, "kind"));
     if (sKind == "spell") return RegExpReplace("_", Get2DAString("spells", "Label", JsonGetInt(JsonObjectGet(jAction, "spell"))), " ");
+    if (sKind == "feat")
+    {
+        string sName = JsonGetString(JsonObjectGet(jAction, "feat_name"));
+        if (sName == "") sName = MEMORIA_GetFeatName(JsonGetInt(JsonObjectGet(jAction, "feat")));
+        return sName == "" ? "feat" : sName;
+    }
     if (sKind == "equip") return "equip " + JsonGetString(JsonObjectGet(jAction, "item_name"));
     return sKind;
 }

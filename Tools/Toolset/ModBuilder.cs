@@ -28,6 +28,7 @@ internal static partial class ModBuilder
 
         ModProjectInputs inputs = await ModProjectInputs.LoadAsync(inputsPath);
         ValidateOwnedInputs(inputs);
+        await Publisher.ValidateWorkshopDescriptionAsync(context, inputs);
         await ValidateLocalizationResourcesAsync(inputs.Resources);
         Console.WriteLine($"Building {inputs.ModDisplayName} {inputs.ModVersion}: {ToolsetLog.RepositoryPath(context, inputs.ProjectDirectory!)} -> {ToolsetLog.RepositoryPath(context, outputDirectory)}");
         string[] includeDirectories = (await ApiSnapshotResolver.ResolveIncludeDirectoriesAsync(context, inputs)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
