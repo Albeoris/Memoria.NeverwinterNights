@@ -6,8 +6,9 @@ Memoria Configuration Manager provides one persistent inventory item and a share
 
 - Collects the settings of all compatible Memoria mods in one NUI menu.
 - Supports player-specific and module-wide booleans, numbers, choices, action buttons, validation, and mod diagnostics.
+- Prompts to save or discard edited settings before another settings page opens or the window closes.
 - Stores settings on the character or module so they persist in saved games and during the transition between modules.
-- Opens directly with `/memoria-config`; the command can be assigned as a quickbar chat macro.
+- Opens through **Examine** on its inventory item or directly with `/memoria-config`; the command can be assigned as a quickbar chat macro. The standard item-description panel closes automatically.
 
 ## Compatibility
 
@@ -63,7 +64,7 @@ A shared schema-1 manifest has package-wide `id`, `name`, `version`, and `depend
 }
 ```
 
-`scope` is `player` or `module`; `int` and `float` options must also declare inclusive `minimum` and `maximum` values. A `choice` stores the integer `value` of one entry from its `choices` array; every choice supports `label` and optional `label_key`. An action may declare `width` to override its button width. Consecutive boolean options with `"layout": "inline"` share one row; the first may provide a separate `heading` and `heading_key`, and each may set its row-cell `width`. `apply` runs after settings are saved, and `diagnostic` runs when the shared item targets an object. `localization`, `name_key`, `label_key`, and `tooltip_key` are optional; localized keys name entries in the mod's own `<prefix>_loc_<language>.txt` table. An option's `tooltip` is its plain-text fallback when `tooltip_key` or its table is missing; omit both when the label is already sufficiently descriptive.
+`scope` is `player` or `module`. Numbers require inclusive `minimum` and `maximum`. Choices store an integer from `choices`. An option may name a boolean `local` in `enabled_by` to become disabled while it is off. A `separator` displays an optional localized `label`. A boolean may provide `enable_warning` and `enable_warning_key`, shown as a red confirmation before it is enabled. Actions may set `width`; consecutive booleans with `"layout": "inline"` share a row and may set cell `width`, `heading`, and `heading_key`. `apply` runs after saving; `diagnostic` runs when the item targets an object. Localization keys reference the mod's `<prefix>_loc_<language>.txt`, with plain text as fallback.
 
 Memoria discovers `*_memoria.txt` resources once per loaded game or module. A missing subsystem section is valid and is ignored by the consumer that does not use it.
 

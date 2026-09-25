@@ -55,7 +55,9 @@ string MEDT_ObjectRef(object oObject)
 
 void MEDT_Report(object oPC, string sLine)
 {
-    SendMessageToPC(oPC, "[MEDT] " + sLine);
+    string sMessage = "[MEDT] " + sLine;
+    SendMessageToPC(oPC, sMessage);
+    WriteTimestampedLogEntry(sMessage);
 }
 
 void MEDT_ReportEventHooks(object oPC, json jRegistry, object oObject, int iHandler, int iPlacement, string sPlacement)

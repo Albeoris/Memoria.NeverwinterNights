@@ -3,6 +3,7 @@
 #include "esi_lib"
 #include "memoria_item"
 #include "memoria_diag"
+#include "memoria_gui"
 #include "memoria_locale"
 #include "memoria_loc"
 #include "memoria_nui"
@@ -248,23 +249,15 @@ void MEIO_Debug(object oPC, string sMessage)
     WriteTimestampedLogEntry(sLine + " pc=" + ObjectToString(oPC));
 }
 
-void MEIO_EnforceExamineSuppression(object oPC, object oItem, string sPhase)
+void MEIO_ScheduleExamineSuppression(object oPC, object oItem, string sReason)
 {
     if (!MEIO_IsDirectlyIn(oItem, oPC) || GetTag(oItem) != MEIO_SCRIPTORIUM_TAG)
     {
-        MEIO_Debug(oPC, "Examine suppression skipped phase=" + sPhase + " item=" + ObjectToString(oItem));
+        MEIO_Debug(oPC, "Examine suppression skipped reason=" + sReason + " item=" + ObjectToString(oItem));
         return;
     }
-    SetGuiPanelDisabled(oPC, GUI_PANEL_EXAMINE_ITEM, FALSE, oItem);
-    SetGuiPanelDisabled(oPC, GUI_PANEL_EXAMINE_ITEM, TRUE, oItem);
-    MEIO_Debug(oPC, "Examine suppression enforced phase=" + sPhase + " item=" + ObjectToString(oItem));
-}
-
-void MEIO_ScheduleExamineSuppression(object oPC, object oItem, string sReason)
-{
-    MEIO_EnforceExamineSuppression(oPC, oItem, sReason + "-immediate");
-    DelayCommand(0.0f, MEIO_EnforceExamineSuppression(oPC, oItem, sReason + "-next-frame"));
-    DelayCommand(0.1f, MEIO_EnforceExamineSuppression(oPC, oItem, sReason + "-delayed"));
+    MEMORIA_GUI_ScheduleItemExamineSuppression(oPC, oItem);
+    MEIO_Debug(oPC, "Examine suppression scheduled reason=" + sReason + " item=" + ObjectToString(oItem));
 }
 
 string MEIO_DebugItemState(object oPC, object oItem)

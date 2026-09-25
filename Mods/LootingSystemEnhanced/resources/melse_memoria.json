@@ -11,6 +11,7 @@
     "localization": {
       "prefix": "melse"
     },
+    "apply": "melse_cfgapply",
     "options": [
       {
         "type": "bool",
@@ -47,69 +48,6 @@
         "label_key": "feature_party_identification_label",
         "tooltip": "Before auto-looting an unidentified item, lets the player or a nearby party member identify it when their current Lore skill is sufficient. Enabled by default.",
         "tooltip_key": "feature_party_identification_tooltip"
-      },
-      {
-        "type": "bool",
-        "scope": "module",
-        "local": "MELSE_FEATURE_CORPSE_LOOTABLE",
-        "label": "Make corpses lootable",
-        "label_key": "feature_lootable_corpses_label",
-        "tooltip": "Keeps defeated creatures available as containers so their inventory can be examined and looted.",
-        "tooltip_key": "feature_lootable_corpses_tooltip"
-      },
-      {
-        "type": "bool",
-        "scope": "module",
-        "local": "MELSE_FEATURE_CORPSE_DECAYING_LOOTED",
-        "label": "Remove looted corpses",
-        "label_key": "feature_corpse_decay_looted_label",
-        "tooltip": "Allows a corpse to disappear after all physical items and gold have been removed from it.",
-        "tooltip_key": "feature_corpse_decay_looted_tooltip"
-      },
-      {
-        "type": "bool",
-        "scope": "module",
-        "local": "MELSE_FEATURE_CORPSE_DECAYING_TIMED",
-        "label": "Remove corpses over time",
-        "label_key": "feature_corpse_decay_timed_label",
-        "tooltip": "Schedules lootable corpses for removal after the configured corpse decay time.",
-        "tooltip_key": "feature_corpse_decay_timed_tooltip"
-      },
-      {
-        "type": "bool",
-        "scope": "module",
-        "local": "MELSE_FEATURE_CORPSE_RAISEABLE",
-        "label": "Allow Raise Dead on corpses",
-        "label_key": "feature_corpse_raiseable_label",
-        "tooltip": "Keeps lootable corpses valid targets for resurrection effects while they remain in the area.",
-        "tooltip_key": "feature_corpse_raiseable_tooltip"
-      },
-      {
-        "type": "bool",
-        "scope": "module",
-        "local": "MELSE_FEATURE_CORPSE_LOOTING_EXAMINED",
-        "label": "Loot examined corpses",
-        "label_key": "feature_corpse_loot_examined_label",
-        "tooltip": "Automatically transfers eligible contents after the player examines and closes a corpse inventory.",
-        "tooltip_key": "feature_corpse_loot_examined_tooltip"
-      },
-      {
-        "type": "bool",
-        "scope": "module",
-        "local": "MELSE_FEATURE_CORPSE_LOOTING_KILLED",
-        "label": "Loot creatures killed by player",
-        "label_key": "feature_corpse_loot_killed_label",
-        "tooltip": "Automatically transfers eligible loot when the player character deals the killing blow.",
-        "tooltip_key": "feature_corpse_loot_killed_tooltip"
-      },
-      {
-        "type": "bool",
-        "scope": "module",
-        "local": "MELSE_FEATURE_CORPSE_LOOTING_KILLED_BY_HENCH",
-        "label": "Loot creatures killed by companions",
-        "label_key": "feature_corpse_loot_killed_by_companion_label",
-        "tooltip": "Automatically transfers eligible loot when a companion or another party-controlled creature deals the killing blow.",
-        "tooltip_key": "feature_corpse_loot_killed_by_companion_tooltip"
       },
       {
         "type": "bool",
@@ -169,17 +107,6 @@
       {
         "type": "int",
         "scope": "module",
-        "local": "MELSE_PARAM_DELAY_CORPSE_DECAY",
-        "label": "Corpse decay time (seconds)",
-        "label_key": "param_corpse_decay_seconds_label",
-        "tooltip": "Sets how many seconds a timed lootable corpse remains before it can be removed.",
-        "tooltip_key": "param_corpse_decay_seconds_tooltip",
-        "minimum": 0,
-        "maximum": 86400
-      },
-      {
-        "type": "int",
-        "scope": "module",
         "local": "MELSE_PARAM_THRESHOLD_ITEM_PRICE",
         "label": "Minimum item value",
         "label_key": "param_min_item_price_label",
@@ -198,6 +125,94 @@
         "tooltip_key": "param_max_item_weight_tooltip",
         "minimum": 0,
         "maximum": 1000000
+      },
+      {
+        "type": "separator",
+        "label": "Corpse preservation",
+        "label_key": "corpse_section_label"
+      },
+      {
+        "type": "bool",
+        "scope": "module",
+        "local": "MELSE_FEATURE_CORPSE_LOOTABLE",
+        "label": "Make corpses lootable",
+        "label_key": "feature_lootable_corpses_label",
+        "tooltip": "Keeps defeated creatures available as containers so their inventory can be examined and looted. This may interfere with modules that expect dead creatures to be removed. Disabled by default.",
+        "tooltip_key": "feature_lootable_corpses_tooltip",
+        "enable_warning": "Lootable corpses may break scripts that wait for an enemy to disappear rather than die. Enable anyway?",
+        "enable_warning_key": "feature_lootable_corpses_warning"
+      },
+      {
+        "type": "bool",
+        "scope": "module",
+        "local": "MELSE_FEATURE_CORPSE_DECAYING_LOOTED",
+        "label": "Remove looted corpses",
+        "label_key": "feature_corpse_decay_looted_label",
+        "tooltip": "Allows a corpse to disappear after all physical items and gold have been removed from it.",
+        "tooltip_key": "feature_corpse_decay_looted_tooltip",
+        "enabled_by": "MELSE_FEATURE_CORPSE_LOOTABLE"
+      },
+      {
+        "type": "bool",
+        "scope": "module",
+        "local": "MELSE_FEATURE_CORPSE_DECAYING_TIMED",
+        "label": "Remove corpses over time",
+        "label_key": "feature_corpse_decay_timed_label",
+        "tooltip": "Schedules lootable corpses for removal after the configured corpse decay time.",
+        "tooltip_key": "feature_corpse_decay_timed_tooltip",
+        "enabled_by": "MELSE_FEATURE_CORPSE_LOOTABLE"
+      },
+      {
+        "type": "bool",
+        "scope": "module",
+        "local": "MELSE_FEATURE_CORPSE_RAISEABLE",
+        "label": "Allow Raise Dead on corpses",
+        "label_key": "feature_corpse_raiseable_label",
+        "tooltip": "Keeps lootable corpses valid targets for resurrection effects while they remain in the area.",
+        "tooltip_key": "feature_corpse_raiseable_tooltip",
+        "enabled_by": "MELSE_FEATURE_CORPSE_LOOTABLE"
+      },
+      {
+        "type": "bool",
+        "scope": "module",
+        "local": "MELSE_FEATURE_CORPSE_LOOTING_EXAMINED",
+        "label": "Loot examined corpses",
+        "label_key": "feature_corpse_loot_examined_label",
+        "tooltip": "Automatically transfers eligible contents after the player examines and closes a corpse inventory.",
+        "tooltip_key": "feature_corpse_loot_examined_tooltip",
+        "enabled_by": "MELSE_FEATURE_CORPSE_LOOTABLE"
+      },
+      {
+        "type": "bool",
+        "scope": "module",
+        "local": "MELSE_FEATURE_CORPSE_LOOTING_KILLED",
+        "label": "Loot creatures killed by player",
+        "label_key": "feature_corpse_loot_killed_label",
+        "tooltip": "Automatically transfers eligible loot when the player character deals the killing blow.",
+        "tooltip_key": "feature_corpse_loot_killed_tooltip",
+        "enabled_by": "MELSE_FEATURE_CORPSE_LOOTABLE"
+      },
+      {
+        "type": "bool",
+        "scope": "module",
+        "local": "MELSE_FEATURE_CORPSE_LOOTING_KILLED_BY_HENCH",
+        "label": "Loot creatures killed by companions",
+        "label_key": "feature_corpse_loot_killed_by_companion_label",
+        "tooltip": "Automatically transfers eligible loot when a companion or another party-controlled creature deals the killing blow.",
+        "tooltip_key": "feature_corpse_loot_killed_by_companion_tooltip",
+        "enabled_by": "MELSE_FEATURE_CORPSE_LOOTABLE"
+      },
+      {
+        "type": "int",
+        "scope": "module",
+        "local": "MELSE_PARAM_DELAY_CORPSE_DECAY",
+        "label": "Corpse decay time (seconds)",
+        "label_key": "param_corpse_decay_seconds_label",
+        "tooltip": "Sets how many seconds a timed lootable corpse remains before it can be removed.",
+        "tooltip_key": "param_corpse_decay_seconds_tooltip",
+        "minimum": 0,
+        "maximum": 86400,
+        "enabled_by": "MELSE_FEATURE_CORPSE_LOOTABLE"
       }
     ]
   }

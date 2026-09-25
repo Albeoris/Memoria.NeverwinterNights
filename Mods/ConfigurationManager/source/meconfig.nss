@@ -1,4 +1,5 @@
 #include "esi_lib"
+#include "memoria_gui"
 #include "memoria_loader"
 #include "memoria_locale"
 #include "memoria_loc"
@@ -8,11 +9,19 @@ const string MECONFIG_ITEM_RESREF = "meconfig";
 const string MECONFIG_ITEM_TAG = "MECONFIG_ITEM";
 const string MECONFIG_ACTIVATE_HANDLER = "meconfig_evact";
 const string MECONFIG_ESI_KEY = "meconfig.module.activate";
+const string MECONFIG_ESI_GUI_KEY = "meconfig.module.gui";
 const string MECONFIG_ESI_CHAT_KEY = "meconfig.module.chat";
 const string MECONFIG_WINDOW_ID = "meconfig";
+const string MECONFIG_UNSAVED_WINDOW_ID = "meconfig_unsaved";
+const string MECONFIG_ENABLE_WARNING_WINDOW_ID = "meconfig_enable_warning";
 const string MECONFIG_LOC_PREFIX = "meconfig";
 const string MECONFIG_LOCAL_ITEM_SCHEMA = "MECONFIG_ITEM_SCHEMA";
 const string MECONFIG_LOCAL_SELECTED_ID = "MECONFIG_SELECTED_ID";
+const string MECONFIG_LOCAL_PENDING_ID = "MECONFIG_PENDING_ID";
+const string MECONFIG_LOCAL_PENDING_MODE = "MECONFIG_PENDING_MODE";
+const string MECONFIG_LOCAL_DRAFT = "MECONFIG_DRAFT";
+const string MECONFIG_LOCAL_WARNING_OPTION = "MECONFIG_WARNING_OPTION";
+const string MECONFIG_LOCAL_WARNING_MODULE = "MECONFIG_WARNING_MODULE";
 const string MECONFIG_LOCAL_DIAGNOSTIC_TARGET = "MECONFIG_DIAGNOSTIC_TARGET";
 const string MECONFIG_LOCAL_LANGUAGE = "MECONFIG_LANGUAGE";
 const string MECONFIG_LOCAL_ITEM_LANGUAGE = "MECONFIG_ITEM_LANGUAGE";
@@ -24,6 +33,14 @@ const string MECONFIG_TEXT_ITEM_DESCRIPTION = "item_description";
 const string MECONFIG_TEXT_WINDOW_TITLE = "window_title";
 const string MECONFIG_TEXT_NO_MODULES = "no_modules";
 const string MECONFIG_TEXT_SAVE = "save";
+const string MECONFIG_TEXT_UNSAVED_TITLE = "unsaved_title";
+const string MECONFIG_TEXT_UNSAVED_MESSAGE = "unsaved_message";
+const string MECONFIG_TEXT_UNSAVED_CLOSE_MESSAGE = "unsaved_close_message";
+const string MECONFIG_TEXT_UNSAVED_SAVE = "unsaved_save";
+const string MECONFIG_TEXT_UNSAVED_DISCARD = "unsaved_discard";
+const string MECONFIG_TEXT_ENABLE_WARNING_TITLE = "enable_warning_title";
+const string MECONFIG_TEXT_ENABLE_WARNING_CONFIRM = "enable_warning_confirm";
+const string MECONFIG_TEXT_ENABLE_WARNING_CANCEL = "enable_warning_cancel";
 const string MECONFIG_TEXT_RANGE_ERROR = "range_error";
 const string MECONFIG_TEXT_HELP_HINT = "help_hint";
 const string MECONFIG_TEXT_COMMAND_HINT = "command_hint";
@@ -86,6 +103,7 @@ json MECONFIG_LocalizeModules(object oPC, json jModules)
             jOption = JsonObjectSet(jOption, "label", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jOption, "label", "label_key")));
             jOption = JsonObjectSet(jOption, "tooltip", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jOption, "tooltip", "tooltip_key")));
             jOption = JsonObjectSet(jOption, "heading", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jOption, "heading", "heading_key")));
+            jOption = JsonObjectSet(jOption, "enable_warning", JsonString(MECONFIG_GetLocalizedValue(oPC, jModule, jOption, "enable_warning", "enable_warning_key")));
             json jChoices = JsonObjectGet(jOption, "choices");
             int nChoice;
             for (nChoice = 0; nChoice < JsonGetLength(jChoices); nChoice++)
@@ -199,6 +217,31 @@ json MECONFIG_BuildChoiceEntries(json jOption)
     return jEntries;
 }
 
+json MECONFIG_ApplyEnabledBy(json jElement, json jOption, json jOptions)
+{
+    string sEnabledBy = JsonGetString(JsonObjectGet(jOption, "enabled_by"));
+    if (sEnabledBy == "")
+        return jElement;
+    int nDependency;
+    for (nDependency = 0; nDependency < JsonGetLength(jOptions); nDependency++)
+    {
+        if (JsonGetString(JsonObjectGet(JsonArrayGet(jOptions, nDependency), "local")) == sEnabledBy)
+            return NuiEnabled(jElement, NuiBind(MECONFIG_OptionBind(nDependency)));
+    }
+    return jElement;
+}
+
+json MECONFIG_BuildSeparator(string sLabel)
+{
+    json jDraw = JsonArray();
+    jDraw = JsonArrayInsert(jDraw, NuiDrawListLine(JsonBool(TRUE), NuiColor(105, 105, 105), JsonFloat(1.0f), NuiVec(0.0f, 6.0f), NuiVec(500.0f, 6.0f)));
+    json jColumn = JsonArray();
+    jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiDrawList(NuiSpacer(), JsonBool(TRUE), jDraw), 12.0f));
+    if (sLabel != "")
+        jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiStyleForegroundColor(NuiLabel(JsonString(sLabel), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), NuiColor(225, 190, 95)), 26.0f));
+    return NuiCol(jColumn);
+}
+
 json MECONFIG_BuildOptions(object oPC, json jModule)
 {
     json jColumn = JsonArray();
@@ -221,7 +264,9 @@ json MECONFIG_BuildOptions(object oPC, json jModule)
         string sHeading = JsonGetString(JsonObjectGet(jOption, "heading"));
         if (sHeading != "")
             jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiLabel(JsonString(sHeading), JsonInt(NUI_HALIGN_LEFT), JsonInt(NUI_VALIGN_MIDDLE)), 26.0f));
-        if (sType == "bool")
+        if (sType == "separator")
+            jColumn = JsonArrayInsert(jColumn, MECONFIG_BuildSeparator(sLabel));
+        else if (sType == "bool")
         {
             if (JsonGetString(JsonObjectGet(jOption, "layout")) == "inline")
             {
@@ -234,14 +279,15 @@ json MECONFIG_BuildOptions(object oPC, json jModule)
                     float fInlineWidth = JsonGetFloat(JsonObjectGet(jInlineOption, "width"));
                     if (fInlineWidth <= 0.0f)
                         fInlineWidth = 150.0f;
-                    jInline = JsonArrayInsert(jInline, NuiWidth(MECONFIG_BuildBoolOption(jInlineOption, nIndex), fInlineWidth));
+                    json jInlineElement = MECONFIG_ApplyEnabledBy(MECONFIG_BuildBoolOption(jInlineOption, nIndex), jInlineOption, jOptions);
+                    jInline = JsonArrayInsert(jInline, NuiWidth(jInlineElement, fInlineWidth));
                     nIndex++;
                 }
                 nIndex--;
                 jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiRow(jInline), 28.0f));
             }
             else
-                jColumn = JsonArrayInsert(jColumn, NuiHeight(MECONFIG_BuildBoolOption(jOption, nIndex), 28.0f));
+                jColumn = JsonArrayInsert(jColumn, NuiHeight(MECONFIG_ApplyEnabledBy(MECONFIG_BuildBoolOption(jOption, nIndex), jOption, jOptions), 28.0f));
         }
         else if (sType == "int" || sType == "float")
         {
@@ -251,7 +297,7 @@ json MECONFIG_BuildOptions(object oPC, json jModule)
             json jOptionRow = NuiRow(jRow);
             if (sTooltip != "")
                 jOptionRow = MEMORIA_NUI_Help(jOptionRow, JsonString(sTooltip));
-            jColumn = JsonArrayInsert(jColumn, NuiHeight(jOptionRow, 30.0f));
+            jColumn = JsonArrayInsert(jColumn, NuiHeight(MECONFIG_ApplyEnabledBy(jOptionRow, jOption, jOptions), 30.0f));
         }
         else if (sType == "choice")
         {
@@ -261,7 +307,7 @@ json MECONFIG_BuildOptions(object oPC, json jModule)
             json jOptionRow = NuiRow(jRow);
             if (sTooltip != "")
                 jOptionRow = MEMORIA_NUI_Help(jOptionRow, JsonString(sTooltip));
-            jColumn = JsonArrayInsert(jColumn, NuiHeight(jOptionRow, 30.0f));
+            jColumn = JsonArrayInsert(jColumn, NuiHeight(MECONFIG_ApplyEnabledBy(jOptionRow, jOption, jOptions), 30.0f));
         }
         else if (sType == "action")
         {
@@ -271,7 +317,7 @@ json MECONFIG_BuildOptions(object oPC, json jModule)
             float fWidth = JsonGetFloat(JsonObjectGet(jOption, "width"));
             if (fWidth > 0.0f)
                 jAction = NuiWidth(jAction, fWidth);
-            jColumn = JsonArrayInsert(jColumn, NuiHeight(jAction, 32.0f));
+            jColumn = JsonArrayInsert(jColumn, NuiHeight(MECONFIG_ApplyEnabledBy(jAction, jOption, jOptions), 32.0f));
         }
     }
     json jButtons = JsonArray();
@@ -313,6 +359,18 @@ void MECONFIG_SetOptionBinds(object oPC, int nToken, json jModule)
     }
 }
 
+void MECONFIG_SetEnableWarningWatches(object oPC, int nToken, json jModule, int bWatch)
+{
+    json jOptions = JsonObjectGet(jModule, "options");
+    int nIndex;
+    for (nIndex = 0; nIndex < JsonGetLength(jOptions); nIndex++)
+    {
+        json jOption = JsonArrayGet(jOptions, nIndex);
+        if (JsonGetString(JsonObjectGet(jOption, "type")) == "bool" && JsonGetString(JsonObjectGet(jOption, "enable_warning")) != "")
+            NuiSetBindWatch(oPC, nToken, MECONFIG_OptionBind(nIndex), bWatch);
+    }
+}
+
 void MECONFIG_Open(object oPC)
 {
     json jModules = MECONFIG_GetModules(oPC);
@@ -336,6 +394,7 @@ void MECONFIG_Open(object oPC)
     NuiSetBind(oPC, nToken, "module_selected", jSelected);
     NuiSetBind(oPC, nToken, "module_count", JsonInt(JsonGetLength(jModules)));
     MECONFIG_SetOptionBinds(oPC, nToken, jModule);
+    MECONFIG_SetEnableWarningWatches(oPC, nToken, jModule, TRUE);
 }
 
 int MECONFIG_IsValidNumber(string sValue, string sType)
@@ -386,7 +445,11 @@ int MECONFIG_Save(object oPC, int nToken)
         object oOwner = MECONFIG_GetOptionOwner(jOption, oPC);
         string sLocal = JsonGetString(JsonObjectGet(jOption, "local"));
         string sValue = RegExpReplace(",", JsonGetString(NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex))), ".");
-        if (sType == "bool") SetLocalInt(oOwner, sLocal, JsonGetInt(NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex))));
+        if (sType == "bool")
+        {
+            int bEnabled = JsonGetInt(NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex)));
+            SetLocalInt(oOwner, sLocal, bEnabled);
+        }
         else if (sType == "int") SetLocalInt(oOwner, sLocal, StringToInt(sValue));
         else if (sType == "float") SetLocalFloat(oOwner, sLocal, StringToFloat(sValue));
         else if (sType == "choice") SetLocalInt(oOwner, sLocal, JsonGetInt(NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex))));
@@ -395,6 +458,197 @@ int MECONFIG_Save(object oPC, int nToken)
     if (sApply != "")
         ExecuteScript(sApply, oPC);
     return TRUE;
+}
+
+int MECONFIG_HasUnsavedChanges(object oPC, int nToken)
+{
+    json jModule = MECONFIG_GetSelectedModule(oPC, MECONFIG_GetModules(oPC));
+    json jOptions = JsonObjectGet(jModule, "options");
+    int nIndex;
+    for (nIndex = 0; nIndex < JsonGetLength(jOptions); nIndex++)
+    {
+        json jOption = JsonArrayGet(jOptions, nIndex);
+        string sType = JsonGetString(JsonObjectGet(jOption, "type"));
+        object oOwner = MECONFIG_GetOptionOwner(jOption, oPC);
+        string sLocal = JsonGetString(JsonObjectGet(jOption, "local"));
+        json jBind = NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex));
+        if (sType == "bool" && (JsonGetInt(jBind) != 0) != (GetLocalInt(oOwner, sLocal) != 0))
+            return TRUE;
+        if (sType == "choice" && JsonGetInt(jBind) != GetLocalInt(oOwner, sLocal))
+            return TRUE;
+        if (sType != "int" && sType != "float")
+            continue;
+        string sValue = RegExpReplace(",", JsonGetString(jBind), ".");
+        if (!MECONFIG_IsValidNumber(sValue, sType))
+            return TRUE;
+        if (sType == "int" && StringToInt(sValue) != GetLocalInt(oOwner, sLocal))
+            return TRUE;
+        if (sType == "float" && StringToFloat(sValue) != GetLocalFloat(oOwner, sLocal))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+json MECONFIG_CaptureDraft(object oPC, int nToken)
+{
+    json jDraft = JsonObject();
+    json jModule = MECONFIG_GetSelectedModule(oPC, MECONFIG_GetModules(oPC));
+    json jOptions = JsonObjectGet(jModule, "options");
+    int nIndex;
+    for (nIndex = 0; nIndex < JsonGetLength(jOptions); nIndex++)
+    {
+        string sType = JsonGetString(JsonObjectGet(JsonArrayGet(jOptions, nIndex), "type"));
+        if (sType == "bool" || sType == "int" || sType == "float" || sType == "choice")
+            jDraft = JsonObjectSet(jDraft, MECONFIG_OptionBind(nIndex), NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex)));
+    }
+    return jDraft;
+}
+
+int MECONFIG_ReopenDraft(object oPC)
+{
+    json jDraft = GetLocalJson(oPC, MECONFIG_LOCAL_DRAFT);
+    MECONFIG_Open(oPC);
+    int nToken = NuiFindWindow(oPC, MECONFIG_WINDOW_ID);
+    if (nToken <= 0)
+        return 0;
+    json jModule = MECONFIG_GetSelectedModule(oPC, MECONFIG_GetModules(oPC));
+    MECONFIG_SetEnableWarningWatches(oPC, nToken, jModule, FALSE);
+    json jOptions = JsonObjectGet(jModule, "options");
+    int nIndex;
+    for (nIndex = 0; nIndex < JsonGetLength(jOptions); nIndex++)
+    {
+        string sBind = MECONFIG_OptionBind(nIndex);
+        json jValue = JsonObjectGet(jDraft, sBind);
+        if (JsonGetType(jValue) != JSON_TYPE_NULL)
+            NuiSetBind(oPC, nToken, sBind, jValue);
+    }
+    MECONFIG_SetEnableWarningWatches(oPC, nToken, jModule, TRUE);
+    return nToken;
+}
+
+json MECONFIG_BuildEnableWarningWindow(object oPC, string sWarning)
+{
+    json jColumn = JsonArray();
+    json jWarning = NuiStyleForegroundColor(NuiText(JsonString(sWarning), FALSE, NUI_SCROLLBARS_NONE), NuiColor(235, 70, 70));
+    jColumn = JsonArrayInsert(jColumn, NuiHeight(jWarning, 82.0f));
+    json jButtons = JsonArray();
+    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_ENABLE_WARNING_CONFIRM))), "confirm"), 180.0f));
+    jButtons = JsonArrayInsert(jButtons, NuiSpacer());
+    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_ENABLE_WARNING_CANCEL))), "cancel"), 180.0f));
+    jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiRow(jButtons), 36.0f));
+    return NuiWindow(NuiCol(jColumn), JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_ENABLE_WARNING_TITLE)), NuiRect(-1.0f, -1.0f, 560.0f, 170.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
+}
+
+void MECONFIG_RequestEnableWarning(object oPC, int nToken, int nIndex)
+{
+    json jModule = MECONFIG_GetSelectedModule(oPC, MECONFIG_GetModules(oPC));
+    json jOptions = JsonObjectGet(jModule, "options");
+    if (nIndex < 0 || nIndex >= JsonGetLength(jOptions))
+        return;
+    json jOption = JsonArrayGet(jOptions, nIndex);
+    if (JsonGetString(JsonObjectGet(jOption, "type")) != "bool" || !JsonGetInt(NuiGetBind(oPC, nToken, MECONFIG_OptionBind(nIndex))))
+        return;
+    object oOwner = MECONFIG_GetOptionOwner(jOption, oPC);
+    if (GetLocalInt(oOwner, JsonGetString(JsonObjectGet(jOption, "local"))))
+        return;
+    string sWarning = JsonGetString(JsonObjectGet(jOption, "enable_warning"));
+    if (sWarning == "")
+        return;
+    SetLocalInt(oPC, MECONFIG_LOCAL_WARNING_OPTION, nIndex + 1);
+    SetLocalString(oPC, MECONFIG_LOCAL_WARNING_MODULE, JsonGetString(JsonObjectGet(jModule, "id")));
+    NuiSetBind(oPC, nToken, MECONFIG_OptionBind(nIndex), JsonBool(FALSE));
+    int nOldToken = NuiFindWindow(oPC, MECONFIG_ENABLE_WARNING_WINDOW_ID);
+    if (nOldToken > 0)
+        NuiDestroy(oPC, nOldToken);
+    NuiCreate(oPC, MECONFIG_BuildEnableWarningWindow(oPC, sWarning), MECONFIG_ENABLE_WARNING_WINDOW_ID, "meconfig_wnevt");
+}
+
+void MECONFIG_ClearEnableWarning(object oPC)
+{
+    DeleteLocalInt(oPC, MECONFIG_LOCAL_WARNING_OPTION);
+    DeleteLocalString(oPC, MECONFIG_LOCAL_WARNING_MODULE);
+}
+
+void MECONFIG_ConfirmEnableWarning(object oPC)
+{
+    int nIndex = GetLocalInt(oPC, MECONFIG_LOCAL_WARNING_OPTION) - 1;
+    int nToken = NuiFindWindow(oPC, MECONFIG_WINDOW_ID);
+    json jModule = MECONFIG_GetSelectedModule(oPC, MECONFIG_GetModules(oPC));
+    if (nIndex >= 0 && nToken > 0 && GetLocalString(oPC, MECONFIG_LOCAL_WARNING_MODULE) == JsonGetString(JsonObjectGet(jModule, "id")))
+    {
+        MECONFIG_SetEnableWarningWatches(oPC, nToken, jModule, FALSE);
+        NuiSetBind(oPC, nToken, MECONFIG_OptionBind(nIndex), JsonBool(TRUE));
+        MECONFIG_SetEnableWarningWatches(oPC, nToken, jModule, TRUE);
+    }
+    MECONFIG_ClearEnableWarning(oPC);
+}
+
+void MECONFIG_ClearPending(object oPC)
+{
+    DeleteLocalString(oPC, MECONFIG_LOCAL_PENDING_ID);
+    DeleteLocalString(oPC, MECONFIG_LOCAL_PENDING_MODE);
+    DeleteLocalJson(oPC, MECONFIG_LOCAL_DRAFT);
+}
+
+json MECONFIG_BuildUnsavedWindow(object oPC)
+{
+    json jColumn = JsonArray();
+    string sMessageKey = GetLocalString(oPC, MECONFIG_LOCAL_PENDING_MODE) == "close" ? MECONFIG_TEXT_UNSAVED_CLOSE_MESSAGE : MECONFIG_TEXT_UNSAVED_MESSAGE;
+    jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiText(JsonString(MECONFIG_GetText(oPC, sMessageKey)), FALSE, NUI_SCROLLBARS_NONE), 72.0f));
+    json jButtons = JsonArray();
+    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_UNSAVED_SAVE))), "save"), 180.0f));
+    jButtons = JsonArrayInsert(jButtons, NuiSpacer());
+    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_UNSAVED_DISCARD))), "discard"), 180.0f));
+    jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiRow(jButtons), 36.0f));
+    return NuiWindow(NuiCol(jColumn), JsonString(MECONFIG_GetText(oPC, MECONFIG_TEXT_UNSAVED_TITLE)), NuiRect(-1.0f, -1.0f, 560.0f, 160.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
+}
+
+void MECONFIG_ShowUnsavedWindow(object oPC)
+{
+    int nOldToken = NuiFindWindow(oPC, MECONFIG_UNSAVED_WINDOW_ID);
+    if (nOldToken > 0)
+        NuiDestroy(oPC, nOldToken);
+    NuiCreate(oPC, MECONFIG_BuildUnsavedWindow(oPC), MECONFIG_UNSAVED_WINDOW_ID, "meconfig_cfevt");
+}
+
+void MECONFIG_SelectPendingModule(object oPC)
+{
+    string sPendingId = GetLocalString(oPC, MECONFIG_LOCAL_PENDING_ID);
+    MECONFIG_ClearPending(oPC);
+    if (sPendingId == "")
+        return;
+    SetLocalString(oPC, MECONFIG_LOCAL_SELECTED_ID, sPendingId);
+    MECONFIG_Open(oPC);
+}
+
+void MECONFIG_RequestModule(object oPC, int nToken, int nIndex)
+{
+    json jModules = MECONFIG_GetModules(oPC);
+    if (nIndex < 0 || nIndex >= JsonGetLength(jModules))
+        return;
+    SetLocalString(oPC, MECONFIG_LOCAL_PENDING_ID, JsonGetString(JsonObjectGet(JsonArrayGet(jModules, nIndex), "id")));
+    SetLocalString(oPC, MECONFIG_LOCAL_PENDING_MODE, "module");
+    DeleteLocalJson(oPC, MECONFIG_LOCAL_DRAFT);
+    if (MECONFIG_HasUnsavedChanges(oPC, nToken))
+    {
+        json jSelected = JsonArray();
+        string sSelectedId = GetLocalString(oPC, MECONFIG_LOCAL_SELECTED_ID);
+        int nModule;
+        for (nModule = 0; nModule < JsonGetLength(jModules); nModule++)
+            jSelected = JsonArrayInsert(jSelected, JsonBool(JsonGetString(JsonObjectGet(JsonArrayGet(jModules, nModule), "id")) == sSelectedId));
+        NuiSetBind(oPC, nToken, "module_selected", jSelected);
+        MECONFIG_ShowUnsavedWindow(oPC);
+        return;
+    }
+    MECONFIG_SelectPendingModule(oPC);
+}
+
+void MECONFIG_RequestClose(object oPC, int nToken)
+{
+    SetLocalString(oPC, MECONFIG_LOCAL_PENDING_MODE, "close");
+    DeleteLocalString(oPC, MECONFIG_LOCAL_PENDING_ID);
+    SetLocalJson(oPC, MECONFIG_LOCAL_DRAFT, MECONFIG_CaptureDraft(oPC, nToken));
+    MECONFIG_ShowUnsavedWindow(oPC);
 }
 
 void MECONFIG_RunAction(object oPC, int nActionIndex)
@@ -463,6 +717,7 @@ void MECONFIG_InstallHook()
 {
     object oModule = GetModule();
     ESI_InjectToObject(oModule, MECONFIG_ESI_KEY, EVENT_SCRIPT_MODULE_ON_ACTIVATE_ITEM, MECONFIG_ACTIVATE_HANDLER, ESI_INJECTION_PLACEMENT_FIRST);
+    ESI_InjectToObject(oModule, MECONFIG_ESI_GUI_KEY, EVENT_SCRIPT_MODULE_ON_PLAYER_GUIEVENT, "meconfig_guievt", ESI_INJECTION_PLACEMENT_FIRST);
     ESI_InjectToObject(oModule, MECONFIG_ESI_CHAT_KEY, EVENT_SCRIPT_MODULE_ON_PLAYER_CHAT, "meconfig_chat", ESI_INJECTION_PLACEMENT_LAST);
 }
 

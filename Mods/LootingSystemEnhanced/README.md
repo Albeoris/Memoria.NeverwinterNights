@@ -9,8 +9,8 @@ This edition fixes an original LSE bug that could remove corpses together with k
 - Finds, tracks, and automatically loots treasure from defeated creatures and containers.
 - Uses the Lore skill of the player or a nearby party member to identify loot before transferring it.
 - Filters automatic looting by item value and weight.
-- Makes corpses lootable and optionally raiseable, then removes them after looting or a chosen delay.
-- Highlights lootable corpses with remaining items in cyan and lists up to eight item stacks in their standard mouseover and Tab label.
+- Can make corpses lootable and optionally raiseable, then removes them after looting or a chosen delay. Corpse preservation is disabled by default for compatibility with module scripts.
+- Highlights lootable corpses and ordinary remains with remaining items in cyan and lists up to eight item stacks in their standard mouseover and Tab label. The list follows the loot into the remains when a corpse decays and updates as items are removed. Turning corpse preservation off returns creatures already modified by MELSE to the standard corpse lifecycle while leaving their loot in ordinary remains.
 - Reports important drops and records where acquired items came from in their descriptions.
 
 ## Compatibility
