@@ -331,7 +331,7 @@ int MEIO_HasItemProperties(object oItem)
 
 int MEIO_CanStoreBook(object oItem)
 {
-    return MEIO_IsBook(oItem) && !GetPlotFlag(oItem) && !GetItemCursedFlag(oItem) && GetGoldPieceValue(oItem) > 0 && GetDroppableFlag(oItem) && !GetInfiniteFlag(oItem) && !MEIO_HasItemProperties(oItem);
+    return MEIO_IsBook(oItem) && !GetPlotFlag(oItem) && !GetItemCursedFlag(oItem) && GetGoldPieceValue(oItem) > 0 && !GetInfiniteFlag(oItem) && !MEIO_HasItemProperties(oItem);
 }
 
 int MEIO_IsUsablePotion(object oItem);
