@@ -189,8 +189,7 @@
         "label": "Loot creatures killed by player",
         "label_key": "feature_corpse_loot_killed_label",
         "tooltip": "Automatically transfers eligible loot when the player character deals the killing blow.",
-        "tooltip_key": "feature_corpse_loot_killed_tooltip",
-        "enabled_by": "MELSE_FEATURE_CORPSE_LOOTABLE"
+        "tooltip_key": "feature_corpse_loot_killed_tooltip"
       },
       {
         "type": "bool",
@@ -199,8 +198,7 @@
         "label": "Loot creatures killed by companions",
         "label_key": "feature_corpse_loot_killed_by_companion_label",
         "tooltip": "Automatically transfers eligible loot when a companion or another party-controlled creature deals the killing blow.",
-        "tooltip_key": "feature_corpse_loot_killed_by_companion_tooltip",
-        "enabled_by": "MELSE_FEATURE_CORPSE_LOOTABLE"
+        "tooltip_key": "feature_corpse_loot_killed_by_companion_tooltip"
       },
       {
         "type": "int",
