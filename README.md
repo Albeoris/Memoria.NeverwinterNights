@@ -55,7 +55,7 @@ dotnet build Memoria.NeverwinterNights.slnx -c Release
 
 The build compiles every entry-point script, converts UTI and ResJSON resources, verifies generated NCS files, and runs every MECONFIG and METACT NUI layout through the layout emulator.
 
-Mod projects use wildcard items for `source`, `resources`, documentation, and layouts. MSBuild writes the evaluated inputs to `artifacts/inputs`; there are no hand-maintained file manifests. Each package owns one `<package>_memoria.json` manifest. `ModId` is the mod's single identity and `ModDisplayName` is its player-facing name. `NwnRequiredPackage` provides compile-time includes without copying dependency files into the current build or publish output. Its `Versions` range must have a bounded, inclusive minimum; compilation uses that version's immutable [API snapshot](Docs/ApiSnapshots.md), or local sources when the minimum equals the dependency's current version. The dependency metadata is also emitted into the package's schema-1 manifest together with the mod `Version` and display name.
+Mod projects use wildcard items for `source`, `resources`, documentation, and layouts. MSBuild writes the evaluated inputs to `artifacts/inputs`; there are no hand-maintained file manifests. Each package owns one `<package>_memoria.json` manifest. `ModId` is the mod's single identity and `ModDisplayName` is its player-facing name. `NwnRequiredPackage` provides compile-time includes without copying dependency files into the current build or publish output. Its `Versions` range must have a bounded, inclusive minimum equal to the dependency project's current version, so compilation always uses its local sources. Dependency sources are compiled into consumers, so every dependency bump requires rebuilding and publishing all consumers with the latest fixes. Immutable [API snapshots](Docs/ApiSnapshots.md) remain published for possible future use. The dependency metadata is also emitted into the package's schema-1 manifest together with the mod `Version` and display name.
 
 NWScript sources and `.resjson` resources remain UTF-8 in the repository. The Toolset detects executable entry points, converts a temporary compiler copy to Windows-1251 when Cyrillic is present or Windows-1252 otherwise, and leaves the source unchanged. It also validates each `.resjson` file and emits a `.txt` resource in Windows-1251 when Cyrillic is present or Windows-1252 otherwise, matching the game-local encoding expected by `JsonParse`. Plain `.json` resources are validated as non-localized English ASCII and emitted as `.txt`.
 
@@ -149,7 +149,7 @@ Every change inside `Mods/<Project>` produces a new package version.
 * MINOR — backward-compatible public API additions.
 * MAJOR — incompatible public API, identifier, resource-contract, or manifest changes.
 
-After a MAJOR bump, dependent version ranges must be reviewed and updated.
+After any version bump, every dependent minimum must be updated to that exact version and the dependent package must receive its own version bump.
 
 ### Validation
 

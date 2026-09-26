@@ -7,7 +7,7 @@
 #include "memoria_loc"
 #include "esi_lib"
 
-const string MECM_VERSION = "1.3.0";
+const string MECM_VERSION = "1.3.1";
 const string MECM_LOC_PREFIX = "mecm";
 const string MECM_LOCAL_INSTALLED = "MECM_INSTALLED";
 const string MECM_LOCAL_ENABLED = "MECM_MODE_ENABLED";

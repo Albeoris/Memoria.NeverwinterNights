@@ -1,4 +1,4 @@
 - Locate code with `rg` first and read only the smallest relevant line ranges; never dump whole large source files unless necessary.
 - Batch related inspection/edits, avoid verbose progress logs, and do not repeat code or context already established.
-- Every `Mods/<Project>` change bumps `Version`: PATCH compatible/internal, MINOR additive API, MAJOR breaking; update dependents after MAJOR.
+- Every `Mods/<Project>` change bumps `Version`: PATCH compatible/internal, MINOR additive API, MAJOR breaking; update every dependent to the new version after any bump.
 - After build-logic or multi-mod changes, clean/build Release with zero warnings/errors; validate every GUI layout.

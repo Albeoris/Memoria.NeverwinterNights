@@ -99,7 +99,7 @@ internal sealed record ModDependency(string ModId, string Versions, string Displ
 
     private static void ValidateVersions(string modId, DependencyVersionRange versions, string currentVersionText, Version currentVersion, string projectPath)
     {
-        if (versions.MinimumVersion > currentVersion) throw new InvalidDataException($"Dependency {modId} minimum version {versions.MinimumVersion.ToString(3)} is newer than its current version {currentVersionText}: {projectPath}");
+        if (versions.MinimumVersion != currentVersion) throw new InvalidDataException($"Dependency {modId} minimum version {versions.MinimumVersion.ToString(3)} must match its current version {currentVersionText}; dependency sources are compiled into consumers, so every build must include their latest fixes: {projectPath}");
         if (!versions.Contains(currentVersion)) throw new InvalidDataException($"Dependency {modId} versions {versions.Text} do not include its current mod version {currentVersionText}: {projectPath}");
     }
 }

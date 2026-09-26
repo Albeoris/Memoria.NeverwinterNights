@@ -41,9 +41,9 @@ A shared schema-1 manifest has package-wide `id`, `name`, `version`, and `depend
   "name": "Package Name",
   "version": "1.4.0",
   "dependencies": [
-    { "id": "MEMORIA", "versions": "[1.0,2.0)" },
-    { "id": "esi", "versions": "[2.0,3.0)" },
-    { "id": "MECONFIG", "versions": "[1.0,2.0)" }
+    { "id": "MEMORIA", "versions": "[1.5.0,2.0.0)" },
+    { "id": "esi", "versions": "[2.2.1,3.0.0)" },
+    { "id": "MECONFIG", "versions": "[1.3.4,2.0.0)" }
   ],
   "bootstrapper": {
     "heartbeat": "mymod_hb",
