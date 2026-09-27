@@ -37,6 +37,7 @@ const string ESI_SCRIPT_AREA_INJECT = "esi_are_inject";
 
 const string ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DEATH = "crtdeath";
 const string ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DIALOGUE = "cre_conv";
+const string ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_END_COMBAT_ROUND = "crtround";
 const string ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_SPAWN_IN = "crtspawn";
 const string ESI_EVENT_NUMBER_ALIAS_ENCOUNTER_ON_OBJECT_ENTER = "encenter";
 const string ESI_EVENT_NUMBER_ALIAS_MODULE_ON_ACQUIRE_ITEM = "modacqit";
@@ -105,6 +106,7 @@ string ESI_GetEventNumberAlias(int nHandler)
 {
     return nHandler == EVENT_SCRIPT_CREATURE_ON_DEATH ? ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DEATH
          : nHandler == EVENT_SCRIPT_CREATURE_ON_DIALOGUE ? ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_DIALOGUE
+         : nHandler == EVENT_SCRIPT_CREATURE_ON_END_COMBATROUND ? ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_END_COMBAT_ROUND
          : nHandler == EVENT_SCRIPT_CREATURE_ON_SPAWN_IN ? ESI_EVENT_NUMBER_ALIAS_CREATURE_ON_SPAWN_IN
          : nHandler == EVENT_SCRIPT_ENCOUNTER_ON_OBJECT_ENTER ? ESI_EVENT_NUMBER_ALIAS_ENCOUNTER_ON_OBJECT_ENTER
          : nHandler == EVENT_SCRIPT_MODULE_ON_ACQUIRE_ITEM ? ESI_EVENT_NUMBER_ALIAS_MODULE_ON_ACQUIRE_ITEM
@@ -286,7 +288,7 @@ int ESI_RegisterRuntimeHook(object oObject, string sKey, int nHandler, string sS
     {
         if (JsonGetString(JsonObjectGet(JsonArrayGet(jHooks, nIndex), ESI_RUNTIME_HOOK_KEY)) == sKey)
         {
-            if (JsonGetString(JsonObjectGet(JsonArrayGet(jHooks, nIndex), ESI_RUNTIME_HOOK_SCRIPT)) == sScript) return TRUE;
+            if (JsonGetString(JsonObjectGet(JsonArrayGet(jHooks, nIndex), ESI_RUNTIME_HOOK_SCRIPT)) == sScript) return ESI_EnsureTrampoline(oObject, nHandler);
             if (!ESI_EnsureTrampoline(oObject, nHandler)) return FALSE;
             jHook = JsonObject();
             jHook = JsonObjectSet(jHook, ESI_RUNTIME_HOOK_KEY, JsonString(sKey));

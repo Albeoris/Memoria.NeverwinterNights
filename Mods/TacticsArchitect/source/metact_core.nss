@@ -7,11 +7,12 @@
 #include "memoria_locale"
 #include "memoria_loc"
 
-const string METACT_VERSION = "0.7.21";
+const string METACT_VERSION = "0.7.23";
 const string METACT_LOC_PREFIX = "metact";
 const string METACT_ESI_KEY_GUI = "metact.module.gui";
 const string METACT_ESI_KEY_TARGET = "metact.module.target";
 const string METACT_ESI_KEY_CHAT = "metact.module.chat";
+const string METACT_ESI_KEY_COMBAT_ROUND_END = "metact.creature.combat_round_end";
 const string METACT_LOCAL_DATABASE = "METACT_DATABASE_V1";
 const string METACT_LOCAL_STORAGE_READY = "METACT_STORAGE_READY";
 const string METACT_LOCAL_STORAGE_SYNCED = "METACT_STORAGE_SYNCED";
@@ -33,6 +34,9 @@ const string METACT_LOCAL_PRIORITY_TEMP = "METACT_UI_PRIORITY_TEMP";
 const string METACT_LOCAL_PRIORITY_SCOPE = "METACT_UI_PRIORITY_SCOPE";
 const string METACT_LOCAL_ACTION = "METACT_UI_ACTION";
 const string METACT_LOCAL_ACTION_TEMP = "METACT_UI_ACTION_TEMP";
+const string METACT_LOCAL_OWNED_COMBAT_FEAT = "METACT_OWNED_COMBAT_FEAT";
+const string METACT_LOCAL_OWNED_COMBAT_MODE = "METACT_OWNED_COMBAT_MODE";
+const string METACT_LOCAL_OWNED_COMBAT_MODE_SET = "METACT_OWNED_COMBAT_MODE_SET";
 const string METACT_LOCAL_OWNED = "METACT_ACTION_OWNED";
 const string METACT_LOCAL_OWNER = "METACT_ACTION_OWNER";
 const string METACT_LOCAL_OWNED_TICKS = "METACT_ACTION_OWNED_TICKS";
@@ -78,6 +82,54 @@ const int METACT_MAX_AOE_TARGETS = 16;
 int METACT_GetFeatActionMode(int iFeat)
 {
     return MEMORIA_GetFeatActionMode(iFeat);
+}
+
+int METACT_HasOwnedCombatMode(object oActor)
+{
+    return GetLocalInt(oActor, METACT_LOCAL_OWNED_COMBAT_MODE_SET);
+}
+
+int METACT_GetOwnedCombatMode(object oActor)
+{
+    return METACT_HasOwnedCombatMode(oActor) ? GetLocalInt(oActor, METACT_LOCAL_OWNED_COMBAT_MODE) : -1;
+}
+
+int METACT_GetOwnedCombatModeFeat(object oActor)
+{
+    return METACT_HasOwnedCombatMode(oActor) ? GetLocalInt(oActor, METACT_LOCAL_OWNED_COMBAT_FEAT) : -1;
+}
+
+void METACT_SetOwnedCombatMode(object oActor, int iActionMode, int iFeat)
+{
+    int iPreviousActionMode = METACT_GetOwnedCombatMode(oActor);
+    if (iPreviousActionMode >= 0 && iPreviousActionMode != iActionMode && GetActionMode(oActor, iPreviousActionMode))
+        SetActionMode(oActor, iPreviousActionMode, FALSE);
+    SetLocalInt(oActor, METACT_LOCAL_OWNED_COMBAT_FEAT, iFeat);
+    SetLocalInt(oActor, METACT_LOCAL_OWNED_COMBAT_MODE, iActionMode);
+    SetLocalInt(oActor, METACT_LOCAL_OWNED_COMBAT_MODE_SET, TRUE);
+    ESI_InjectToObject(oActor, METACT_ESI_KEY_COMBAT_ROUND_END, EVENT_SCRIPT_CREATURE_ON_END_COMBATROUND, "metact_roundend", ESI_INJECTION_PLACEMENT_LAST);
+}
+
+void METACT_ClearOwnedCombatMode(object oActor)
+{
+    int iActionMode = METACT_GetOwnedCombatMode(oActor);
+    if (iActionMode >= 0 && GetActionMode(oActor, iActionMode))
+        SetActionMode(oActor, iActionMode, FALSE);
+    DeleteLocalInt(oActor, METACT_LOCAL_OWNED_COMBAT_FEAT);
+    DeleteLocalInt(oActor, METACT_LOCAL_OWNED_COMBAT_MODE);
+    DeleteLocalInt(oActor, METACT_LOCAL_OWNED_COMBAT_MODE_SET);
+    ESI_RemoveFromObject(oActor, METACT_ESI_KEY_COMBAT_ROUND_END, EVENT_SCRIPT_CREATURE_ON_END_COMBATROUND, ESI_INJECTION_PLACEMENT_LAST);
+}
+
+void METACT_ClearOwnedCombatModes(object oPC)
+{
+    int iIndex;
+    for (iIndex = 1; iIndex <= GetLocalInt(oPC, METACT_LOCAL_GROUP_COUNT); iIndex++)
+    {
+        object oActor = GetLocalObject(oPC, METACT_LOCAL_GROUP_MEMBER + IntToString(iIndex));
+        if (GetIsObjectValid(oActor) && METACT_HasOwnedCombatMode(oActor))
+            METACT_ClearOwnedCombatMode(oActor);
+    }
 }
 
 const int METACT_MAX_AOE_CANDIDATE_ENEMIES = 12;
@@ -291,6 +343,7 @@ void METACT_SaveDatabase(object oPC, json jDatabase)
 {
     SetLocalJson(oPC, METACT_LOCAL_DATABASE, jDatabase);
     METACT_WritePersistentDatabase(oPC, jDatabase);
+    METACT_ClearOwnedCombatModes(oPC);
 }
 
 int METACT_GetDebugEnabled(object oPC)

@@ -18,6 +18,7 @@ const string METACT_LOCAL_PENDING_EQUIP_CAST = "METACT_PENDING_EQUIP_CAST";
 const string METACT_LOCAL_PENDING_RECHECK = "METACT_PENDING_RECHECK";
 const string METACT_LOCAL_COMMIT_RECHECK = "METACT_COMMIT_RECHECK";
 const string METACT_LOCAL_PERCEPTION_RANGE = "METACT_PERCEPTION_RANGE";
+const string METACT_LOCAL_DEBUG_ACTION_RESULT = "METACT_DEBUG_ACTION_RESULT";
 const int METACT_MAX_TARGETS = 32;
 const int METACT_RANGE_ROW_DEFAULT = 11;
 const int METACT_RANGE_ROW_PLAYER = 12;
@@ -1155,6 +1156,7 @@ int METACT_ExecuteSpellAction(object oActor, object oPC, json jAction, json jCon
 int METACT_ExecuteAction(object oActor, object oPC, json jAction, json jCondition, json jPriorities)
 {
     DeleteLocalString(oActor, METACT_LOCAL_FAILURE);
+    DeleteLocalString(oActor, METACT_LOCAL_DEBUG_ACTION_RESULT);
     string sKind = JsonGetString(JsonObjectGet(jAction, "kind"));
     if (JsonGetString(JsonObjectGet(jCondition, "kind")) == "cluster" && sKind != "spell" && (sKind != "feat" || !METACT_IsSpellHostile(JsonGetInt(JsonObjectGet(jAction, "spell"))) || !METACT_IsSpellArea(JsonGetInt(JsonObjectGet(jAction, "spell"))))) return METACT_Fail(oActor, "condition_incompatible");
     if (sKind == "spell") return METACT_ExecuteSpellAction(oActor, oPC, jAction, jCondition, jPriorities);
@@ -1191,9 +1193,14 @@ int METACT_ExecuteAction(object oActor, object oPC, json jAction, json jConditio
         {
             if (iFeat == FEAT_FLURRY_OF_BLOWS && !GetIsInCombat(oActor))
                 return METACT_Fail(oActor, "requires_combat");
+            METACT_SetOwnedCombatMode(oActor, iActionMode, iFeat);
             if (GetActionMode(oActor, iActionMode))
-                return METACT_Fail(oActor, "action_mode_already_active");
+            {
+                SetLocalString(oActor, METACT_LOCAL_DEBUG_ACTION_RESULT, "maintain");
+                return TRUE;
+            }
             SetActionMode(oActor, iActionMode, TRUE);
+            SetLocalString(oActor, METACT_LOCAL_DEBUG_ACTION_RESULT, "activate");
             return TRUE;
         }
         int iAssociateType = iSpell >= 0 ? METACT_GetSpellAssociateType(iSpell) : -1;
@@ -1352,7 +1359,8 @@ void METACT_RunActorRules(object oActor, object oPC)
             json jPriorities = METACT_GetEffectiveTargetPriorities(jAction, jRule, jTactic);
             if (METACT_ExecuteAction(oActor, oPC, jAction, jCondition, jPriorities))
             {
-                string sResult = GetLocalInt(oActor, METACT_LOCAL_PENDING_RECHECK) ? "recheck" : "execute";
+                string sResult = GetLocalString(oActor, METACT_LOCAL_DEBUG_ACTION_RESULT);
+                if (sResult == "") sResult = GetLocalInt(oActor, METACT_LOCAL_PENDING_RECHECK) ? "recheck" : "execute";
                 string sTarget = METACT_DebugResolvedTarget(oActor);
                 if (sTarget != "") sResult += " | " + sTarget;
                 sTrace += "\n#" + IntToString(iRule + 1) + "." + IntToString(iAction + 1) + " " + METACT_DebugActionText(jAction) + ": " + sResult;
