@@ -14,6 +14,7 @@ const int MEDT_TARGET_MODE_EXAMINE = 1;
 const int MEDT_TARGET_MODE_DELETE = 2;
 const int MEDT_TARGET_MODE_ICON = 3;
 const int MEDT_TARGET_MODE_USEABLE = 4;
+const int MEDT_TARGET_MODE_CURSE = 5;
 const float MEDT_USEABLE_SEARCH_RADIUS = 1.5f;
 
 string MEDT_GetText(object oPC, string sKey)
@@ -357,12 +358,31 @@ void MEDT_ToggleUseable(object oPC, object oSelected, vector vPosition)
     SendMessageToPC(oPC, sMessage);
 }
 
+void MEDT_ToggleCurse(object oPC, object oTarget)
+{
+    if (GetObjectType(oTarget) != OBJECT_TYPE_ITEM)
+    {
+        SendMessageToPC(oPC, MEDT_GetText(oPC, "curse_item_required"));
+        return;
+    }
+
+    int bCursed = !GetItemCursedFlag(oTarget);
+    SetItemCursedFlag(oTarget, bCursed);
+    if (GetItemCursedFlag(oTarget) != bCursed)
+    {
+        SendMessageToPC(oPC, MEDT_FormatObjectText(oPC, "curse_change_failed", oTarget));
+        return;
+    }
+    string sMessage = MEDT_FormatObjectText(oPC, bCursed ? "curse_applied" : "curse_removed", oTarget);
+    SendMessageToPC(oPC, sMessage);
+}
+
 void MEDT_StartTargeting(object oPC, int iMode)
 {
     SetLocalInt(oPC, MEDT_LOCAL_TARGET_MODE, iMode);
-    string sMessage = iMode == MEDT_TARGET_MODE_EXAMINE ? "select_examine" : iMode == MEDT_TARGET_MODE_DELETE ? "select_delete" : iMode == MEDT_TARGET_MODE_ICON ? "select_icon" : "select_useable";
+    string sMessage = iMode == MEDT_TARGET_MODE_EXAMINE ? "select_examine" : iMode == MEDT_TARGET_MODE_DELETE ? "select_delete" : iMode == MEDT_TARGET_MODE_ICON ? "select_icon" : iMode == MEDT_TARGET_MODE_CURSE ? "select_curse" : "select_useable";
     SendMessageToPC(oPC, MEDT_GetText(oPC, sMessage));
-    EnterTargetingMode(oPC, iMode == MEDT_TARGET_MODE_ICON ? OBJECT_TYPE_ITEM : OBJECT_TYPE_ALL, MOUSECURSOR_EXAMINE, MOUSECURSOR_NOEXAMINE);
+    EnterTargetingMode(oPC, iMode == MEDT_TARGET_MODE_ICON || iMode == MEDT_TARGET_MODE_CURSE ? OBJECT_TYPE_ITEM : OBJECT_TYPE_ALL, MOUSECURSOR_EXAMINE, MOUSECURSOR_NOEXAMINE);
 }
 
 void MEDT_InstallHook()

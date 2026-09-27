@@ -8,7 +8,7 @@ void main()
         return;
     }
     int iMode = GetLocalInt(oPC, MEDT_LOCAL_TARGET_MODE);
-    if (iMode != MEDT_TARGET_MODE_EXAMINE && iMode != MEDT_TARGET_MODE_DELETE && iMode != MEDT_TARGET_MODE_ICON && iMode != MEDT_TARGET_MODE_USEABLE)
+    if (iMode != MEDT_TARGET_MODE_EXAMINE && iMode != MEDT_TARGET_MODE_DELETE && iMode != MEDT_TARGET_MODE_ICON && iMode != MEDT_TARGET_MODE_USEABLE && iMode != MEDT_TARGET_MODE_CURSE)
     {
         return;
     }
@@ -31,8 +31,12 @@ void main()
     {
         MEDT_OpenIconPicker(oPC, oTarget);
     }
-    else
+    else if (iMode == MEDT_TARGET_MODE_USEABLE)
     {
         MEDT_ToggleUseable(oPC, oTarget, GetTargetingModeSelectedPosition());
+    }
+    else
+    {
+        MEDT_ToggleCurse(oPC, oTarget);
     }
 }

@@ -3,10 +3,12 @@
   "examine_action": "Objekt untersuchen",
   "delete_action": "Objekt löschen",
   "icon_action": "Gegenstandssymbol ändern",
+  "curse_action": "Gegenstandsfluch umschalten",
   "useable_action": "Benutzbarkeit umschalten",
   "select_examine": "Wählt einen Inventargegenstand oder ein Objekt in der Welt zum Untersuchen aus.",
   "select_delete": "Wählt einen Inventargegenstand oder ein Objekt in der Welt zum Löschen aus.",
   "select_icon": "Wählt einen Inventargegenstand aus, dessen Symbol geändert werden soll.",
+  "select_curse": "Wählt einen Gegenstand aus, um ihn zu verfluchen oder seinen Fluch zu entfernen.",
   "select_useable": "Wählt ein benutzbares Objekt aus, um es zu deaktivieren, oder den Boden an der Position eines unbenutzbaren Objekts, um es zu aktivieren.",
   "selection_cancelled": "Objektauswahl abgebrochen.",
   "confirm_title": "Objekt löschen",
@@ -28,5 +30,9 @@
   "useable_unsupported": "Die Benutzbarkeit dieses Objekts kann nicht geändert werden.",
   "useable_change_failed": "Die Benutzbarkeit von {name} ({id}) konnte nicht geändert werden.",
   "useable_enabled": "{name} ({id}) wurde aktiviert.",
-  "useable_disabled": "{name} ({id}) wurde deaktiviert."
+  "useable_disabled": "{name} ({id}) wurde deaktiviert.",
+  "curse_item_required": "Das ausgewählte Objekt ist kein Gegenstand.",
+  "curse_change_failed": "Der Fluchstatus von {name} ({id}) konnte nicht geändert werden.",
+  "curse_applied": "{name} ({id}) wurde verflucht.",
+  "curse_removed": "Der Fluch von {name} ({id}) wurde entfernt."
 }

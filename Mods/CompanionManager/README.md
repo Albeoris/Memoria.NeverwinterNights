@@ -10,6 +10,7 @@ Companion Manager automatically sends companions and other allied creatures to u
 - Prevents companions from attacking locked doors and containers that should be unlocked or disarmed instead.
 - Supports henchmen, familiars, animal companions, summons, and dominated creatures.
 - Can optionally open henchman inventories in campaigns that normally prohibit it, after an explicit item-loss warning.
+- Marks the carried and equipped items of henchmen whose inventories are normally prohibited as cursed, preventing them from being looted if their inventory is opened by another mod.
 
 ## Compatibility
 

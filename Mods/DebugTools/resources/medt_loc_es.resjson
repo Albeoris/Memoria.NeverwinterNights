@@ -3,10 +3,12 @@
   "examine_action": "Examinar objeto",
   "delete_action": "Eliminar objeto",
   "icon_action": "Cambiar icono del objeto",
+  "curse_action": "Alternar maldición del objeto",
   "useable_action": "Alternar usabilidad del objeto",
   "select_examine": "Selecciona un objeto del inventario o del mundo para examinarlo.",
   "select_delete": "Selecciona un objeto del inventario o del mundo para eliminarlo.",
   "select_icon": "Selecciona en el inventario el objeto cuyo icono quieres cambiar.",
+  "select_curse": "Selecciona un objeto para maldecirlo o eliminar su maldición.",
   "select_useable": "Selecciona un objeto utilizable para desactivarlo, o el suelo en la ubicación de un objeto no utilizable para activarlo.",
   "selection_cancelled": "Selección de objeto cancelada.",
   "confirm_title": "Eliminar objeto",
@@ -28,5 +30,9 @@
   "useable_unsupported": "No se puede cambiar la usabilidad de este objeto.",
   "useable_change_failed": "No se pudo cambiar la usabilidad de {name} ({id}).",
   "useable_enabled": "Se activó {name} ({id}).",
-  "useable_disabled": "Se desactivó {name} ({id})."
+  "useable_disabled": "Se desactivó {name} ({id}).",
+  "curse_item_required": "El objeto seleccionado no es un objeto de inventario.",
+  "curse_change_failed": "No se pudo cambiar el estado de maldición de {name} ({id}).",
+  "curse_applied": "Se maldijo {name} ({id}).",
+  "curse_removed": "Se eliminó la maldición de {name} ({id})."
 }

@@ -32,6 +32,12 @@
       },
       {
         "type": "action",
+        "label": "Toggle item curse",
+        "label_key": "curse_action",
+        "script": "medt_curse"
+      },
+      {
+        "type": "action",
         "label": "Toggle object usability",
         "label_key": "useable_action",
         "script": "medt_useable"

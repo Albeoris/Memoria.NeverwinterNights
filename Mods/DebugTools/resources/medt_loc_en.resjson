@@ -3,10 +3,12 @@
   "examine_action": "Examine object",
   "delete_action": "Delete object",
   "icon_action": "Change item icon",
+  "curse_action": "Toggle item curse",
   "useable_action": "Toggle object usability",
   "select_examine": "Select an inventory item or an object in the world to examine.",
   "select_delete": "Select an inventory item or an object in the world to delete.",
   "select_icon": "Select an inventory item whose icon you want to change.",
+  "select_curse": "Select an item to curse it or remove its curse.",
   "select_useable": "Select a usable object to disable it, or target the ground at an unusable object's location to enable it.",
   "selection_cancelled": "Object selection cancelled.",
   "confirm_title": "Delete object",
@@ -28,5 +30,9 @@
   "useable_unsupported": "This object's usability cannot be changed.",
   "useable_change_failed": "The usability of {name} ({id}) could not be changed.",
   "useable_enabled": "Enabled {name} ({id}).",
-  "useable_disabled": "Disabled {name} ({id})."
+  "useable_disabled": "Disabled {name} ({id}).",
+  "curse_item_required": "The selected object is not an item.",
+  "curse_change_failed": "The curse state of {name} ({id}) could not be changed.",
+  "curse_applied": "Cursed {name} ({id}).",
+  "curse_removed": "Removed the curse from {name} ({id})."
 }

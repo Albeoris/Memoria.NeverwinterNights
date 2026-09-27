@@ -3,10 +3,12 @@
   "examine_action": "Examiner un objet",
   "delete_action": "Supprimer un objet",
   "icon_action": "Changer l'icône de l'objet",
+  "curse_action": "Basculer la malédiction de l'objet",
   "useable_action": "Basculer l'utilisation de l'objet",
   "select_examine": "Sélectionnez un objet dans l'inventaire ou dans le monde à examiner.",
   "select_delete": "Sélectionnez un objet dans l'inventaire ou dans le monde à supprimer.",
   "select_icon": "Sélectionnez dans l'inventaire l'objet dont vous souhaitez changer l'icône.",
+  "select_curse": "Sélectionnez un objet pour le maudire ou retirer sa malédiction.",
   "select_useable": "Sélectionnez un objet utilisable pour le désactiver, ou le sol à l'emplacement d'un objet inutilisable pour l'activer.",
   "selection_cancelled": "Sélection annulée.",
   "confirm_title": "Supprimer l'objet",
@@ -28,5 +30,9 @@
   "useable_unsupported": "L'utilisation de cet objet ne peut pas être modifiée.",
   "useable_change_failed": "Impossible de modifier l'utilisation de {name} ({id}).",
   "useable_enabled": "{name} ({id}) a été activé.",
-  "useable_disabled": "{name} ({id}) a été désactivé."
+  "useable_disabled": "{name} ({id}) a été désactivé.",
+  "curse_item_required": "L'objet sélectionné n'est pas un objet d'inventaire.",
+  "curse_change_failed": "Impossible de modifier l'état de malédiction de {name} ({id}).",
+  "curse_applied": "{name} ({id}) a été maudit.",
+  "curse_removed": "La malédiction de {name} ({id}) a été retirée."
 }
