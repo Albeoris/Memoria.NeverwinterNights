@@ -1078,8 +1078,12 @@ int METACT_ExecuteSpellAction(object oActor, object oPC, json jAction, json jCon
     int iSpellLevel = METACT_GetActionSpellLevel(jAction, iSpell);
     int iMetaMagic = JsonGetInt(JsonObjectGet(jAction, "metamagic"));
     int iClusterMinimum = JsonGetString(JsonObjectGet(jCondition, "kind")) == "cluster" ? JsonGetInt(JsonObjectGet(jCondition, "value")) : 1;
-    if (iSpell < 0) return METACT_Fail(oActor, "invalid_spell");
-    if (JsonGetString(JsonObjectGet(jCondition, "kind")) == "cluster" && (!METACT_IsSpellHostile(iSpell) || !METACT_IsSpellArea(iSpell))) return METACT_Fail(oActor, "condition_incompatible");
+    if (iSpell < 0)
+        return METACT_Fail(oActor, "invalid_spell");
+    int bHostile = METACT_IsSpellHostile(iSpell);
+    int bArea = METACT_IsSpellArea(iSpell);
+    if (JsonGetString(JsonObjectGet(jCondition, "kind")) == "cluster" && (!bHostile || !bArea))
+        return METACT_Fail(oActor, "condition_incompatible:" + IntToString(bHostile) + ":" + IntToString(bArea));
     string sSource = JsonGetString(JsonObjectGet(jAction, "source"));
     int iClass = JsonGetInt(JsonObjectGet(jAction, "class"));
     int iDomain = JsonGetInt(JsonObjectGet(jAction, "domain"));
@@ -1158,7 +1162,14 @@ int METACT_ExecuteAction(object oActor, object oPC, json jAction, json jConditio
     DeleteLocalString(oActor, METACT_LOCAL_FAILURE);
     DeleteLocalString(oActor, METACT_LOCAL_DEBUG_ACTION_RESULT);
     string sKind = JsonGetString(JsonObjectGet(jAction, "kind"));
-    if (JsonGetString(JsonObjectGet(jCondition, "kind")) == "cluster" && sKind != "spell" && (sKind != "feat" || !METACT_IsSpellHostile(JsonGetInt(JsonObjectGet(jAction, "spell"))) || !METACT_IsSpellArea(JsonGetInt(JsonObjectGet(jAction, "spell"))))) return METACT_Fail(oActor, "condition_incompatible");
+    if (JsonGetString(JsonObjectGet(jCondition, "kind")) == "cluster" && sKind != "spell")
+    {
+        int iSpell = JsonGetInt(JsonObjectGet(jAction, "spell"));
+        int bHostile = sKind == "feat" && METACT_IsSpellHostile(iSpell);
+        int bArea = sKind == "feat" && METACT_IsSpellArea(iSpell);
+        if (!bHostile || !bArea)
+            return METACT_Fail(oActor, "condition_incompatible:" + IntToString(bHostile) + ":" + IntToString(bArea));
+    }
     if (sKind == "spell") return METACT_ExecuteSpellAction(oActor, oPC, jAction, jCondition, jPriorities);
     if (sKind == "equip")
     {
@@ -1270,6 +1281,8 @@ string METACT_DebugReasonText(object oPC, string sReason)
     if (sReason == "item_already_equipped") return "item is already equipped";
     if (sReason == "item_cannot_be_equipped") return "item cannot be equipped";
     if (sReason == "action_not_configured") return bRussian ? "действие не настроено" : "action is not configured";
+    if (FindSubString(sReason, "condition_incompatible:") == 0)
+        return "action is incompatible with the rule condition (cluster requires hostile=1, area=1; action has hostile=" + GetSubString(sReason, 23, 1) + ", area=" + GetSubString(sReason, 25, 1) + ")";
     if (sReason == "condition_incompatible") return "action is incompatible with the rule condition";
     return sReason == "" ? (bRussian ? "действие неприменимо" : "action is not applicable") : sReason;
 }

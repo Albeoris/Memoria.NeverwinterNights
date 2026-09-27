@@ -41,22 +41,34 @@ int METACT_IsSpellHostile(int iSpell)
 
 int METACT_GetSpellTargetShape(int iSpell)
 {
-    string sShape = Get2DAString("spells", "TargetShape", iSpell);
-    if (sShape == "S" || sShape == "Sphere")
+    string sShape = GetStringLowerCase(Get2DAString("spells", "TargetShape", iSpell));
+    if (sShape == "s" || sShape == "sphere")
         return SPELL_TARGETING_SHAPE_SPHERE;
-    if (sShape == "R" || sShape == "Rect")
+    if (sShape == "r" || sShape == "rect" || sShape == "rectangle")
         return SPELL_TARGETING_SHAPE_RECT;
-    if (sShape == "C" || sShape == "Cone")
+    if (sShape == "c" || sShape == "cone")
         return SPELL_TARGETING_SHAPE_CONE;
-    if (sShape == "H" || sShape == "HSphere")
+    if (sShape == "h" || sShape == "hsphere")
         return SPELL_TARGETING_SHAPE_HSPHERE;
     int iShape = StringToInt(sShape);
     return iShape >= SPELL_TARGETING_SHAPE_NONE && iShape <= SPELL_TARGETING_SHAPE_HSPHERE ? iShape : SPELL_TARGETING_SHAPE_NONE;
 }
 
+int METACT_GetSpellTargetType(int iSpell)
+{
+    string sTargetType = Get2DAString("spells", "TargetType", iSpell);
+    if (GetSubString(sTargetType, 0, 2) != "0x" && GetSubString(sTargetType, 0, 2) != "0X")
+        return StringToInt(sTargetType);
+    int iValue;
+    int iIndex;
+    for (iIndex = 2; iIndex < GetStringLength(sTargetType); iIndex++)
+        iValue = iValue * 16 + MEMORIA_HexDigit(GetSubString(sTargetType, iIndex, 1));
+    return iValue;
+}
+
 int METACT_IsSpellArea(int iSpell)
 {
-    return METACT_GetSpellTargetShape(iSpell) != SPELL_TARGETING_SHAPE_NONE;
+    return METACT_GetSpellTargetShape(iSpell) != SPELL_TARGETING_SHAPE_NONE || METACT_GetSpellTargetType(iSpell) / 4 % 2 == 1;
 }
 
 int METACT_CanSpellHitAllies(int iSpell)
