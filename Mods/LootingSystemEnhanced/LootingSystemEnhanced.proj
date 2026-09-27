@@ -2,7 +2,7 @@
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
         <ModId>MELSE</ModId>
-        <Version>2.0.26</Version>
+        <Version>2.0.27</Version>
         <ModDisplayName>Memoria: Ravick's Looting System Enhanced</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">
@@ -17,8 +17,8 @@
         <NwnResource Include="resources\**\*" Exclude="resources\**\.gitkeep" />
         <PackageDocument Include="*.md" />
         <NwnRequiredPackage Include="..\Memoria\Memoria.proj" ModId="MEMORIA" Versions="[1.5.0,2.0.0)" PackageName="Memoria" />
-        <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" ModId="esi" Versions="[2.3.1,3.0.0)" PackageName="Event Script Injector (Memoria Edition)" />
-        <NwnRequiredPackage Include="..\ConfigurationManager\ConfigurationManager.proj" ModId="MECONFIG" Versions="[1.3.6,2.0.0)" PackageName="Memoria Configuration Manager" />
+        <NwnRequiredPackage Include="..\EventScriptInjector\EventScriptInjector.proj" ModId="esi" Versions="[2.4.0,3.0.0)" PackageName="Event Script Injector (Memoria Edition)" />
+        <NwnRequiredPackage Include="..\ConfigurationManager\ConfigurationManager.proj" ModId="MECONFIG" Versions="[1.3.7,2.0.0)" PackageName="Memoria Configuration Manager" />
     </ItemGroup>
     <Import Project="..\..\Build\NwnModProject.targets" />
 </Project>

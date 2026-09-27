@@ -7,7 +7,7 @@
 #include "memoria_loc"
 #include "esi_lib"
 
-const string MECM_VERSION = "1.3.4";
+const string MECM_VERSION = "1.4.0";
 const string MECM_LOC_PREFIX = "mecm";
 const string MECM_LOCAL_INSTALLED = "MECM_INSTALLED";
 const string MECM_LOCAL_ENABLED = "MECM_MODE_ENABLED";
@@ -49,6 +49,7 @@ const string MECM_LOCAL_COMPANION_INVENTORY_CONFIRMED = "MECM_COMPANION_INVENTOR
 const string MECM_LOCAL_INVENTORY_HOOK_COUNT = "MECM_INVENTORY_HOOK_COUNT";
 const string MECM_LOCAL_INVENTORY_HOOK_MEMBER = "MECM_INVENTORY_HOOK_MEMBER_";
 const string MECM_LOCAL_HENCHMAN_INVENTORY_PROCESSED = "MECM_HENCHMAN_INVENTORY_PROCESSED";
+const string MECM_LOCAL_HENCHMAN_INVENTORY_PROCESSED_UUID = "MECM_HENCHMAN_INVENTORY_PROCESSED_UUID";
 const string MECM_LOCAL_AUTO_DETECT = "MECM_CFG_AUTO_DETECT";
 const string MECM_LOCAL_DETECT_ACTOR = "MECM_DETECT_ACTOR";
 const string MECM_LOCAL_DETECT_COUNT = "MECM_DETECT_COUNT";
@@ -167,20 +168,28 @@ int MECM_IsInventoryCompanion(object oCreature, object oPC)
     return GetIsObjectValid(oCreature) && GetAssociateType(oCreature) == ASSOCIATE_TYPE_HENCHMAN && MECM_GetRootMaster(oCreature) == oPC;
 }
 
+#include "mecm_ocinv"
+
 void MECM_CurseInventory(object oInventory)
 {
     object oItem = GetFirstItemInInventory(oInventory);
     while (GetIsObjectValid(oItem))
     {
-        SetItemCursedFlag(oItem, TRUE);
-        MECM_CurseInventory(oItem);
+        if (!GetLocalInt(oItem, MECM_OC_MANAGED_ITEM))
+        {
+            SetItemCursedFlag(oItem, TRUE);
+            MECM_CurseInventory(oItem);
+        }
         oItem = GetNextItemInInventory(oInventory);
     }
 }
 
 void MECM_ProtectHenchmanInventory(object oHenchman)
 {
+    if (MECM_IsOcHenchman(oHenchman))
+        MECM_MarkNativeHenchmanItems(oHenchman);
     SetLocalInt(oHenchman, MECM_LOCAL_HENCHMAN_INVENTORY_PROCESSED, TRUE);
+    SetLocalString(oHenchman, MECM_LOCAL_HENCHMAN_INVENTORY_PROCESSED_UUID, GetObjectUUID(oHenchman));
     if (!GetLocalInt(oHenchman, MECM_HENCHMAN_INVENTORY_PROHIBITED))
         return;
     MECM_CurseInventory(oHenchman);
@@ -188,7 +197,7 @@ void MECM_ProtectHenchmanInventory(object oHenchman)
     for (iSlot = 0; iSlot < NUM_INVENTORY_SLOTS; iSlot++)
     {
         object oItem = GetItemInSlot(iSlot, oHenchman);
-        if (!GetIsObjectValid(oItem))
+        if (!GetIsObjectValid(oItem) || GetLocalInt(oItem, MECM_OC_MANAGED_ITEM))
             continue;
         SetItemCursedFlag(oItem, TRUE);
         MECM_CurseInventory(oItem);
@@ -201,20 +210,22 @@ void MECM_ProtectHenchmanInventories(object oPC)
     object oHenchman = GetHenchman(oPC, iNth);
     while (GetIsObjectValid(oHenchman))
     {
-        if (!GetLocalInt(oHenchman, MECM_LOCAL_HENCHMAN_INVENTORY_PROCESSED))
+        if (MECM_IsOcHenchman(oHenchman))
+            MECM_ProcessOcHenchman(oPC, oHenchman);
+        else if (!GetLocalInt(oHenchman, MECM_LOCAL_HENCHMAN_INVENTORY_PROCESSED) || GetLocalString(oHenchman, MECM_LOCAL_HENCHMAN_INVENTORY_PROCESSED_UUID) != GetObjectUUID(oHenchman))
             MECM_ProtectHenchmanInventory(oHenchman);
         iNth++;
         oHenchman = GetHenchman(oPC, iNth);
     }
 }
 
-int MECM_HasProhibitedHenchmanInventory(object oPC)
+int MECM_HasHenchmanInventoryLossRisk(object oPC)
 {
     int iNth = 1;
     object oHenchman = GetHenchman(oPC, iNth);
     while (GetIsObjectValid(oHenchman))
     {
-        if (GetLocalInt(oHenchman, MECM_HENCHMAN_INVENTORY_PROHIBITED))
+        if (GetLocalInt(oHenchman, MECM_HENCHMAN_INVENTORY_PROHIBITED) && !MECM_IsOcHenchman(oHenchman))
             return TRUE;
         iNth++;
         oHenchman = GetHenchman(oPC, iNth);
@@ -1093,6 +1104,7 @@ void MECM_RemoveLegacyAutoDetect(object oPC)
 void MECM_RunLockRegistryDispatcher(object oPC)
 {
     MECM_BuildGroupCache(oPC);
+    MECM_InitializeOcInventory(oPC);
     MECM_ProtectHenchmanInventories(oPC);
     MECM_SynchronizeInventoryHooks(oPC);
     MECM_BuildLocksmithCache(oPC);

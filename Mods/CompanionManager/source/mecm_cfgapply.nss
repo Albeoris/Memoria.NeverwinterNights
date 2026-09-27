@@ -15,7 +15,7 @@ void main()
     if (!GetLocalInt(oPC, MECM_LOCAL_HIGHLIGHT))
         MECM_ClearCachedHighlights(oPC);
     ExecuteScript("mecm_registry", oPC);
-    if (GetLocalInt(oPC, MECM_LOCAL_COMPANION_INVENTORY) && !GetLocalInt(oPC, MECM_LOCAL_COMPANION_INVENTORY_CONFIRMED) && MECM_HasProhibitedHenchmanInventory(oPC))
+    if (GetLocalInt(oPC, MECM_LOCAL_COMPANION_INVENTORY) && !GetLocalInt(oPC, MECM_LOCAL_COMPANION_INVENTORY_CONFIRMED) && MECM_HasHenchmanInventoryLossRisk(oPC))
     {
         SetLocalInt(oPC, MECM_LOCAL_COMPANION_INVENTORY, FALSE);
         MECM_RemoveInventoryHooks(oPC);

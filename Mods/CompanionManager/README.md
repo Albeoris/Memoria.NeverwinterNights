@@ -11,10 +11,11 @@ Companion Manager automatically sends companions and other allied creatures to u
 - Supports henchmen, familiars, animal companions, summons, and dominated creatures.
 - Can optionally open henchman inventories in campaigns that normally prohibit it, after an explicit item-loss warning.
 - Marks the carried and equipped items of henchmen whose inventories are normally prohibited as cursed, preventing them from being looted if their inventory is opened by another mod.
+- In the Original Campaign, preserves items given by the player to the six vanilla henchmen across level-up recreation, dismissal and rehiring, save/load, and chapter transitions while keeping each incarnation's native equipment protected.
 
 ## Compatibility
 
-MECM works with most modules and override mods. It does not replace original campaign scripts; optional inventory access is attached to each henchman's runtime `OnConversation` event through ESI and removed again when disabled. Mods that automate locks or traps, control companion actions, or replace event handlers at runtime may interfere with it.
+MECM works with most modules and override mods. It does not replace original campaign scripts; optional inventory access is attached to each henchman's runtime `OnConversation` event through ESI and removed again when disabled. Original Campaign inventory persistence also observes the module's item-acquired and item-lost events through ESI. Mods that automate locks or traps, control companion actions, or replace event handlers at runtime may interfere with it.
 
 The [original LSE](https://steamcommunity.com/sharedfiles/filedetails/?id=2307769974) is incompatible with Memoria and its mods. Use the [Memoria edition](https://steamcommunity.com/sharedfiles/filedetails/?id=3803404663) instead.
 

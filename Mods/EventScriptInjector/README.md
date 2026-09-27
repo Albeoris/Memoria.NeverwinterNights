@@ -4,7 +4,7 @@ Event Script Injector lets multiple override mods add behavior to game events wi
 
 ## Features
 
-- Injects scripts into module, area, creature, and placeable events, including creature `OnCombatRoundEnd`.
+- Injects scripts into module, area, creature, and placeable events, including module `OnAcquireItem`/`OnLoseItem` and creature `OnCombatRoundEnd`.
 - Preserves the original event script and supports ordered handlers from multiple mods.
 - Retains Ravick's original `ESI_InjectToObject` API and resource names for existing integrations and saved games.
 - Rebuilds runtime registrations after a game or module is loaded.
