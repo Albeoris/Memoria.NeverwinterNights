@@ -3,9 +3,11 @@
   "examine_action": "Objekt untersuchen",
   "delete_action": "Objekt löschen",
   "icon_action": "Gegenstandssymbol ändern",
+  "useable_action": "Benutzbarkeit umschalten",
   "select_examine": "Wählt einen Inventargegenstand oder ein Objekt in der Welt zum Untersuchen aus.",
   "select_delete": "Wählt einen Inventargegenstand oder ein Objekt in der Welt zum Löschen aus.",
   "select_icon": "Wählt einen Inventargegenstand aus, dessen Symbol geändert werden soll.",
+  "select_useable": "Wählt ein benutzbares Objekt aus, um es zu deaktivieren, oder den Boden an der Position eines unbenutzbaren Objekts, um es zu aktivieren.",
   "selection_cancelled": "Objektauswahl abgebrochen.",
   "confirm_title": "Objekt löschen",
   "confirm_question": "Soll {name} ({id}) wirklich gelöscht werden?",
@@ -21,5 +23,10 @@
   "icon_item_required": "Das ausgewählte Objekt ist kein Gegenstand.",
   "icon_unsupported": "Dieser Gegenstand verwendet kein einfaches nummeriertes Modellsymbol.",
   "icon_change_failed": "Das Gegenstandssymbol konnte nicht geändert werden. Behälter mit Inhalt können nicht kopiert werden.",
-  "icon_changed": "{name} verwendet jetzt Symbol {model} ({icon})."
+  "icon_changed": "{name} verwendet jetzt Symbol {model} ({icon}).",
+  "useable_not_found": "An der ausgewählten Position wurde kein unbenutzbares Objekt gefunden.",
+  "useable_unsupported": "Die Benutzbarkeit dieses Objekts kann nicht geändert werden.",
+  "useable_change_failed": "Die Benutzbarkeit von {name} ({id}) konnte nicht geändert werden.",
+  "useable_enabled": "{name} ({id}) wurde aktiviert.",
+  "useable_disabled": "{name} ({id}) wurde deaktiviert."
 }

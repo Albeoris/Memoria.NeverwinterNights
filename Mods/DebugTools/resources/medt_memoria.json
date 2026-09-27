@@ -29,6 +29,12 @@
         "label": "Change item icon",
         "label_key": "icon_action",
         "script": "medt_icon"
+      },
+      {
+        "type": "action",
+        "label": "Toggle object usability",
+        "label_key": "useable_action",
+        "script": "medt_useable"
       }
     ]
   }

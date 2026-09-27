@@ -1013,6 +1013,7 @@ void MELSE_SetIsUntracked(object oPlaceable, int bValue)
 
 void MELSE_SetIsUntrackedIfEmpty(object oPlaceable)
 {
+    // Empty containers may be quest targets that must remain usable so the player can put an item into them.
     if (!GetIsObjectValid(GetFirstItemInInventory(oPlaceable)))
         MELSE_SetIsUntracked(oPlaceable, TRUE);
 }

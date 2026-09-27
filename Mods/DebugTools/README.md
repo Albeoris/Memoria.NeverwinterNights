@@ -6,11 +6,12 @@ Memoria Debug Tools adds object inspection and removal tools to the Memoria Conf
 
 - Examines inventory items and world objects, including their identity, state, effects, local variables, event hooks, inventory contents, and type-specific properties; the report is sent to chat and the game log.
 - Lists every numbered icon resource available to a selected simple-model item class and applies the chosen appearance.
+- Toggles whether a supported world object is usable; an unusable object can be recovered by targeting the ground at its location.
 - Deletes a selected object after confirmation and shows an extra warning for protected or service objects.
 
 ## Compatibility
 
-MEDT works alongside other Memoria mods and changes nothing until you explicitly delete an object.
+MEDT works alongside other Memoria mods and changes nothing until you explicitly modify an object.
 
 The [original LSE](https://steamcommunity.com/sharedfiles/filedetails/?id=2307769974) is incompatible with Memoria and its mods. Use the [Memoria edition](https://steamcommunity.com/sharedfiles/filedetails/?id=3803404663) instead.
 

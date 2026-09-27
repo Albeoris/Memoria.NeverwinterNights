@@ -13,6 +13,8 @@ const string MEDT_ICON_WINDOW_ID = "medt_icons";
 const int MEDT_TARGET_MODE_EXAMINE = 1;
 const int MEDT_TARGET_MODE_DELETE = 2;
 const int MEDT_TARGET_MODE_ICON = 3;
+const int MEDT_TARGET_MODE_USEABLE = 4;
+const float MEDT_USEABLE_SEARCH_RADIUS = 1.5f;
 
 string MEDT_GetText(object oPC, string sKey)
 {
@@ -300,10 +302,63 @@ void MEDT_OpenDeleteConfirmation(object oPC, object oTarget)
     NuiCreate(oPC, MEDT_BuildConfirmWindow(oPC, oTarget), MEDT_CONFIRM_WINDOW_ID, "medt_nuievt");
 }
 
+int MEDT_GetCanSetUseable(object oTarget)
+{
+    int iType = GetObjectType(oTarget);
+    return iType == OBJECT_TYPE_CREATURE || iType == OBJECT_TYPE_ITEM || iType == OBJECT_TYPE_DOOR || iType == OBJECT_TYPE_PLACEABLE;
+}
+
+object MEDT_FindUnuseableTarget(object oArea, vector vPosition)
+{
+    location lTarget = Location(oArea, vPosition, 0.0f);
+    int iTypes = OBJECT_TYPE_CREATURE | OBJECT_TYPE_ITEM | OBJECT_TYPE_DOOR | OBJECT_TYPE_PLACEABLE;
+    int iNth = 1;
+    object oTarget = GetNearestObjectToLocation(iTypes, lTarget, iNth);
+    while (GetIsObjectValid(oTarget) && GetDistanceBetweenLocations(lTarget, GetLocation(oTarget)) <= MEDT_USEABLE_SEARCH_RADIUS)
+    {
+        if (!GetUseableFlag(oTarget))
+        {
+            return oTarget;
+        }
+        iNth++;
+        oTarget = GetNearestObjectToLocation(iTypes, lTarget, iNth);
+    }
+    return OBJECT_INVALID;
+}
+
+void MEDT_ToggleUseable(object oPC, object oSelected, vector vPosition)
+{
+    object oTarget = oSelected;
+    if (oSelected == GetArea(oPC))
+    {
+        oTarget = MEDT_FindUnuseableTarget(oSelected, vPosition);
+    }
+    if (!GetIsObjectValid(oTarget))
+    {
+        SendMessageToPC(oPC, MEDT_GetText(oPC, "useable_not_found"));
+        return;
+    }
+    if (!MEDT_GetCanSetUseable(oTarget))
+    {
+        SendMessageToPC(oPC, MEDT_GetText(oPC, "useable_unsupported"));
+        return;
+    }
+
+    int bUseable = !GetUseableFlag(oTarget);
+    SetUseableFlag(oTarget, bUseable);
+    if (GetUseableFlag(oTarget) != bUseable)
+    {
+        SendMessageToPC(oPC, MEDT_FormatObjectText(oPC, "useable_change_failed", oTarget));
+        return;
+    }
+    string sMessage = MEDT_FormatObjectText(oPC, bUseable ? "useable_enabled" : "useable_disabled", oTarget);
+    SendMessageToPC(oPC, sMessage);
+}
+
 void MEDT_StartTargeting(object oPC, int iMode)
 {
     SetLocalInt(oPC, MEDT_LOCAL_TARGET_MODE, iMode);
-    string sMessage = iMode == MEDT_TARGET_MODE_EXAMINE ? "select_examine" : iMode == MEDT_TARGET_MODE_DELETE ? "select_delete" : "select_icon";
+    string sMessage = iMode == MEDT_TARGET_MODE_EXAMINE ? "select_examine" : iMode == MEDT_TARGET_MODE_DELETE ? "select_delete" : iMode == MEDT_TARGET_MODE_ICON ? "select_icon" : "select_useable";
     SendMessageToPC(oPC, MEDT_GetText(oPC, sMessage));
     EnterTargetingMode(oPC, iMode == MEDT_TARGET_MODE_ICON ? OBJECT_TYPE_ITEM : OBJECT_TYPE_ALL, MOUSECURSOR_EXAMINE, MOUSECURSOR_NOEXAMINE);
 }

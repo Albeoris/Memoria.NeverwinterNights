@@ -3,9 +3,11 @@
   "examine_action": "Examiner un objet",
   "delete_action": "Supprimer un objet",
   "icon_action": "Changer l'icône de l'objet",
+  "useable_action": "Basculer l'utilisation de l'objet",
   "select_examine": "Sélectionnez un objet dans l'inventaire ou dans le monde à examiner.",
   "select_delete": "Sélectionnez un objet dans l'inventaire ou dans le monde à supprimer.",
   "select_icon": "Sélectionnez dans l'inventaire l'objet dont vous souhaitez changer l'icône.",
+  "select_useable": "Sélectionnez un objet utilisable pour le désactiver, ou le sol à l'emplacement d'un objet inutilisable pour l'activer.",
   "selection_cancelled": "Sélection annulée.",
   "confirm_title": "Supprimer l'objet",
   "confirm_question": "Voulez-vous vraiment supprimer {name} ({id}) ?",
@@ -21,5 +23,10 @@
   "icon_item_required": "L'objet sélectionné n'est pas un objet d'inventaire.",
   "icon_unsupported": "Cet objet n'utilise pas une icône de modèle simple numérotée.",
   "icon_change_failed": "Impossible de changer l'icône. Les conteneurs contenant des objets ne peuvent pas être copiés.",
-  "icon_changed": "L'icône de {name} est maintenant {model} ({icon})."
+  "icon_changed": "L'icône de {name} est maintenant {model} ({icon}).",
+  "useable_not_found": "Aucun objet inutilisable n'a été trouvé à l'emplacement sélectionné.",
+  "useable_unsupported": "L'utilisation de cet objet ne peut pas être modifiée.",
+  "useable_change_failed": "Impossible de modifier l'utilisation de {name} ({id}).",
+  "useable_enabled": "{name} ({id}) a été activé.",
+  "useable_disabled": "{name} ({id}) a été désactivé."
 }

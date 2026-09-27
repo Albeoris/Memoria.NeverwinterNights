@@ -3,9 +3,11 @@
   "examine_action": "Esamina oggetto",
   "delete_action": "Elimina oggetto",
   "icon_action": "Cambia icona oggetto",
+  "useable_action": "Attiva o disattiva oggetto",
   "select_examine": "Seleziona un oggetto nell'inventario o nel mondo da esaminare.",
   "select_delete": "Seleziona un oggetto nell'inventario o nel mondo da eliminare.",
   "select_icon": "Seleziona nell'inventario l'oggetto di cui vuoi cambiare l'icona.",
+  "select_useable": "Seleziona un oggetto utilizzabile per disattivarlo, oppure il terreno nella posizione di un oggetto non utilizzabile per attivarlo.",
   "selection_cancelled": "Selezione dell'oggetto annullata.",
   "confirm_title": "Elimina oggetto",
   "confirm_question": "Vuoi davvero eliminare {name} ({id})?",
@@ -21,5 +23,10 @@
   "icon_item_required": "L'oggetto selezionato non è un oggetto d'inventario.",
   "icon_unsupported": "Questo oggetto non usa una semplice icona modello numerata.",
   "icon_change_failed": "Impossibile cambiare l'icona. I contenitori con contenuto non possono essere copiati.",
-  "icon_changed": "L'icona di {name} è ora {model} ({icon})."
+  "icon_changed": "L'icona di {name} è ora {model} ({icon}).",
+  "useable_not_found": "Nessun oggetto non utilizzabile è stato trovato nella posizione selezionata.",
+  "useable_unsupported": "L'utilizzabilità di questo oggetto non può essere modificata.",
+  "useable_change_failed": "Impossibile modificare l'utilizzabilità di {name} ({id}).",
+  "useable_enabled": "{name} ({id}) è stato attivato.",
+  "useable_disabled": "{name} ({id}) è stato disattivato."
 }

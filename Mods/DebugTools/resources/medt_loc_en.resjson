@@ -3,9 +3,11 @@
   "examine_action": "Examine object",
   "delete_action": "Delete object",
   "icon_action": "Change item icon",
+  "useable_action": "Toggle object usability",
   "select_examine": "Select an inventory item or an object in the world to examine.",
   "select_delete": "Select an inventory item or an object in the world to delete.",
   "select_icon": "Select an inventory item whose icon you want to change.",
+  "select_useable": "Select a usable object to disable it, or target the ground at an unusable object's location to enable it.",
   "selection_cancelled": "Object selection cancelled.",
   "confirm_title": "Delete object",
   "confirm_question": "Do you really want to delete {name} ({id})?",
@@ -21,5 +23,10 @@
   "icon_item_required": "The selected object is not an item.",
   "icon_unsupported": "This item does not use a simple numbered model icon.",
   "icon_change_failed": "The item icon could not be changed. Containers with contents cannot be copied.",
-  "icon_changed": "Changed {name} to icon {model} ({icon})."
+  "icon_changed": "Changed {name} to icon {model} ({icon}).",
+  "useable_not_found": "No unusable object was found at the selected location.",
+  "useable_unsupported": "This object's usability cannot be changed.",
+  "useable_change_failed": "The usability of {name} ({id}) could not be changed.",
+  "useable_enabled": "Enabled {name} ({id}).",
+  "useable_disabled": "Disabled {name} ({id})."
 }
