@@ -48,6 +48,7 @@
   "cond_combat_state": "Estado de combate",
   "cond_in_combat": "Solo en combate",
   "cond_out_of_combat": "Solo fuera de combate",
+  "cond_invisible_enemy": "Enemigo invisible cercano",
   "threshold": "Umbral",
   "radius": "Radio (metros)",
   "save": "Guardar",

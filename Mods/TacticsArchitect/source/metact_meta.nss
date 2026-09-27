@@ -23,15 +23,40 @@ int METACT_GetSpellAssociateType(int iSpell)
     return -1;
 }
 
+int METACT_IsHarmfulSpellCategory(int iCategory)
+{
+    return iCategory == TALENT_CATEGORY_HARMFUL_AREAEFFECT_DISCRIMINANT || iCategory == TALENT_CATEGORY_HARMFUL_AREAEFFECT_INDISCRIMINANT || iCategory == TALENT_CATEGORY_HARMFUL_RANGED || iCategory == TALENT_CATEGORY_HARMFUL_TOUCH || iCategory == TALENT_CATEGORY_HARMFUL_MELEE;
+}
+
 int METACT_IsSpellHostile(int iSpell)
 {
-    return Get2DAString("spells", "HostileSetting", iSpell) == "1";
+    if (Get2DAString("spells", "HostileSetting", iSpell) == "1")
+    {
+        return TRUE;
+    }
+
+    int iCategory = StringToInt(Get2DAString("spells", "Category", iSpell));
+    return METACT_IsHarmfulSpellCategory(iCategory);
+}
+
+int METACT_GetSpellTargetShape(int iSpell)
+{
+    string sShape = Get2DAString("spells", "TargetShape", iSpell);
+    if (sShape == "S" || sShape == "Sphere")
+        return SPELL_TARGETING_SHAPE_SPHERE;
+    if (sShape == "R" || sShape == "Rect")
+        return SPELL_TARGETING_SHAPE_RECT;
+    if (sShape == "C" || sShape == "Cone")
+        return SPELL_TARGETING_SHAPE_CONE;
+    if (sShape == "H" || sShape == "HSphere")
+        return SPELL_TARGETING_SHAPE_HSPHERE;
+    int iShape = StringToInt(sShape);
+    return iShape >= SPELL_TARGETING_SHAPE_NONE && iShape <= SPELL_TARGETING_SHAPE_HSPHERE ? iShape : SPELL_TARGETING_SHAPE_NONE;
 }
 
 int METACT_IsSpellArea(int iSpell)
 {
-    string sShape = Get2DAString("spells", "TargetShape", iSpell);
-    return sShape != "" && sShape != "****";
+    return METACT_GetSpellTargetShape(iSpell) != SPELL_TARGETING_SHAPE_NONE;
 }
 
 int METACT_CanSpellHitAllies(int iSpell)
@@ -163,12 +188,29 @@ int METACT_HasFullDamageImmunity(object oTarget, int iDamageType)
     return FALSE;
 }
 
+int METACT_HasSpellEffect(object oTarget, int iSpell)
+{
+    effect eEffect = GetFirstEffect(oTarget);
+    while (GetIsEffectValid(eEffect))
+    {
+        if (GetEffectSpellId(eEffect) == iSpell)
+            return TRUE;
+        eEffect = GetNextEffect(oTarget);
+    }
+    return FALSE;
+}
+
 int METACT_IsSpellSensible(object oCaster, object oTarget, int iSpell, int iSpellLevel)
 {
     DeleteLocalString(oCaster, METACT_LOCAL_REJECT_REASON);
     if (!GetIsObjectValid(oCaster) || !GetIsObjectValid(oTarget))
     {
         SetLocalString(oCaster, METACT_LOCAL_REJECT_REASON, "invalid_object");
+        return FALSE;
+    }
+    if (METACT_GetSpellRole(iSpell) != METACT_ROLE_SUMMON && METACT_HasSpellEffect(oTarget, iSpell))
+    {
+        SetLocalString(oCaster, METACT_LOCAL_REJECT_REASON, "effect_already_present");
         return FALSE;
     }
     if (METACT_IsSpellHostile(iSpell))
@@ -211,11 +253,6 @@ int METACT_IsSpellSensible(object oCaster, object oTarget, int iSpell, int iSpel
             SetLocalString(oCaster, METACT_LOCAL_REJECT_REASON, "unbeatable_spell_resistance");
             return FALSE;
         }
-    }
-    else if (METACT_GetSpellRole(iSpell) != METACT_ROLE_SUMMON && GetHasSpellEffect(iSpell, oTarget))
-    {
-        SetLocalString(oCaster, METACT_LOCAL_REJECT_REASON, "effect_already_present");
-        return FALSE;
     }
     SetLocalInt(oCaster, "METACT_META_SPELL", iSpell);
     SetLocalObject(oCaster, "METACT_META_TARGET", oTarget);

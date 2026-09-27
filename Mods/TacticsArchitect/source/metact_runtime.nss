@@ -17,7 +17,11 @@ const string METACT_LOCAL_PENDING_EQUIP_ACTION = "METACT_PENDING_EQUIP_ACTION";
 const string METACT_LOCAL_PENDING_EQUIP_CAST = "METACT_PENDING_EQUIP_CAST";
 const string METACT_LOCAL_PENDING_RECHECK = "METACT_PENDING_RECHECK";
 const string METACT_LOCAL_COMMIT_RECHECK = "METACT_COMMIT_RECHECK";
+const string METACT_LOCAL_PERCEPTION_RANGE = "METACT_PERCEPTION_RANGE";
 const int METACT_MAX_TARGETS = 32;
+const int METACT_RANGE_ROW_DEFAULT = 11;
+const int METACT_RANGE_ROW_PLAYER = 12;
+const int METACT_RANGE_ROW_MONSTER = 13;
 
 int METACT_Fail(object oActor, string sReason)
 {
@@ -33,6 +37,72 @@ int METACT_GetHealthPercent(object oCreature)
 object METACT_GetEnemy(object oActor, int iNth)
 {
     return GetNearestCreature(CREATURE_TYPE_REPUTATION, REPUTATION_TYPE_ENEMY, oActor, iNth, CREATURE_TYPE_PERCEPTION, PERCEPTION_SEEN);
+}
+
+float METACT_GetPrimaryPerceptionRange(int iRow)
+{
+    if (iRow < 0)
+        return 0.0f;
+    string sRange = Get2DAString("ranges", "PrimaryRange", iRow);
+    if (sRange == "" || sRange == "****")
+        return 0.0f;
+    return StringToFloat(sRange);
+}
+
+float METACT_GetSightRange(object oActor)
+{
+    if (GetIsPC(oActor))
+        return METACT_GetPrimaryPerceptionRange(METACT_RANGE_ROW_PLAYER);
+
+    int iStoredRange = GetLocalInt(oActor, METACT_LOCAL_PERCEPTION_RANGE);
+    int iRangeRow = iStoredRange - 1;
+    if (iStoredRange == 0)
+    {
+        json jRange = JsonPointer(ObjectToJson(oActor), "/PerceptionRange/value");
+        iRangeRow = JsonGetType(jRange) == JSON_TYPE_INTEGER ? JsonGetInt(jRange) : METACT_RANGE_ROW_DEFAULT;
+        SetLocalInt(oActor, METACT_LOCAL_PERCEPTION_RANGE, iRangeRow + 1);
+    }
+    if (iRangeRow == METACT_RANGE_ROW_DEFAULT)
+        iRangeRow = StringToInt(Get2DAString("appearance", "PERCEPTIONDIST", GetAppearanceType(oActor)));
+
+    // True Seeing changes which vision states can be perceived, but it does not change the PrimaryRange selected by the engine.
+    float fRange = METACT_GetPrimaryPerceptionRange(iRangeRow);
+    if (GetIsInCombat(oActor))
+    {
+        float fCombatRange = METACT_GetPrimaryPerceptionRange(METACT_RANGE_ROW_MONSTER);
+        if (fCombatRange > fRange)
+            fRange = fCombatRange;
+    }
+    return fRange;
+}
+
+int METACT_HasInvisibilityEffect(object oCreature)
+{
+    effect eEffect = GetFirstEffect(oCreature);
+    while (GetIsEffectValid(eEffect))
+    {
+        if (GetEffectType(eEffect) == EFFECT_TYPE_INVISIBILITY)
+            return TRUE;
+        eEffect = GetNextEffect(oCreature);
+    }
+    return FALSE;
+}
+
+int METACT_HasNearbyInvisibleEnemy(object oActor)
+{
+    float fRadius = METACT_GetSightRange(oActor);
+    if (fRadius <= 0.0f)
+        return FALSE;
+
+    location lActor = GetLocation(oActor);
+    object oCreature = GetFirstObjectInShape(SHAPE_SPHERE, fRadius, lActor, TRUE, OBJECT_TYPE_CREATURE);
+    while (GetIsObjectValid(oCreature))
+    {
+        if (oCreature != oActor && !GetIsDead(oCreature) && GetIsEnemy(oCreature, oActor) && !GetObjectSeen(oCreature, oActor) && METACT_HasInvisibilityEffect(oCreature))
+            return TRUE;
+        oCreature = GetNextObjectInShape(SHAPE_SPHERE, fRadius, lActor, TRUE, OBJECT_TYPE_CREATURE);
+    }
+    return FALSE;
 }
 
 int METACT_CountEnemies(object oActor, float fRadius)
@@ -587,6 +657,7 @@ int METACT_MatchesCondition(object oActor, object oPC, json jCondition)
     if (sKind == "no_summon") return !GetIsObjectValid(GetAssociate(ASSOCIATE_TYPE_SUMMONED, oActor));
     if (sKind == "no_familiar") return !GetIsObjectValid(GetAssociate(ASSOCIATE_TYPE_FAMILIAR, oActor));
     if (sKind == "combat_state") return GetIsInCombat(oActor) == iValue;
+    if (sKind == "invisible_enemy") return METACT_HasNearbyInvisibleEnemy(oActor);
     return FALSE;
 }
 
@@ -598,6 +669,8 @@ int METACT_ResolveTarget(object oActor, object oPC, json jAction, int iSpell, in
     string sTarget = JsonGetString(JsonObjectGet(jAction, "target"));
     int bHostile = iSpell >= 0 ? METACT_IsSpellHostile(iSpell) : TRUE;
     int bArea = iSpell >= 0 && METACT_IsSpellArea(iSpell);
+    if (bHostile && sTarget == "self")
+        sTarget = "auto";
     int bCanHitAllies = bHostile && bArea && METACT_CanSpellHitAllies(iSpell);
     if (bCanHitAllies && !JsonGetInt(JsonObjectGet(jAction, "friendly_fire")) && METACT_GetAoeSafetyMode(jAction) == METACT_AOE_SAFETY_STATIONARY && !METACT_AreRelevantAlliesStationary(oPC, oActor)) return METACT_Fail(oActor, "allies_moving");
     int iAssociateType = iSpell >= 0 ? METACT_GetSpellAssociateType(iSpell) : -1;
@@ -848,6 +921,9 @@ void METACT_EndOwnedAction(object oActor)
     DeleteLocalInt(oActor, METACT_LOCAL_PENDING_EQUIP_CAST);
     DeleteLocalInt(oActor, METACT_LOCAL_PENDING_RECHECK);
     DeleteLocalInt(oActor, METACT_LOCAL_COMMIT_RECHECK);
+    DeleteLocalObject(oActor, METACT_LOCAL_EVAL_TARGET);
+    DeleteLocalLocation(oActor, METACT_LOCAL_EVAL_LOCATION);
+    DeleteLocalInt(oActor, METACT_LOCAL_EVAL_IS_LOCATION);
     if (GetIsObjectValid(oActor) && oActor != oPC)
         SetAssociateState(NW_ASC_IS_BUSY, FALSE, oActor);
 }
@@ -1200,6 +1276,7 @@ string METACT_DebugConditionText(object oActor, json jCondition)
         return "matching targets=" + IntToString(METACT_CountMatchingEnemies(oActor, jCondition)) + ", rating " + (JsonGetString(JsonObjectGet(jCondition, "comparison")) == "max" ? "<= " : ">= ") + IntToString(iExpected);
     }
     if (sKind == "combat_state") return "combat=" + IntToString(GetIsInCombat(oActor)) + ", expected=" + IntToString(JsonGetInt(JsonObjectGet(jCondition, "value")));
+    if (sKind == "invisible_enemy") return "nearby invisible enemy=" + IntToString(METACT_HasNearbyInvisibleEnemy(oActor));
     return sKind == "" ? "always" : sKind;
 }
 
@@ -1217,13 +1294,29 @@ string METACT_DebugActionText(json jAction)
     return sKind;
 }
 
+string METACT_DebugResolvedTarget(object oActor)
+{
+    if (GetLocalInt(oActor, METACT_LOCAL_EVAL_IS_LOCATION))
+    {
+        location lTarget = GetLocalLocation(oActor, METACT_LOCAL_EVAL_LOCATION);
+        object oArea = GetAreaFromLocation(lTarget);
+        vector vPosition = GetPositionFromLocation(lTarget);
+        return "target=location area=\"" + GetName(oArea) + "\" (" + ObjectToString(oArea) + ") position=[" + FloatToString(vPosition.x, 0, 3) + "," + FloatToString(vPosition.y, 0, 3) + "," + FloatToString(vPosition.z, 0, 3) + "]";
+    }
+    object oTarget = GetLocalObject(oActor, METACT_LOCAL_EVAL_TARGET);
+    if (!GetIsObjectValid(oTarget))
+        return "";
+    vector vPosition = GetPosition(oTarget);
+    return "target=object \"" + GetName(oTarget) + "\" (" + ObjectToString(oTarget) + ") position=[" + FloatToString(vPosition.x, 0, 3) + "," + FloatToString(vPosition.y, 0, 3) + "," + FloatToString(vPosition.z, 0, 3) + "]";
+}
+
 void METACT_SendDebugTrace(object oActor, object oPC, string sTrace)
 {
     if (!METACT_GetDebugEnabled(oPC)) return;
     string sMessage = "[METACT] " + GetName(oActor) + sTrace;
     if (GetLocalString(oActor, METACT_LOCAL_DEBUG_LAST) == sMessage) return;
     SetLocalString(oActor, METACT_LOCAL_DEBUG_LAST, sMessage);
-    SendMessageToPC(oPC, sMessage);
+    METACT_SendDebugMessage(oPC, sMessage);
 }
 
 void METACT_RunActorRules(object oActor, object oPC)
@@ -1260,6 +1353,8 @@ void METACT_RunActorRules(object oActor, object oPC)
             if (METACT_ExecuteAction(oActor, oPC, jAction, jCondition, jPriorities))
             {
                 string sResult = GetLocalInt(oActor, METACT_LOCAL_PENDING_RECHECK) ? "recheck" : "execute";
+                string sTarget = METACT_DebugResolvedTarget(oActor);
+                if (sTarget != "") sResult += " | " + sTarget;
                 sTrace += "\n#" + IntToString(iRule + 1) + "." + IntToString(iAction + 1) + " " + METACT_DebugActionText(jAction) + ": " + sResult;
                 METACT_SendDebugTrace(oActor, oPC, sTrace);
                 return;

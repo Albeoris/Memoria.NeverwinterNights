@@ -48,6 +48,7 @@
   "cond_combat_state": "Combat status",
   "cond_in_combat": "Only in combat",
   "cond_out_of_combat": "Only out of combat",
+  "cond_invisible_enemy": "Invisible enemy nearby",
   "threshold": "Threshold",
   "radius": "Radius (metres)",
   "save": "Save",

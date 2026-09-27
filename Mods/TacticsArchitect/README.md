@@ -9,9 +9,11 @@ Tactics Architect adds a persistent Dragon Age-style tactics editor for the play
 - Builds ordered tactics from conditions and one or more actions.
 - Uses attacks, spells, abilities, usable items, summons, and equipment changes.
 - Selects targets through global, rule-specific, and action-specific priorities, including attackers of a chosen party member and rating or health thresholds.
-- Reacts to health, combat state, nearby enemies, enemy strength, clustered targets, and active summons or familiars.
+- Reacts to health, combat state, nearby visible or magically invisible enemies, enemy strength, clustered targets, and active summons or familiars.
 - Predicts area-of-effect targets and provides several friendly-fire safety policies.
+- Avoids recasting non-summoning spells while the same spell effect is already active on a candidate target.
 - Rechecks tactics immediately before committing abilities, with an optional legacy mode that queues them immediately.
+- Sends optional decision traces, including the resolved object or location target, to both character chat and `nwengineLog.txt`.
 - Saves tactics for an individual character or creature type.
 - Opens contextual help for controls with the right mouse button.
 - Opens the editor directly with `/memoria-tact`; the command can be assigned as a quickbar chat macro.

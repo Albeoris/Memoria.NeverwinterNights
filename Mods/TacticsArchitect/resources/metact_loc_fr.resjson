@@ -48,6 +48,7 @@
   "cond_combat_state": "État de combat",
   "cond_in_combat": "Seulement en combat",
   "cond_out_of_combat": "Seulement hors combat",
+  "cond_invisible_enemy": "Ennemi invisible à proximité",
   "threshold": "Seuil",
   "radius": "Rayon (metres)",
   "save": "Enregistrer",

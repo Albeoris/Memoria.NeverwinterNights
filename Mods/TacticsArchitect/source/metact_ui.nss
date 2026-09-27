@@ -84,7 +84,8 @@ json METACT_ConditionEntries(object oPC)
     jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_NO_SUMMON, oPC), 4));
     jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_NO_FAMILIAR, oPC), 5));
     jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_ENEMY_RATING, oPC), 6));
-    return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_COMBAT_STATE, oPC), 7));
+    jEntries = JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_COMBAT_STATE, oPC), 7));
+    return JsonArrayInsert(jEntries, NuiComboEntry(METACT_GetText(METACT_TEXT_COND_INVISIBLE_ENEMY, oPC), 8));
 }
 
 json METACT_CombatStateEntries(object oPC)
@@ -346,6 +347,7 @@ string METACT_ConditionLabel(object oPC, json jCondition)
     if (sKind == "no_familiar") return METACT_GetText(METACT_TEXT_COND_NO_FAMILIAR, oPC);
     if (sKind == "enemy_rating") return METACT_GetText(JsonGetString(JsonObjectGet(jCondition, "comparison")) == "max" ? METACT_TEXT_COND_ENEMY_RATING_MAX : METACT_TEXT_COND_ENEMY_RATING_MIN, oPC) + ": " + GetStringByStrRef(6416 + iValue);
     if (sKind == "combat_state") return METACT_GetText(iValue ? METACT_TEXT_COND_IN_COMBAT : METACT_TEXT_COND_OUT_OF_COMBAT, oPC);
+    if (sKind == "invisible_enemy") return METACT_GetText(METACT_TEXT_COND_INVISIBLE_ENEMY, oPC);
     return METACT_GetText(METACT_TEXT_INVALID, oPC);
 }
 
@@ -867,12 +869,13 @@ int METACT_ConditionToIndex(string sKind)
     if (sKind == "no_familiar") return 5;
     if (sKind == "enemy_rating") return 6;
     if (sKind == "combat_state") return 7;
+    if (sKind == "invisible_enemy") return 8;
     return 0;
 }
 
 string METACT_IndexToCondition(int iKind)
 {
-    return iKind == 1 ? "enemies" : iKind == 2 ? "cluster" : iKind == 3 ? "health" : iKind == 4 ? "no_summon" : iKind == 5 ? "no_familiar" : iKind == 6 ? "enemy_rating" : iKind == 7 ? "combat_state" : "always";
+    return iKind == 1 ? "enemies" : iKind == 2 ? "cluster" : iKind == 3 ? "health" : iKind == 4 ? "no_summon" : iKind == 5 ? "no_familiar" : iKind == 6 ? "enemy_rating" : iKind == 7 ? "combat_state" : iKind == 8 ? "invisible_enemy" : "always";
 }
 
 void METACT_RefreshConditionMode(object oPC, int iToken)

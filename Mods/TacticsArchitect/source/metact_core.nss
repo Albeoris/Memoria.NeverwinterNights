@@ -7,7 +7,7 @@
 #include "memoria_locale"
 #include "memoria_loc"
 
-const string METACT_VERSION = "0.7.15";
+const string METACT_VERSION = "0.7.21";
 const string METACT_LOC_PREFIX = "metact";
 const string METACT_ESI_KEY_GUI = "metact.module.gui";
 const string METACT_ESI_KEY_TARGET = "metact.module.target";
@@ -137,6 +137,7 @@ const string METACT_TEXT_COND_NO_FAMILIAR = "cond_no_familiar";
 const string METACT_TEXT_COND_COMBAT_STATE = "cond_combat_state";
 const string METACT_TEXT_COND_IN_COMBAT = "cond_in_combat";
 const string METACT_TEXT_COND_OUT_OF_COMBAT = "cond_out_of_combat";
+const string METACT_TEXT_COND_INVISIBLE_ENEMY = "cond_invisible_enemy";
 const string METACT_TEXT_THRESHOLD = "threshold";
 const string METACT_TEXT_RADIUS = "radius";
 const string METACT_TEXT_SAVE = "save";
@@ -295,6 +296,12 @@ void METACT_SaveDatabase(object oPC, json jDatabase)
 int METACT_GetDebugEnabled(object oPC)
 {
     return JsonGetInt(JsonObjectGet(METACT_GetDatabase(oPC), "debug"));
+}
+
+void METACT_SendDebugMessage(object oPC, string sMessage)
+{
+    SendMessageToPC(oPC, sMessage);
+    WriteTimestampedLogEntry(sMessage);
 }
 
 void METACT_SetDebugEnabled(object oPC, int bEnabled)

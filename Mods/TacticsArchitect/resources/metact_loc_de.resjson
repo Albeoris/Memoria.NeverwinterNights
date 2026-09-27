@@ -48,6 +48,7 @@
   "cond_combat_state": "Kampfstatus",
   "cond_in_combat": "Nur im Kampf",
   "cond_out_of_combat": "Nur außerhalb des Kampfes",
+  "cond_invisible_enemy": "Unsichtbarer Gegner in der Nähe",
   "threshold": "Schwellenwert",
   "radius": "Radius (Meter)",
   "save": "Speichern",

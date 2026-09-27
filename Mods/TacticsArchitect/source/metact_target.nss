@@ -27,11 +27,11 @@ void METACT_DumpTarget(object oPC, object oTarget)
     object oActor = GetLocalObject(oPC, METACT_LOCAL_ACTOR);
     if (!GetIsObjectValid(oActor) || !METACT_IsGroupCreature(oActor, oPC)) oActor = oPC;
     int iRating = METACT_GetRelativeEnemyRating(oActor, oTarget);
-    SendMessageToPC(oPC, "[METACT] TARGET " + GetName(oTarget) + " | actor=" + GetName(oActor) + " | CR=" + FloatToString(GetChallengeRating(oTarget), 0, 2) + " | actor HD=" + IntToString(GetHitDice(oActor)) + " | rating=" + IntToString(iRating) + " | distance=" + FloatToString(GetDistanceBetween(oActor, oTarget), 0, 2) + "m | SR=" + IntToString(GetSpellResistance(oTarget)));
+    METACT_SendDebugMessage(oPC, "[METACT] TARGET " + GetName(oTarget) + " | actor=" + GetName(oActor) + " | CR=" + FloatToString(GetChallengeRating(oTarget), 0, 2) + " | actor HD=" + IntToString(GetHitDice(oActor)) + " | rating=" + IntToString(iRating) + " | distance=" + FloatToString(GetDistanceBetween(oActor, oTarget), 0, 2) + "m | SR=" + IntToString(GetSpellResistance(oTarget)));
     int iProfile = METACT_FindRuntimeProfile(oPC, oActor);
     if (iProfile < 0)
     {
-        SendMessageToPC(oPC, "[METACT] No active profile for this actor.");
+        METACT_SendDebugMessage(oPC, "[METACT] No active profile for this actor.");
         return;
     }
     json jProfile = METACT_GetProfile(oPC, iProfile);
@@ -53,7 +53,7 @@ void METACT_DumpTarget(object oPC, object oTarget)
             int iSpellLevel = METACT_GetActionSpellLevel(jAction, iSpell);
             int bSensible = METACT_IsSpellSensible(oActor, oTarget, iSpell, iSpellLevel);
             string sReason = bSensible ? "accepted" : METACT_DebugReasonText(oPC, GetLocalString(oActor, METACT_LOCAL_REJECT_REASON));
-            SendMessageToPC(oPC, "[METACT] #" + IntToString(iRule + 1) + "." + IntToString(iAction + 1) + " " + RegExpReplace("_", Get2DAString("spells", "Label", iSpell), " ") + " | level=" + IntToString(iSpellLevel) + " | condition=" + (bCondition ? "yes" : "no") + " (" + METACT_DebugConditionText(oActor, JsonObjectGet(jRule, "condition")) + ") | target=" + sReason + " | " + METACT_DebugAvailability(oActor, jAction, iSpell));
+            METACT_SendDebugMessage(oPC, "[METACT] #" + IntToString(iRule + 1) + "." + IntToString(iAction + 1) + " " + RegExpReplace("_", Get2DAString("spells", "Label", iSpell), " ") + " | level=" + IntToString(iSpellLevel) + " | condition=" + (bCondition ? "yes" : "no") + " (" + METACT_DebugConditionText(oActor, JsonObjectGet(jRule, "condition")) + ") | target=" + sReason + " | " + METACT_DebugAvailability(oActor, jAction, iSpell));
         }
     }
 }
@@ -66,7 +66,7 @@ void main()
     object oTarget = GetTargetingModeSelectedObject();
     if (!GetIsObjectValid(oTarget))
     {
-        SendMessageToPC(oPC, "[METACT] Target inspection cancelled.");
+        METACT_SendDebugMessage(oPC, "[METACT] Target inspection cancelled.");
         return;
     }
     METACT_DumpTarget(oPC, oTarget);

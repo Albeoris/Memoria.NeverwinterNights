@@ -48,6 +48,7 @@
   "cond_combat_state": "Stato di combattimento",
   "cond_in_combat": "Solo in combattimento",
   "cond_out_of_combat": "Solo fuori dal combattimento",
+  "cond_invisible_enemy": "Nemico invisibile vicino",
   "threshold": "Soglia",
   "radius": "Raggio (metri)",
   "save": "Salva",
