@@ -390,8 +390,13 @@ void MELSE_RefreshBodyBagLootDisplays(object oArea)
     while (GetIsObjectValid(oObject))
     {
         object oOwner = GetLocalObject(oObject, MELSE_LOCAL_CORPSE_INVENTORY_OWNER);
-        if (GetObjectType(oObject) == OBJECT_TYPE_PLACEABLE && GetTag(oObject) == MELSE_TAG_BODYBAG && !GetIsObjectValid(oOwner) && !RAV_GetLocalInt(oObject, MELSE_LOCAL_CORPSE_LOOT_DISPLAY) && GetIsObjectValid(GetFirstItemInInventory(oObject)))
-            MELSE_UpdateInventoryLootDisplay(oObject);
+        if (GetObjectType(oObject) == OBJECT_TYPE_PLACEABLE && GetTag(oObject) == MELSE_TAG_BODYBAG && !GetIsObjectValid(oOwner))
+        {
+            if (!ESI_IsRegistered(oObject, MELSE_INJECT_KEY_PLACEABLE_CLOSE, EVENT_SCRIPT_PLACEABLE_ON_CLOSED, MELSE_SCRIPT_EVENT_PLACEABLE_CLOSE, ESI_INJECTION_PLACEMENT_FIRST))
+                ESI_InjectToObject(oObject, MELSE_INJECT_KEY_PLACEABLE_CLOSE, EVENT_SCRIPT_PLACEABLE_ON_CLOSED, MELSE_SCRIPT_EVENT_PLACEABLE_CLOSE, ESI_INJECTION_PLACEMENT_FIRST);
+            if (!RAV_GetLocalInt(oObject, MELSE_LOCAL_CORPSE_LOOT_DISPLAY) && GetIsObjectValid(GetFirstItemInInventory(oObject)))
+                MELSE_UpdateInventoryLootDisplay(oObject);
+        }
         oObject = GetNextObjectInArea(oArea);
     }
 }

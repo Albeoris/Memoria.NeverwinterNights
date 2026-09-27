@@ -288,7 +288,7 @@ int MEIO_IsBook(object oItem)
 
 int MEIO_IsKeyItem(object oItem)
 {
-    return GetIsObjectValid(oItem) && (GetPlotFlag(oItem) || GetGoldPieceValue(oItem) == 0);
+    return GetIsObjectValid(oItem) && (GetBaseItemType(oItem) == BASE_ITEM_KEY || GetPlotFlag(oItem) || GetGoldPieceValue(oItem) == 0);
 }
 
 int MEIO_IsCursedItem(object oItem)
