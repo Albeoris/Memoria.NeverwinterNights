@@ -72,7 +72,9 @@ const string MEIO_LOCAL_BURN_PROCESSED = "MEIO_BURN_PROCESSED";
 const string MEIO_CFG_AUTO_SCROLLS = "MEIO_CFG_AUTO_SCROLLS";
 const string MEIO_CFG_AUTO_POTIONS = "MEIO_CFG_AUTO_POTIONS";
 const string MEIO_CFG_AUTO_BOOKS = "MEIO_CFG_AUTO_BOOKS";
+const string MEIO_CFG_AUTO_KEY_ITEMS = "MEIO_CFG_AUTO_KEY_ITEMS";
 const string MEIO_CFG_AUTO_INITIALIZED = "MEIO_CFG_AUTO_INITIALIZED";
+const string MEIO_CFG_AUTO_KEY_ITEMS_INITIALIZED = "MEIO_CFG_AUTO_KEY_ITEMS_INITIALIZED";
 const string MEIO_CFG_KEEP_UNTARGETED_OPEN = "MEIO_CFG_KEEP_UNTARGETED_OPEN";
 const string MEIO_CFG_UI_SCALE = "MEIO_CFG_UI_SCALE";
 const string MEIO_CFG_DEBUG = "MEIO_CFG_DEBUG";
@@ -145,14 +147,18 @@ const string MEIO_STORAGE_SLOT_BOOKS = "books";
 
 void MEIO_EnsureAutomaticSettings(object oPC)
 {
-    if (GetLocalInt(oPC, MEIO_CFG_AUTO_INITIALIZED))
+    if (!GetLocalInt(oPC, MEIO_CFG_AUTO_INITIALIZED))
     {
-        return;
+        SetLocalInt(oPC, MEIO_CFG_AUTO_SCROLLS, TRUE);
+        SetLocalInt(oPC, MEIO_CFG_AUTO_POTIONS, TRUE);
+        SetLocalInt(oPC, MEIO_CFG_AUTO_BOOKS, TRUE);
+        SetLocalInt(oPC, MEIO_CFG_AUTO_INITIALIZED, TRUE);
     }
-    SetLocalInt(oPC, MEIO_CFG_AUTO_SCROLLS, TRUE);
-    SetLocalInt(oPC, MEIO_CFG_AUTO_POTIONS, TRUE);
-    SetLocalInt(oPC, MEIO_CFG_AUTO_BOOKS, TRUE);
-    SetLocalInt(oPC, MEIO_CFG_AUTO_INITIALIZED, TRUE);
+    if (!GetLocalInt(oPC, MEIO_CFG_AUTO_KEY_ITEMS_INITIALIZED))
+    {
+        SetLocalInt(oPC, MEIO_CFG_AUTO_KEY_ITEMS, TRUE);
+        SetLocalInt(oPC, MEIO_CFG_AUTO_KEY_ITEMS_INITIALIZED, TRUE);
+    }
 }
 
 int MEIO_GetUIScalePercent(object oPC)
@@ -401,7 +407,7 @@ int MEIO_CanStoreItem(object oItem)
 int MEIO_IsAutomaticForItem(object oPC, object oItem)
 {
     MEIO_EnsureAutomaticSettings(oPC);
-    return MEIO_IsScroll(oItem) ? GetLocalInt(oPC, MEIO_CFG_AUTO_SCROLLS) : MEIO_IsUsablePotion(oItem) ? GetLocalInt(oPC, MEIO_CFG_AUTO_POTIONS) : MEIO_IsBook(oItem) ? GetLocalInt(oPC, MEIO_CFG_AUTO_BOOKS) : FALSE;
+    return MEIO_IsKeyItem(oItem) ? GetLocalInt(oPC, MEIO_CFG_AUTO_KEY_ITEMS) : MEIO_IsScroll(oItem) ? GetLocalInt(oPC, MEIO_CFG_AUTO_SCROLLS) : MEIO_IsUsablePotion(oItem) ? GetLocalInt(oPC, MEIO_CFG_AUTO_POTIONS) : MEIO_IsBook(oItem) ? GetLocalInt(oPC, MEIO_CFG_AUTO_BOOKS) : FALSE;
 }
 
 int MEIO_IsTransferBusy(object oPC)

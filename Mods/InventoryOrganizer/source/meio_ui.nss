@@ -927,7 +927,7 @@ void MEIO_OpenTab(object oPC, int iTab)
     object oBookStorage = MEIO_EnsureBookStorage(oPC);
     if (!GetIsObjectValid(oScriptorium) || !GetIsObjectValid(oStorage) || !GetIsObjectValid(oPotionStorage) || !GetIsObjectValid(oBookStorage))
     {
-        MEIO_ReportError(oPC, "Spatial Storage NUI open aborted invalidObjects=" + ObjectToString(oScriptorium) + "," + ObjectToString(oStorage) + "," + ObjectToString(oPotionStorage) + "," + ObjectToString(oBookStorage) + " blockedMask=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_STORAGE_BLOCKED_MASK)));
+        MEIO_ReportError(oPC, "Dimensional Storage NUI open aborted invalidObjects=" + ObjectToString(oScriptorium) + "," + ObjectToString(oStorage) + "," + ObjectToString(oPotionStorage) + "," + ObjectToString(oBookStorage) + " blockedMask=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_STORAGE_BLOCKED_MASK)));
         return;
     }
     MEIO_ValidateContents(oPC, oStorage);
@@ -994,7 +994,7 @@ void MEIO_OpenTab(object oPC, int iTab)
     }
     else
     {
-        MEIO_ReportError(oPC, "NuiCreate failed for Spatial Storage tab=" + IntToString(iTab));
+        MEIO_ReportError(oPC, "NuiCreate failed for Dimensional Storage tab=" + IntToString(iTab));
     }
 }
 

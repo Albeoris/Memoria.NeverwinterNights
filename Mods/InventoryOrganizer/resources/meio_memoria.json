@@ -19,7 +19,7 @@
         "local": "MEIO_CFG_AUTO_SCROLLS",
         "label": "Automatically store scrolls",
         "label_key": "auto_scrolls_label",
-        "tooltip": "Moves eligible acquired scrolls to Spatial Storage.",
+        "tooltip": "Moves eligible acquired scrolls to Dimensional Storage.",
         "tooltip_key": "auto_scrolls_tooltip"
       },
       {
@@ -28,7 +28,7 @@
         "local": "MEIO_CFG_AUTO_POTIONS",
         "label": "Automatically store potions",
         "label_key": "auto_potions_label",
-        "tooltip": "Moves eligible acquired potions to Spatial Storage.",
+        "tooltip": "Moves eligible acquired potions to Dimensional Storage.",
         "tooltip_key": "auto_potions_tooltip"
       },
       {
@@ -37,8 +37,17 @@
         "local": "MEIO_CFG_AUTO_BOOKS",
         "label": "Automatically store books",
         "label_key": "auto_books_label",
-        "tooltip": "Moves eligible acquired books, notes, and journals to Spatial Storage.",
+        "tooltip": "Moves eligible acquired books, notes, and journals to Dimensional Storage.",
         "tooltip_key": "auto_books_tooltip"
+      },
+      {
+        "type": "bool",
+        "scope": "player",
+        "local": "MEIO_CFG_AUTO_KEY_ITEMS",
+        "label": "Automatically store key items",
+        "label_key": "auto_key_items_label",
+        "tooltip": "Moves eligible acquired key items into Key Item Containers.",
+        "tooltip_key": "auto_key_items_tooltip"
       },
       {
         "type": "int",
@@ -46,7 +55,7 @@
         "local": "MEIO_CFG_UI_SCALE",
         "label": "Item scale (%)",
         "label_key": "ui_scale_label",
-        "tooltip": "Sets the size of spell entries in Spatial Storage. Allowed range: 25-100%. The default is 75%.",
+        "tooltip": "Sets the size of spell entries in Dimensional Storage. Allowed range: 25-100%. The default is 75%.",
         "tooltip_key": "ui_scale_tooltip",
         "minimum": 25,
         "maximum": 100
@@ -57,7 +66,7 @@
         "local": "MEIO_CFG_KEEP_UNTARGETED_OPEN",
         "label": "Keep storage open for untargeted actions",
         "label_key": "keep_untargeted_open_label",
-        "tooltip": "Keeps Spatial Storage open after drinking a potion or casting a personal-range scroll.",
+        "tooltip": "Keeps Dimensional Storage open after drinking a potion or casting a personal-range scroll.",
         "tooltip_key": "keep_untargeted_open_tooltip"
       },
       {

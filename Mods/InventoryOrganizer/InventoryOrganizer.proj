@@ -2,7 +2,7 @@
     <Import Project="..\..\Directory.Build.props" />
     <PropertyGroup>
         <ModId>MEIO</ModId>
-        <Version>0.6.3</Version>
+        <Version>0.6.7</Version>
         <ModDisplayName>Memoria: Inventory Organizer</ModDisplayName>
     </PropertyGroup>
     <PropertyGroup Label="Steam Workshop">

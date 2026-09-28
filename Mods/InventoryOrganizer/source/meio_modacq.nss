@@ -59,6 +59,11 @@ void main()
     }
     if (MEIO_IsKeyItem(oItem))
     {
+        if (!MEIO_IsAutomaticForItem(oPC, oItem))
+        {
+            MEIO_Debug(oPC, "OnAcquire decision=ignore reason=automatic-key-item-storage-disabled " + MEIO_DebugItemState(oPC, oItem));
+            return;
+        }
         if (!MEIO_CanStoreKeyItem(oItem))
         {
             MEIO_Debug(oPC, "OnAcquire decision=ignore reason=ineligible-key-item " + MEIO_DebugItemState(oPC, oItem));
