@@ -289,9 +289,17 @@ int MELSE_GetHasAnyItem(object oObject)
     return FALSE;
 }
 
+int MELSE_GetIsDestroyableExcluded(object oObject)
+{
+    // Exclude NWN Chapter 3 Luskan: Baram's Lair
+    return GetTag(oObject) == "M2Q4E_02";
+}
+
 void MELSE_SetIsDestroyableSafe(int bDestroyable, int bRaiseable = TRUE, int bSelectableWhenDead = FALSE, object oObject = OBJECT_SELF)
 {
     if (!GetIsObjectValid(oObject))
+        return;
+    if (!bDestroyable && MELSE_GetIsDestroyableExcluded(GetArea(oObject)))
         return;
     if (bDestroyable && GetObjectType(oObject) == OBJECT_TYPE_CREATURE && GetIsDead(oObject))
     {
