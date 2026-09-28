@@ -18,6 +18,7 @@
   "confirm_cancel": "Cancelar",
   "target_missing": "El objeto seleccionado ya no existe.",
   "deleted": "Se eliminó {name} ({id}).",
+  "delete_failed": "No se pudo eliminar {name} ({id}). El motor protege el objeto.",
   "icon_title": "Cambiar icono del objeto",
   "icon_summary": "Clase de objeto: {class} · Tipo base: {base} · Iconos disponibles: {count}",
   "icon_current": "(actual)",

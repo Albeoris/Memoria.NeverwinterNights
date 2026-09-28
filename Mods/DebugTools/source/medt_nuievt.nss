@@ -41,7 +41,5 @@ void main()
         SendMessageToPC(oPC, MEDT_GetText(oPC, "target_missing"));
         return;
     }
-    string sMessage = MEDT_FormatObjectText(oPC, "deleted", oTarget);
-    DestroyObject(oTarget);
-    SendMessageToPC(oPC, sMessage);
+    MEDT_DeleteObject(oPC, oTarget);
 }

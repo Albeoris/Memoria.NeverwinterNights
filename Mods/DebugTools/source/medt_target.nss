@@ -14,6 +14,15 @@ void main()
     }
     DeleteLocalInt(oPC, MEDT_LOCAL_TARGET_MODE);
     object oTarget = GetTargetingModeSelectedObject();
+    vector vPosition = GetTargetingModeSelectedPosition();
+    if ((iMode == MEDT_TARGET_MODE_EXAMINE || iMode == MEDT_TARGET_MODE_DELETE) && oTarget == GetArea(oPC))
+    {
+        object oUnuseableTarget = MEDT_FindUnuseableTarget(oTarget, vPosition);
+        if (GetIsObjectValid(oUnuseableTarget))
+        {
+            oTarget = oUnuseableTarget;
+        }
+    }
     if (!GetIsObjectValid(oTarget))
     {
         SendMessageToPC(oPC, MEDT_GetText(oPC, "selection_cancelled"));
@@ -33,7 +42,7 @@ void main()
     }
     else if (iMode == MEDT_TARGET_MODE_USEABLE)
     {
-        MEDT_ToggleUseable(oPC, oTarget, GetTargetingModeSelectedPosition());
+        MEDT_ToggleUseable(oPC, oTarget, vPosition);
     }
     else
     {

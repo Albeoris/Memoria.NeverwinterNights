@@ -279,9 +279,31 @@ void MEDT_Examine(object oPC, object oTarget)
 
 int MEDT_IsProtected(object oTarget)
 {
-    if (GetPlotFlag(oTarget) || GetIsPC(oTarget) || GetIsDM(oTarget)) return TRUE;
+    if (GetPlotFlag(oTarget) || GetIsPC(oTarget) || GetIsDM(oTarget) || !GetIsDestroyable(oTarget)) return TRUE;
     if (GetObjectType(oTarget) != OBJECT_TYPE_ITEM) return FALSE;
     return GetItemCursedFlag(oTarget) || !GetDroppableFlag(oTarget);
+}
+
+void MEDT_ReportDeleteResult(object oPC, object oTarget, string sSuccess, string sFailure)
+{
+    SendMessageToPC(oPC, GetIsObjectValid(oTarget) ? sFailure : sSuccess);
+}
+
+void MEDT_DeleteObject(object oPC, object oTarget)
+{
+    string sSuccess = MEDT_FormatObjectText(oPC, "deleted", oTarget);
+    string sFailure = MEDT_FormatObjectText(oPC, "delete_failed", oTarget);
+    if (!GetIsDestroyable(oTarget))
+    {
+        SetIsDestroyable(TRUE, TRUE, FALSE, oTarget);
+    }
+    if (!GetIsDestroyable(oTarget))
+    {
+        SendMessageToPC(oPC, sFailure);
+        return;
+    }
+    DestroyObject(oTarget);
+    DelayCommand(0.1f, MEDT_ReportDeleteResult(oPC, oTarget, sSuccess, sFailure));
 }
 
 json MEDT_BuildConfirmWindow(object oPC, object oTarget)
@@ -290,9 +312,9 @@ json MEDT_BuildConfirmWindow(object oPC, object oTarget)
     jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiText(JsonString(MEDT_FormatObjectText(oPC, "confirm_question", oTarget)), FALSE, NUI_SCROLLBARS_NONE), 56.0f));
     if (MEDT_IsProtected(oTarget)) jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiStyleForegroundColor(NuiText(JsonString(MEDT_GetText(oPC, "protected_warning")), FALSE, NUI_SCROLLBARS_NONE), NuiColor(235, 70, 70)), 72.0f));
     json jButtons = JsonArray();
-    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MEDT_GetText(oPC, "confirm_delete"))), "delete"), 150.0f));
+    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MEDT_GetText(oPC, "confirm_delete"))), "delete"), 195.0f));
     jButtons = JsonArrayInsert(jButtons, NuiSpacer());
-    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MEDT_GetText(oPC, "confirm_cancel"))), "cancel"), 150.0f));
+    jButtons = JsonArrayInsert(jButtons, NuiWidth(NuiId(NuiButton(JsonString(MEDT_GetText(oPC, "confirm_cancel"))), "cancel"), 195.0f));
     jColumn = JsonArrayInsert(jColumn, NuiHeight(NuiRow(jButtons), 36.0f));
     return NuiWindow(NuiCol(jColumn), JsonString(MEDT_GetText(oPC, "confirm_title")), NuiRect(-1.0f, -1.0f, 620.0f, MEDT_IsProtected(oTarget) ? 230.0f : 160.0f), JsonBool(FALSE), JsonBool(FALSE), JsonBool(TRUE), JsonBool(FALSE), JsonBool(TRUE));
 }
