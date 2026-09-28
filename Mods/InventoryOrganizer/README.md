@@ -1,6 +1,6 @@
 # Memoria Inventory Organizer (MEIO)
 
-Memoria Inventory Organizer adds **Spatial Storage** to every player character. The visible chest item is both a UI handle and an intake container; scrolls, potions, and books live in separate hidden stores belonging to the current game state. Key items remain as their original physical objects in player-created inventory containers so campaign possession checks continue to work. All stores and containers are saved with the game.
+Memoria Inventory Organizer adds **Spatial Storage** to every player character. The visible chest item is both a UI handle and an intake container; scrolls, potions, and books live in separate hidden stores that follow the character between modules. Key items remain as their original physical objects in player-created inventory containers so campaign possession checks continue to work. All stores and containers are saved with the game.
 
 ## Features
 
@@ -30,7 +30,7 @@ Do not remove MEIO while Spatial Storage still contains items: its hidden stores
 
 ## Compatibility
 
-MEIO requires Memoria and Event Script Injector 2.1 or newer. Its module acquire-item, GUI, player-target, and player-chat handlers are registered through ESI and do not replace module scripts directly. The chat handler runs after the module's original handler. Stored contents are scoped to the current save game and are never synchronized through a profile-wide campaign database.
+MEIO requires Memoria 1.6 and Event Script Injector 2.4 or newer. Its module acquire-item, GUI, player-target, and player-chat handlers are registered through ESI and do not replace module scripts directly. The chat handler runs after the module's original handler. Scroll, potion, and book stores are mirrored as complete player-scoped campaign snapshots, so their contents survive module transitions without converting items to JSON. A loaded save remains authoritative over a newer snapshot from another save slot.
 
 MEIO reserves Big Box appearances `242` and `243` and icon resources `iit_bigbox_242.tga` and `iit_bigbox_243.tga` for Spatial Storage and Key Item Storage. A mod that uses either appearance or resource creates only a soft conflict: storage functionality remains intact, but one of the items may display the wrong icon depending on override load order.
 

@@ -45,6 +45,16 @@ void MEIO_Heartbeat(object oPC)
     MEMORIA_SetHeartbeatDiagnostic(oPC, "installing MEIO event hooks");
     MEIO_InstallHooks();
     MEIO_CleanupKeepOutRegistry(oPC);
+    if (!ESI_IsRuntimeMarkerSet(oPC, MEIO_RUNTIME_STORAGE_FLUSH))
+    {
+        DeleteLocalInt(oPC, MEIO_LOCAL_STORAGE_FLUSH_SCHEDULED);
+        ESI_SetRuntimeMarker(oPC, MEIO_RUNTIME_STORAGE_FLUSH);
+    }
+    if (!ESI_IsRuntimeMarkerSet(oPC, MEIO_RUNTIME_EXAMINE_SUPPRESSION))
+    {
+        DeleteLocalInt(oPC, MEIO_LOCAL_EXAMINE_SUPPRESSION_GUARD);
+        ESI_SetRuntimeMarker(oPC, MEIO_RUNTIME_EXAMINE_SUPPRESSION);
+    }
     if (!ESI_IsRuntimeMarkerSet(oPC, MEIO_RUNTIME_INITIAL_IMPORT))
     {
         DeleteLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_RUNNING);
@@ -53,9 +63,14 @@ void MEIO_Heartbeat(object oPC)
     }
     MEMORIA_SetHeartbeatDiagnostic(oPC, "initializing the Scriptorium and its physical storage");
     object oScriptorium = MEIO_EnsureScriptorium(oPC);
-    object oStorage = MEIO_EnsureStorage(oPC);
-    object oPotionStorage = MEIO_EnsurePotionStorage(oPC);
-    object oBookStorage = MEIO_EnsureBookStorage(oPC);
+    int bPersistenceReady = GetIsObjectValid(oScriptorium) && MEIO_InitializeStoragePersistence(oPC);
+    object oStorage = bPersistenceReady ? MEIO_EnsureStorage(oPC) : OBJECT_INVALID;
+    object oPotionStorage = bPersistenceReady ? MEIO_EnsurePotionStorage(oPC) : OBJECT_INVALID;
+    object oBookStorage = bPersistenceReady ? MEIO_EnsureBookStorage(oPC) : OBJECT_INVALID;
+    if (bPersistenceReady && GetLocalInt(oPC, MEIO_LOCAL_STORAGE_DIRTY_MASK))
+    {
+        MEIO_FlushStoragePersistence(oPC);
+    }
     if (!ESI_IsRuntimeMarkerSet(oPC, MEIO_RUNTIME_RESERVATION))
     {
         if (GetIsObjectValid(GetLocalObject(oPC, MEIO_LOCAL_RESERVED)))
@@ -72,6 +87,16 @@ void MEIO_Heartbeat(object oPC)
     }
     if (GetIsObjectValid(oScriptorium) && GetIsObjectValid(oStorage) && GetIsObjectValid(oPotionStorage) && GetIsObjectValid(oBookStorage))
     {
+        if (!ESI_IsRuntimeMarkerSet(oPC, MEIO_RUNTIME_STORAGE_VALIDATED))
+        {
+            MEMORIA_SetHeartbeatDiagnostic(oPC, "validating restored Scriptorium contents");
+            MEIO_BeginStorageTransaction(oPC);
+            MEIO_ValidateContents(oPC, oStorage);
+            MEIO_ValidatePotionContents(oPC, oPotionStorage);
+            MEIO_ValidateBookContents(oPC, oBookStorage);
+            MEIO_EndStorageTransaction(oPC);
+            ESI_SetRuntimeMarker(oPC, MEIO_RUNTIME_STORAGE_VALIDATED);
+        }
         if (!GetLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_DONE))
         {
             if (!GetLocalInt(oPC, MEIO_LOCAL_INITIAL_IMPORT_RUNNING))
@@ -90,10 +115,6 @@ void MEIO_Heartbeat(object oPC)
                 }
             }
         }
-        MEMORIA_SetHeartbeatDiagnostic(oPC, "validating Scriptorium contents");
-        MEIO_ValidateContents(oPC, oStorage);
-        MEIO_ValidatePotionContents(oPC, oPotionStorage);
-        MEIO_ValidateBookContents(oPC, oBookStorage);
         MEIO_ProcessVaultContents(oPC, MEIO_INITIAL_IMPORT_BATCH_SIZE);
         MEIO_ReconcileDuplicates(oPC, oScriptorium);
     }

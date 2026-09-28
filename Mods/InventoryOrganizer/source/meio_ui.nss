@@ -884,6 +884,7 @@ void MEIO_OpenKeyItemsTab(object oPC)
     object oScriptorium = MEIO_EnsureScriptorium(oPC);
     if (!GetIsObjectValid(oScriptorium))
     {
+        MEIO_ReportError(oPC, "Key Items NUI open aborted because the Scriptorium handle is invalid");
         return;
     }
     json jIndex = MEIO_BuildKeyItemIndex(oPC);
@@ -901,6 +902,10 @@ void MEIO_OpenKeyItemsTab(object oPC)
     if (iToken > 0)
     {
         MEIO_RefreshKeyItemWindow(oPC, iToken);
+    }
+    else
+    {
+        MEIO_ReportError(oPC, "NuiCreate failed for the Key Items window");
     }
 }
 
@@ -922,6 +927,7 @@ void MEIO_OpenTab(object oPC, int iTab)
     object oBookStorage = MEIO_EnsureBookStorage(oPC);
     if (!GetIsObjectValid(oScriptorium) || !GetIsObjectValid(oStorage) || !GetIsObjectValid(oPotionStorage) || !GetIsObjectValid(oBookStorage))
     {
+        MEIO_ReportError(oPC, "Spatial Storage NUI open aborted invalidObjects=" + ObjectToString(oScriptorium) + "," + ObjectToString(oStorage) + "," + ObjectToString(oPotionStorage) + "," + ObjectToString(oBookStorage) + " blockedMask=" + IntToString(GetLocalInt(oPC, MEIO_LOCAL_STORAGE_BLOCKED_MASK)));
         return;
     }
     MEIO_ValidateContents(oPC, oStorage);
@@ -985,6 +991,10 @@ void MEIO_OpenTab(object oPC, int iTab)
             NuiSetBindWatch(oPC, iToken, "book_search", TRUE);
             NuiSetBindWatch(oPC, iToken, "book_english_names", TRUE);
         }
+    }
+    else
+    {
+        MEIO_ReportError(oPC, "NuiCreate failed for Spatial Storage tab=" + IntToString(iTab));
     }
 }
 

@@ -1,15 +1,17 @@
 // Original Campaign henchman inventory persistence.
 
 const int MECM_OC_INVENTORY_SCHEMA = 1;
-const string MECM_OC_INVENTORY_STATE = "MECM_OC_INVENTORY_STATE";
-const string MECM_OC_INVENTORY_STATE_INITIALIZED = "MECM_OC_INVENTORY_STATE_INITIALIZED";
+const string MECM_OC_PERSIST_NAMESPACE = "mecm";
+const string MECM_OC_PERSIST_STATE = "oc_inventory";
+const string MECM_OC_LEGACY_LOCAL_STATE = "MECM_OC_INVENTORY_STATE";
+const string MECM_OC_LEGACY_LOCAL_INITIALIZED = "MECM_OC_INVENTORY_STATE_INITIALIZED";
+const string MECM_OC_LEGACY_CAMPAIGN_DATABASE = "mecmocinventory";
+const string MECM_OC_LEGACY_CAMPAIGN_VARIABLE = "state";
 const string MECM_OC_INVENTORY_RESTORED = "MECM_OC_INVENTORY_RESTORED";
 const string MECM_OC_RESTORING_ITEMS = "MECM_OC_RESTORING_ITEMS";
 const string MECM_OC_NATIVE_ITEM = "MECM_OC_NATIVE_ITEM";
 const string MECM_OC_MANAGED_ITEM = "MECM_OC_MANAGED_ITEM";
 const string MECM_OC_MANAGED_OWNER = "MECM_OC_MANAGED_OWNER";
-const string MECM_OC_CAMPAIGN_DATABASE = "mecmocinventory";
-const string MECM_OC_CAMPAIGN_VARIABLE = "state";
 const string MECM_OC_ESI_ACQUIRE = "mecm.oc.inventory.acquire";
 const string MECM_OC_ESI_LOSE = "mecm.oc.inventory.lose";
 const string MECM_OC_RUNTIME_INITIALIZED = "mecm.oc.inventory.initialized";
@@ -72,25 +74,15 @@ json MECM_NormalizeOcInventoryState(json jState)
     return jState;
 }
 
-void MECM_MirrorOcInventoryState(object oPC, json jState)
-{
-    SetCampaignJson(MECM_OC_CAMPAIGN_DATABASE, MECM_OC_CAMPAIGN_VARIABLE, jState, oPC);
-}
-
 int MECM_WriteOcInventoryState(object oPC, json jState)
 {
-    object oModule = GetModule();
     jState = MECM_NormalizeOcInventoryState(jState);
-    if (JsonDump(GetLocalJson(oModule, MECM_OC_INVENTORY_STATE)) == JsonDump(jState))
-        return FALSE;
-    SetLocalJson(oModule, MECM_OC_INVENTORY_STATE, jState);
-    MECM_MirrorOcInventoryState(oPC, jState);
-    return TRUE;
+    return MEMORIA_PersistCommitJson(oPC, MECM_OC_PERSIST_NAMESPACE, MECM_OC_PERSIST_STATE, jState);
 }
 
 json MECM_GetOcInventoryState()
 {
-    return MECM_NormalizeOcInventoryState(GetLocalJson(GetModule(), MECM_OC_INVENTORY_STATE));
+    return MECM_NormalizeOcInventoryState(MEMORIA_PersistGetLocalJson(MECM_OC_PERSIST_NAMESPACE, MECM_OC_PERSIST_STATE));
 }
 
 json MECM_GetOcHenchmanItems(json jState, string sHenchmanId)
@@ -128,23 +120,15 @@ int MECM_InitializeOcInventory(object oPC)
     object oModule = GetModule();
     if (!ESI_IsRuntimeMarkerSet(oModule, MECM_OC_RUNTIME_INITIALIZED))
     {
-        json jState;
-        if (GetLocalInt(oModule, MECM_OC_INVENTORY_STATE_INITIALIZED))
+        if (!MEMORIA_PersistHasLocalJson(MECM_OC_PERSIST_NAMESPACE, MECM_OC_PERSIST_STATE))
         {
-            jState = MECM_NormalizeOcInventoryState(GetLocalJson(oModule, MECM_OC_INVENTORY_STATE));
-            SetLocalJson(oModule, MECM_OC_INVENTORY_STATE, jState);
-            MECM_MirrorOcInventoryState(oPC, jState);
+            json jLegacyState = GetLocalInt(oModule, MECM_OC_LEGACY_LOCAL_INITIALIZED) ? GetLocalJson(oModule, MECM_OC_LEGACY_LOCAL_STATE) : GetStringUpperCase(GetTag(oModule)) != "PRELUDE" ? GetCampaignJson(MECM_OC_LEGACY_CAMPAIGN_DATABASE, MECM_OC_LEGACY_CAMPAIGN_VARIABLE, oPC) : JsonNull();
+            if (JsonGetType(jLegacyState) == JSON_TYPE_OBJECT)
+                MEMORIA_PersistCommitJson(oPC, MECM_OC_PERSIST_NAMESPACE, MECM_OC_PERSIST_STATE, MECM_NormalizeOcInventoryState(jLegacyState));
         }
-        else
-        {
-            if (GetStringUpperCase(GetTag(oModule)) == "PRELUDE")
-                jState = MECM_NewOcInventoryState();
-            else
-                jState = MECM_NormalizeOcInventoryState(GetCampaignJson(MECM_OC_CAMPAIGN_DATABASE, MECM_OC_CAMPAIGN_VARIABLE, oPC));
-            SetLocalJson(oModule, MECM_OC_INVENTORY_STATE, jState);
-            SetLocalInt(oModule, MECM_OC_INVENTORY_STATE_INITIALIZED, TRUE);
-            MECM_MirrorOcInventoryState(oPC, jState);
-        }
+        json jState = MEMORIA_PersistInitializeJson(oPC, MECM_OC_PERSIST_NAMESPACE, MECM_OC_PERSIST_STATE, MECM_NewOcInventoryState(), GetStringUpperCase(GetTag(oModule)) != "PRELUDE");
+        jState = MECM_NormalizeOcInventoryState(jState);
+        MEMORIA_PersistCommitJson(oPC, MECM_OC_PERSIST_NAMESPACE, MECM_OC_PERSIST_STATE, jState);
         ESI_SetRuntimeMarker(oModule, MECM_OC_RUNTIME_INITIALIZED);
     }
     MECM_InstallOcInventoryHooks();

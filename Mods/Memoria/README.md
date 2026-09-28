@@ -8,6 +8,7 @@ Memoria is the shared loader and framework that lets multiple Neverwinter Nights
 - Checks package versions and dependencies, disables incompatible packages, and keeps the remaining mods running.
 - Reports the last diagnostic stage supplied by a heartbeat when the NWScript VM aborts that package.
 - Provides shared NWScript helpers for mod authors.
+- Provides a namespaced persistence bridge that keeps save-local JSON authoritative while mirroring state and complete object snapshots through a player-scoped campaign database.
 - Provides shared suppression of the standard item-description panel for inventory items that open custom interfaces through **Examine**.
 - Provides consistent right-click contextual help for Memoria-owned NUI windows.
 
@@ -51,3 +52,5 @@ Create `override/mymod_memoria.txt` as a complete runtime manifest:
 The manifest filename and heartbeat are NWN resource names and must be unique and respect the game's resref length limit. Lower numeric priorities run earlier; ESI is always forced to priority `0`. Implement the heartbeat as a normal compiled entry point containing `void main()`; Memoria invokes it with the player character as `OBJECT_SELF`.
 
 Distribute `mymod_memoria.txt` and `mymod_hb.ncs` with the external mod. Do not distribute `default.nss` or `default.ncs`; the installed Memoria package dispatches the registered heartbeat through its own `default.ncs`.
+
+Persistent integrations can include `memoria_persist` and use `MEMORIA_PersistInitializeJson`, `MEMORIA_PersistCommitJson`, and `MEMORIA_PersistGetLocalJson` for small caller-owned schemas. Use `MEMORIA_PersistStoreObject` and `MEMORIA_PersistRetrieveObject` for opaque object snapshots; the framework namespaces transport keys but never interprets object contents.

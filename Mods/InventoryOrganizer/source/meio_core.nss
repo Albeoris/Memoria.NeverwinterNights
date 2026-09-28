@@ -7,6 +7,7 @@
 #include "memoria_locale"
 #include "memoria_loc"
 #include "memoria_nui"
+#include "memoria_persist"
 #include "memoria_string"
 #include "x3_inc_string"
 
@@ -27,6 +28,7 @@ const string MEIO_LOCAL_STORAGE = "MEIO_STORAGE_OBJECT";
 const string MEIO_LOCAL_POTION_STORAGE = "MEIO_POTION_STORAGE_OBJECT";
 const string MEIO_LOCAL_BOOK_STORAGE = "MEIO_BOOK_STORAGE_OBJECT";
 const string MEIO_LOCAL_STORAGE_OWNER = "MEIO_STORAGE_OWNER";
+const string MEIO_LOCAL_STORAGE_SLOT = "MEIO_STORAGE_SLOT";
 const string MEIO_LOCAL_SCHEMA = "MEIO_SCHEMA";
 const string MEIO_LOCAL_INITIAL_IMPORT_DONE = "MEIO_INITIAL_IMPORT_V4_DONE";
 const string MEIO_LOCAL_INITIAL_IMPORT_SNAPSHOT_DONE = "MEIO_INITIAL_IMPORT_V4_SNAPSHOT";
@@ -82,12 +84,30 @@ const string MEIO_LOCAL_CLEANUP_GENERATION = "MEIO_CLEANUP_GENERATION";
 const string MEIO_LOCAL_SUPPRESS_GENERATION = "MEIO_SUPPRESS_GENERATION";
 const string MEIO_LOCAL_LANGUAGE = "MEIO_LANGUAGE";
 const string MEIO_LOCAL_ITEM_LANGUAGE = "MEIO_ITEM_LANGUAGE";
+const string MEIO_LOCAL_EXAMINE_SUPPRESSION_GUARD = "MEIO_EXAMINE_SUPPRESSION_GUARD";
+const string MEIO_LOCAL_EXAMINE_SUPPRESSION_GENERATION = "MEIO_EXAMINE_SUPPRESSION_GENERATION";
+const string MEIO_LOCAL_LAST_ERROR = "MEIO_LAST_ERROR";
+const string MEIO_LOCAL_LAST_ERROR_HEARTBEAT = "MEIO_LAST_ERROR_HEARTBEAT";
 const string MEIO_ESI_ACQUIRE = "meio.module.acquire";
 const string MEIO_ESI_GUI = "meio.module.gui";
 const string MEIO_ESI_TARGET = "meio.module.target";
 const string MEIO_ESI_CHAT = "meio.module.chat";
 const string MEIO_RUNTIME_RESERVATION = "meio.reservation";
 const string MEIO_RUNTIME_INITIAL_IMPORT = "meio.initial_import";
+const string MEIO_RUNTIME_PERSISTENCE = "meio.persistence";
+const string MEIO_RUNTIME_STORAGE_VALIDATED = "meio.storage.validated";
+const string MEIO_RUNTIME_EXAMINE_SUPPRESSION = "meio.examine.suppression";
+const string MEIO_RUNTIME_STORAGE_FLUSH = "meio.storage.flush";
+const string MEIO_PERSIST_NAMESPACE = "meio";
+const string MEIO_PERSIST_STATE = "storage";
+const string MEIO_LOCAL_STORAGE_DIRTY_MASK = "MEIO_STORAGE_DIRTY_MASK";
+const string MEIO_LOCAL_STORAGE_BLOCKED_MASK = "MEIO_STORAGE_BLOCKED_MASK";
+const string MEIO_LOCAL_STORAGE_TRANSACTION_DEPTH = "MEIO_STORAGE_TRANSACTION_DEPTH";
+const string MEIO_LOCAL_STORAGE_FLUSH_SCHEDULED = "MEIO_STORAGE_FLUSH_SCHEDULED";
+const string MEIO_LOCAL_STORAGE_FLUSH_GENERATION = "MEIO_STORAGE_FLUSH_GENERATION";
+const string MEIO_LOCAL_PERSIST_COMMITS = "MEIO_PERSIST_COMMITS";
+const string MEIO_LOCAL_PERSIST_RESTORES = "MEIO_PERSIST_RESTORES";
+const string MEIO_LOCAL_PERSIST_FAILURES = "MEIO_PERSIST_FAILURES";
 const int MEIO_SCHEMA = 1;
 const int MEIO_TARGET_ALL = 0;
 const int MEIO_TARGET_SELF = 1;
@@ -114,6 +134,14 @@ const int MEIO_TRANSFER_BURN_BOOKS = 8;
 const int MEIO_TRANSFER_STORE_KEY_ITEMS = 9;
 const int MEIO_TRANSFER_WITHDRAW_KEY_ITEMS = 10;
 const int MEIO_KEY_CONTAINER_SCHEMA = 1;
+const int MEIO_PERSIST_SCHEMA = 1;
+const int MEIO_STORAGE_MASK_SCROLLS = 1;
+const int MEIO_STORAGE_MASK_POTIONS = 2;
+const int MEIO_STORAGE_MASK_BOOKS = 4;
+const int MEIO_STORAGE_MASK_ALL = 7;
+const string MEIO_STORAGE_SLOT_SCROLLS = "scrolls";
+const string MEIO_STORAGE_SLOT_POTIONS = "potions";
+const string MEIO_STORAGE_SLOT_BOOKS = "books";
 
 void MEIO_EnsureAutomaticSettings(object oPC)
 {
@@ -249,6 +277,31 @@ void MEIO_Debug(object oPC, string sMessage)
     WriteTimestampedLogEntry(sLine + " pc=" + ObjectToString(oPC));
 }
 
+void MEIO_ReportError(object oPC, string sMessage)
+{
+    int iHeartbeat = GetLocalInt(oPC, MEIO_LOCAL_HEARTBEAT_COUNTER);
+    if (GetLocalString(oPC, MEIO_LOCAL_LAST_ERROR) == sMessage && iHeartbeat - GetLocalInt(oPC, MEIO_LOCAL_LAST_ERROR_HEARTBEAT) < 10)
+    {
+        return;
+    }
+    SetLocalString(oPC, MEIO_LOCAL_LAST_ERROR, sMessage);
+    SetLocalInt(oPC, MEIO_LOCAL_LAST_ERROR_HEARTBEAT, iHeartbeat);
+    string sLine = "[MEIO ERROR] " + sMessage + " pc=" + ObjectToString(oPC) + " module=" + GetTag(GetModule());
+    WriteTimestampedLogEntry(sLine);
+    if (GetIsObjectValid(oPC) && GetLocalInt(oPC, MEIO_CFG_DEBUG))
+    {
+        SendMessageToPC(oPC, sLine);
+    }
+}
+
+void MEIO_ClearExamineSuppressionGuard(object oPC, int iGeneration)
+{
+    if (GetLocalInt(oPC, MEIO_LOCAL_EXAMINE_SUPPRESSION_GENERATION) == iGeneration)
+    {
+        DeleteLocalInt(oPC, MEIO_LOCAL_EXAMINE_SUPPRESSION_GUARD);
+    }
+}
+
 void MEIO_ScheduleExamineSuppression(object oPC, object oItem, string sReason)
 {
     if (!MEIO_IsDirectlyIn(oItem, oPC) || GetTag(oItem) != MEIO_SCRIPTORIUM_TAG)
@@ -256,7 +309,11 @@ void MEIO_ScheduleExamineSuppression(object oPC, object oItem, string sReason)
         MEIO_Debug(oPC, "Examine suppression skipped reason=" + sReason + " item=" + ObjectToString(oItem));
         return;
     }
+    int iGeneration = GetLocalInt(oPC, MEIO_LOCAL_EXAMINE_SUPPRESSION_GENERATION) + 1;
+    SetLocalInt(oPC, MEIO_LOCAL_EXAMINE_SUPPRESSION_GENERATION, iGeneration);
+    SetLocalInt(oPC, MEIO_LOCAL_EXAMINE_SUPPRESSION_GUARD, TRUE);
     MEMORIA_GUI_ScheduleItemExamineSuppression(oPC, oItem);
+    DelayCommand(0.25f, MEIO_ClearExamineSuppressionGuard(oPC, iGeneration));
     MEIO_Debug(oPC, "Examine suppression scheduled reason=" + sReason + " item=" + ObjectToString(oItem));
 }
 

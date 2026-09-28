@@ -4,6 +4,7 @@
 
 int MEIO_CopyAmount(object oSource, object oTarget, int iRequested);
 void MEIO_RebuildOpenWindowIndex(object oPC);
+int MEIO_InitializeStoragePersistence(object oPC);
 
 int MEIO_CountVariant(object oContainer, string sKey)
 {
@@ -63,126 +64,372 @@ int MEIO_IsInScriptorium(object oStorage, object oItem)
     return MEIO_IsDirectlyIn(oItem, oStorage);
 }
 
-object MEIO_FindRuntimeStorage(object oPC)
+object MEIO_FindRuntimeStorageSlot(object oPC, string sLocal, string sTag, string sSlot)
 {
-    object oStorage = GetLocalObject(oPC, MEIO_LOCAL_STORAGE);
-    if (GetIsObjectValid(oStorage) && GetObjectType(oStorage) == OBJECT_TYPE_STORE && GetTag(oStorage) == MEIO_STORAGE_TAG)
+    object oStorage = GetLocalObject(oPC, sLocal);
+    if (GetIsObjectValid(oStorage) && GetObjectType(oStorage) == OBJECT_TYPE_STORE && GetTag(oStorage) == sTag)
     {
         return oStorage;
     }
     int iIndex;
-    oStorage = GetObjectByTag(MEIO_STORAGE_TAG, iIndex);
+    oStorage = GetObjectByTag(sTag, iIndex);
     while (GetIsObjectValid(oStorage))
     {
-        if (GetObjectType(oStorage) == OBJECT_TYPE_STORE && GetLocalObject(oStorage, MEIO_LOCAL_STORAGE_OWNER) == oPC)
+        object oOwner = GetLocalObject(oStorage, MEIO_LOCAL_STORAGE_OWNER);
+        if (GetObjectType(oStorage) == OBJECT_TYPE_STORE && (oOwner == oPC || !GetIsObjectValid(oOwner)))
         {
-            SetLocalObject(oPC, MEIO_LOCAL_STORAGE, oStorage);
+            SetLocalString(oStorage, MEIO_LOCAL_STORAGE_SLOT, sSlot);
+            SetLocalObject(oStorage, MEIO_LOCAL_STORAGE_OWNER, oPC);
+            SetLocalObject(oPC, sLocal, oStorage);
             return oStorage;
         }
         iIndex++;
-        oStorage = GetObjectByTag(MEIO_STORAGE_TAG, iIndex);
+        oStorage = GetObjectByTag(sTag, iIndex);
     }
     return OBJECT_INVALID;
 }
 
-object MEIO_EnsureStorage(object oPC)
+object MEIO_FindRuntimeStorage(object oPC)
 {
-    object oStorage = MEIO_FindRuntimeStorage(oPC);
-    if (!GetIsObjectValid(oStorage))
-    {
-        oStorage = CreateObject(OBJECT_TYPE_STORE, MEIO_STORAGE_RESREF, GetLocation(oPC), FALSE, MEIO_STORAGE_TAG);
-    }
-    if (!GetIsObjectValid(oStorage))
-    {
-        return OBJECT_INVALID;
-    }
-    SetTag(oStorage, MEIO_STORAGE_TAG);
-    SetLocalObject(oStorage, MEIO_LOCAL_STORAGE_OWNER, oPC);
-    SetLocalObject(oPC, MEIO_LOCAL_STORAGE, oStorage);
-    return oStorage;
+    return MEIO_FindRuntimeStorageSlot(oPC, MEIO_LOCAL_STORAGE, MEIO_STORAGE_TAG, MEIO_STORAGE_SLOT_SCROLLS);
 }
 
 object MEIO_FindRuntimePotionStorage(object oPC)
 {
-    object oStorage = GetLocalObject(oPC, MEIO_LOCAL_POTION_STORAGE);
-    if (GetIsObjectValid(oStorage) && GetObjectType(oStorage) == OBJECT_TYPE_STORE && GetTag(oStorage) == MEIO_POTION_STORAGE_TAG)
-    {
-        return oStorage;
-    }
-    int iIndex;
-    oStorage = GetObjectByTag(MEIO_POTION_STORAGE_TAG, iIndex);
-    while (GetIsObjectValid(oStorage))
-    {
-        if (GetObjectType(oStorage) == OBJECT_TYPE_STORE && GetLocalObject(oStorage, MEIO_LOCAL_STORAGE_OWNER) == oPC)
-        {
-            SetLocalObject(oPC, MEIO_LOCAL_POTION_STORAGE, oStorage);
-            return oStorage;
-        }
-        iIndex++;
-        oStorage = GetObjectByTag(MEIO_POTION_STORAGE_TAG, iIndex);
-    }
-    return OBJECT_INVALID;
-}
-
-object MEIO_EnsurePotionStorage(object oPC)
-{
-    object oStorage = MEIO_FindRuntimePotionStorage(oPC);
-    if (!GetIsObjectValid(oStorage))
-    {
-        oStorage = CreateObject(OBJECT_TYPE_STORE, MEIO_POTION_STORAGE_RESREF, GetLocation(oPC), FALSE, MEIO_POTION_STORAGE_TAG);
-    }
-    if (!GetIsObjectValid(oStorage))
-    {
-        return OBJECT_INVALID;
-    }
-    SetTag(oStorage, MEIO_POTION_STORAGE_TAG);
-    SetLocalObject(oStorage, MEIO_LOCAL_STORAGE_OWNER, oPC);
-    SetLocalObject(oPC, MEIO_LOCAL_POTION_STORAGE, oStorage);
-    return oStorage;
+    return MEIO_FindRuntimeStorageSlot(oPC, MEIO_LOCAL_POTION_STORAGE, MEIO_POTION_STORAGE_TAG, MEIO_STORAGE_SLOT_POTIONS);
 }
 
 object MEIO_FindRuntimeBookStorage(object oPC)
 {
-    object oStorage = GetLocalObject(oPC, MEIO_LOCAL_BOOK_STORAGE);
-    if (GetIsObjectValid(oStorage) && GetObjectType(oStorage) == OBJECT_TYPE_STORE && GetTag(oStorage) == MEIO_BOOK_STORAGE_TAG)
+    return MEIO_FindRuntimeStorageSlot(oPC, MEIO_LOCAL_BOOK_STORAGE, MEIO_BOOK_STORAGE_TAG, MEIO_STORAGE_SLOT_BOOKS);
+}
+
+object MEIO_AdoptStorage(object oPC, object oStorage, string sLocal, string sTag, string sSlot)
+{
+    if (!GetIsObjectValid(oStorage) || GetObjectType(oStorage) != OBJECT_TYPE_STORE)
     {
-        return oStorage;
+        return OBJECT_INVALID;
     }
-    int iIndex;
-    oStorage = GetObjectByTag(MEIO_BOOK_STORAGE_TAG, iIndex);
-    while (GetIsObjectValid(oStorage))
+    SetTag(oStorage, sTag);
+    SetLocalString(oStorage, MEIO_LOCAL_STORAGE_SLOT, sSlot);
+    SetLocalObject(oStorage, MEIO_LOCAL_STORAGE_OWNER, oPC);
+    SetLocalObject(oPC, sLocal, oStorage);
+    return oStorage;
+}
+
+object MEIO_CreateStorage(object oPC, string sResRef, string sLocal, string sTag, string sSlot)
+{
+    return MEIO_AdoptStorage(oPC, CreateObject(OBJECT_TYPE_STORE, sResRef, GetLocation(oPC), FALSE, sTag), sLocal, sTag, sSlot);
+}
+
+json MEIO_NewPersistenceState()
+{
+    json jState = JsonObject();
+    jState = JsonObjectSet(jState, "schema", JsonInt(MEIO_PERSIST_SCHEMA));
+    jState = JsonObjectSet(jState, "revision", JsonString(""));
+    jState = JsonObjectSet(jState, "scrolls", JsonBool(FALSE));
+    jState = JsonObjectSet(jState, "potions", JsonBool(FALSE));
+    jState = JsonObjectSet(jState, "books", JsonBool(FALSE));
+    return jState;
+}
+
+int MEIO_IsPersistenceState(json jState)
+{
+    return JsonGetType(jState) == JSON_TYPE_OBJECT && JsonGetInt(JsonObjectGet(jState, "schema")) == MEIO_PERSIST_SCHEMA;
+}
+
+string MEIO_GetPersistenceRevision(json jState)
+{
+    return MEIO_IsPersistenceState(jState) ? JsonGetString(JsonObjectGet(jState, "revision")) : "";
+}
+
+int MEIO_GetPersistenceMask(json jState)
+{
+    if (!MEIO_IsPersistenceState(jState))
     {
-        if (GetObjectType(oStorage) == OBJECT_TYPE_STORE && GetLocalObject(oStorage, MEIO_LOCAL_STORAGE_OWNER) == oPC)
+        return 0;
+    }
+    return (JsonGetInt(JsonObjectGet(jState, "scrolls")) ? MEIO_STORAGE_MASK_SCROLLS : 0) | (JsonGetInt(JsonObjectGet(jState, "potions")) ? MEIO_STORAGE_MASK_POTIONS : 0) | (JsonGetInt(JsonObjectGet(jState, "books")) ? MEIO_STORAGE_MASK_BOOKS : 0);
+}
+
+int MEIO_FlushStoragePersistence(object oPC)
+{
+    DeleteLocalInt(oPC, MEIO_LOCAL_STORAGE_FLUSH_SCHEDULED);
+    int iDirty = GetLocalInt(oPC, MEIO_LOCAL_STORAGE_DIRTY_MASK);
+    if (!iDirty)
+    {
+        return TRUE;
+    }
+    int iRemaining = iDirty;
+    if ((iDirty & MEIO_STORAGE_MASK_SCROLLS) && MEMORIA_PersistStoreObject(oPC, MEIO_PERSIST_NAMESPACE, "scrolls", MEIO_FindRuntimeStorage(oPC), FALSE))
+    {
+        iRemaining &= ~MEIO_STORAGE_MASK_SCROLLS;
+    }
+    if ((iDirty & MEIO_STORAGE_MASK_POTIONS) && MEMORIA_PersistStoreObject(oPC, MEIO_PERSIST_NAMESPACE, "potions", MEIO_FindRuntimePotionStorage(oPC), FALSE))
+    {
+        iRemaining &= ~MEIO_STORAGE_MASK_POTIONS;
+    }
+    if ((iDirty & MEIO_STORAGE_MASK_BOOKS) && MEMORIA_PersistStoreObject(oPC, MEIO_PERSIST_NAMESPACE, "books", MEIO_FindRuntimeBookStorage(oPC), FALSE))
+    {
+        iRemaining &= ~MEIO_STORAGE_MASK_BOOKS;
+    }
+    SetLocalInt(oPC, MEIO_LOCAL_STORAGE_DIRTY_MASK, iRemaining);
+    if (iRemaining)
+    {
+        SetLocalInt(oPC, MEIO_LOCAL_PERSIST_FAILURES, GetLocalInt(oPC, MEIO_LOCAL_PERSIST_FAILURES) + 1);
+        MEIO_ReportError(oPC, "StoreCampaignObject failed; dirty state retained mask=" + IntToString(iRemaining));
+        MEIO_Debug(oPC, "Storage persistence commit failed dirtyMask=" + IntToString(iRemaining));
+        return FALSE;
+    }
+    json jState = MEIO_NewPersistenceState();
+    jState = JsonObjectSet(jState, "revision", JsonString(GetRandomUUID()));
+    jState = JsonObjectSet(jState, "scrolls", JsonBool(GetIsObjectValid(MEIO_FindRuntimeStorage(oPC))));
+    jState = JsonObjectSet(jState, "potions", JsonBool(GetIsObjectValid(MEIO_FindRuntimePotionStorage(oPC))));
+    jState = JsonObjectSet(jState, "books", JsonBool(GetIsObjectValid(MEIO_FindRuntimeBookStorage(oPC))));
+    MEMORIA_PersistCommitJson(oPC, MEIO_PERSIST_NAMESPACE, MEIO_PERSIST_STATE, jState);
+    SetLocalInt(oPC, MEIO_LOCAL_PERSIST_COMMITS, GetLocalInt(oPC, MEIO_LOCAL_PERSIST_COMMITS) + 1);
+    return TRUE;
+}
+
+void MEIO_RunScheduledStorageFlush(object oPC, int iGeneration)
+{
+    if (GetLocalInt(oPC, MEIO_LOCAL_STORAGE_FLUSH_GENERATION) != iGeneration)
+    {
+        return;
+    }
+    DeleteLocalInt(oPC, MEIO_LOCAL_STORAGE_FLUSH_SCHEDULED);
+    MEIO_FlushStoragePersistence(oPC);
+}
+
+void MEIO_ScheduleStorageFlush(object oPC)
+{
+    if (GetLocalInt(oPC, MEIO_LOCAL_STORAGE_FLUSH_SCHEDULED))
+    {
+        return;
+    }
+    int iGeneration = GetLocalInt(oPC, MEIO_LOCAL_STORAGE_FLUSH_GENERATION) + 1;
+    SetLocalInt(oPC, MEIO_LOCAL_STORAGE_FLUSH_GENERATION, iGeneration);
+    SetLocalInt(oPC, MEIO_LOCAL_STORAGE_FLUSH_SCHEDULED, TRUE);
+    DelayCommand(0.01f, MEIO_RunScheduledStorageFlush(oPC, iGeneration));
+}
+
+void MEIO_BeginStorageTransaction(object oPC)
+{
+    SetLocalInt(oPC, MEIO_LOCAL_STORAGE_TRANSACTION_DEPTH, GetLocalInt(oPC, MEIO_LOCAL_STORAGE_TRANSACTION_DEPTH) + 1);
+}
+
+void MEIO_EndStorageTransaction(object oPC)
+{
+    int iDepth = GetLocalInt(oPC, MEIO_LOCAL_STORAGE_TRANSACTION_DEPTH);
+    if (iDepth > 1)
+    {
+        SetLocalInt(oPC, MEIO_LOCAL_STORAGE_TRANSACTION_DEPTH, iDepth - 1);
+        return;
+    }
+    DeleteLocalInt(oPC, MEIO_LOCAL_STORAGE_TRANSACTION_DEPTH);
+    MEIO_ScheduleStorageFlush(oPC);
+}
+
+void MEIO_ScheduleStorageSave(object oPC, int iMask)
+{
+    SetLocalInt(oPC, MEIO_LOCAL_STORAGE_DIRTY_MASK, GetLocalInt(oPC, MEIO_LOCAL_STORAGE_DIRTY_MASK) | iMask);
+    if (!GetLocalInt(oPC, MEIO_LOCAL_STORAGE_TRANSACTION_DEPTH))
+    {
+        MEIO_ScheduleStorageFlush(oPC);
+    }
+}
+
+int MEIO_IsExpectedStorage(object oStorage)
+{
+    return GetIsObjectValid(oStorage) && GetObjectType(oStorage) == OBJECT_TYPE_STORE;
+}
+
+string MEIO_DescribeStorage(object oStorage)
+{
+    if (!GetIsObjectValid(oStorage))
+    {
+        return "invalid";
+    }
+    return "object=" + ObjectToString(oStorage) + ",type=" + IntToString(GetObjectType(oStorage)) + ",tag=" + GetTag(oStorage) + ",resref=" + GetResRef(oStorage);
+}
+
+void MEIO_DestroyStartupStorage(object oStorage)
+{
+    if (GetIsObjectValid(oStorage))
+    {
+        DestroyObject(oStorage);
+    }
+}
+
+int MEIO_InitializeStoragePersistence(object oPC)
+{
+    if (ESI_IsRuntimeMarkerSet(oPC, MEIO_RUNTIME_PERSISTENCE))
+    {
+        return GetLocalInt(oPC, MEIO_LOCAL_STORAGE_BLOCKED_MASK) == 0;
+    }
+    DeleteLocalInt(oPC, MEIO_LOCAL_STORAGE_BLOCKED_MASK);
+    object oScrolls = MEIO_FindRuntimeStorage(oPC);
+    object oPotions = MEIO_FindRuntimePotionStorage(oPC);
+    object oBooks = MEIO_FindRuntimeBookStorage(oPC);
+    if (GetIsObjectValid(oScrolls) && !MEIO_IsExpectedStorage(oScrolls))
+    {
+        DeleteLocalObject(oPC, MEIO_LOCAL_STORAGE);
+        oScrolls = OBJECT_INVALID;
+    }
+    if (GetIsObjectValid(oPotions) && !MEIO_IsExpectedStorage(oPotions))
+    {
+        DeleteLocalObject(oPC, MEIO_LOCAL_POTION_STORAGE);
+        oPotions = OBJECT_INVALID;
+    }
+    if (GetIsObjectValid(oBooks) && !MEIO_IsExpectedStorage(oBooks))
+    {
+        DeleteLocalObject(oPC, MEIO_LOCAL_BOOK_STORAGE);
+        oBooks = OBJECT_INVALID;
+    }
+    if (GetIsObjectValid(oScrolls))
+    {
+        MEIO_AdoptStorage(oPC, oScrolls, MEIO_LOCAL_STORAGE, MEIO_STORAGE_TAG, MEIO_STORAGE_SLOT_SCROLLS);
+    }
+    if (GetIsObjectValid(oPotions))
+    {
+        MEIO_AdoptStorage(oPC, oPotions, MEIO_LOCAL_POTION_STORAGE, MEIO_POTION_STORAGE_TAG, MEIO_STORAGE_SLOT_POTIONS);
+    }
+    if (GetIsObjectValid(oBooks))
+    {
+        MEIO_AdoptStorage(oPC, oBooks, MEIO_LOCAL_BOOK_STORAGE, MEIO_BOOK_STORAGE_TAG, MEIO_STORAGE_SLOT_BOOKS);
+    }
+    int iExisting = (GetIsObjectValid(oScrolls) ? MEIO_STORAGE_MASK_SCROLLS : 0) | (GetIsObjectValid(oPotions) ? MEIO_STORAGE_MASK_POTIONS : 0) | (GetIsObjectValid(oBooks) ? MEIO_STORAGE_MASK_BOOKS : 0);
+    int bHasLocal = MEMORIA_PersistHasLocalJson(MEIO_PERSIST_NAMESPACE, MEIO_PERSIST_STATE);
+    if (bHasLocal)
+    {
+        json jLocal = MEMORIA_PersistGetLocalJson(MEIO_PERSIST_NAMESPACE, MEIO_PERSIST_STATE);
+        int iExpected = MEIO_GetPersistenceMask(jLocal);
+        if (!MEIO_IsPersistenceState(jLocal) || (iExisting & iExpected) != iExpected)
         {
-            SetLocalObject(oPC, MEIO_LOCAL_BOOK_STORAGE, oStorage);
-            return oStorage;
+            int iBlocked = !MEIO_IsPersistenceState(jLocal) ? MEIO_STORAGE_MASK_ALL : iExpected & ~iExisting;
+            SetLocalInt(oPC, MEIO_LOCAL_STORAGE_BLOCKED_MASK, iBlocked);
+            SetLocalInt(oPC, MEIO_LOCAL_PERSIST_FAILURES, GetLocalInt(oPC, MEIO_LOCAL_PERSIST_FAILURES) + 1);
+            MEIO_ReportError(oPC, "Save-local storage metadata requires missing or invalid runtime stores; operations blocked mask=" + IntToString(iBlocked));
+            MEIO_Debug(oPC, "Storage persistence blocked missing save-local stores mask=" + IntToString(iBlocked));
+            return FALSE;
         }
-        iIndex++;
-        oStorage = GetObjectByTag(MEIO_BOOK_STORAGE_TAG, iIndex);
+        json jCampaign = MEMORIA_PersistGetCampaignJson(oPC, MEIO_PERSIST_NAMESPACE, MEIO_PERSIST_STATE);
+        if (MEIO_GetPersistenceRevision(jLocal) != MEIO_GetPersistenceRevision(jCampaign))
+        {
+            SetLocalInt(oPC, MEIO_LOCAL_STORAGE_DIRTY_MASK, iExpected);
+            if (!MEIO_FlushStoragePersistence(oPC))
+            {
+                return FALSE;
+            }
+        }
+        else
+        {
+            MEMORIA_PersistInitializeJson(oPC, MEIO_PERSIST_NAMESPACE, MEIO_PERSIST_STATE, MEIO_NewPersistenceState(), TRUE);
+        }
+        ESI_SetRuntimeMarker(oPC, MEIO_RUNTIME_PERSISTENCE);
+        MEIO_Debug(oPC, "Storage persistence adopted save-local stores mask=" + IntToString(iExisting));
+        return TRUE;
     }
-    return OBJECT_INVALID;
+    if (iExisting)
+    {
+        if (!GetIsObjectValid(oScrolls))
+        {
+            oScrolls = MEIO_CreateStorage(oPC, MEIO_STORAGE_RESREF, MEIO_LOCAL_STORAGE, MEIO_STORAGE_TAG, MEIO_STORAGE_SLOT_SCROLLS);
+        }
+        if (!GetIsObjectValid(oPotions))
+        {
+            oPotions = MEIO_CreateStorage(oPC, MEIO_POTION_STORAGE_RESREF, MEIO_LOCAL_POTION_STORAGE, MEIO_POTION_STORAGE_TAG, MEIO_STORAGE_SLOT_POTIONS);
+        }
+        if (!GetIsObjectValid(oBooks))
+        {
+            oBooks = MEIO_CreateStorage(oPC, MEIO_BOOK_STORAGE_RESREF, MEIO_LOCAL_BOOK_STORAGE, MEIO_BOOK_STORAGE_TAG, MEIO_STORAGE_SLOT_BOOKS);
+        }
+        if (!GetIsObjectValid(oScrolls) || !GetIsObjectValid(oPotions) || !GetIsObjectValid(oBooks))
+        {
+            MEIO_ReportError(oPC, "Legacy storage migration could not create all missing STORE objects; migration will retry");
+            return FALSE;
+        }
+        SetLocalInt(oPC, MEIO_LOCAL_STORAGE_DIRTY_MASK, MEIO_STORAGE_MASK_ALL);
+        if (!MEIO_FlushStoragePersistence(oPC))
+        {
+            return FALSE;
+        }
+        ESI_SetRuntimeMarker(oPC, MEIO_RUNTIME_PERSISTENCE);
+        MEIO_Debug(oPC, "Storage persistence exported legacy stores");
+        return TRUE;
+    }
+    json jCampaign = MEMORIA_PersistGetCampaignJson(oPC, MEIO_PERSIST_NAMESPACE, MEIO_PERSIST_STATE);
+    if (JsonGetType(jCampaign) != JSON_TYPE_NULL && !MEIO_IsPersistenceState(jCampaign))
+    {
+        SetLocalInt(oPC, MEIO_LOCAL_STORAGE_BLOCKED_MASK, MEIO_STORAGE_MASK_ALL);
+        SetLocalInt(oPC, MEIO_LOCAL_PERSIST_FAILURES, GetLocalInt(oPC, MEIO_LOCAL_PERSIST_FAILURES) + 1);
+        MEIO_ReportError(oPC, "Campaign storage metadata has an unsupported schema; empty replacement refused");
+        return FALSE;
+    }
+    int bRestore = MEIO_IsPersistenceState(jCampaign);
+    int iCampaignMask = MEIO_GetPersistenceMask(jCampaign);
+    oScrolls = iCampaignMask & MEIO_STORAGE_MASK_SCROLLS ? MEMORIA_PersistRetrieveObject(oPC, MEIO_PERSIST_NAMESPACE, "scrolls", GetLocation(oPC)) : MEIO_CreateStorage(oPC, MEIO_STORAGE_RESREF, MEIO_LOCAL_STORAGE, MEIO_STORAGE_TAG, MEIO_STORAGE_SLOT_SCROLLS);
+    oPotions = iCampaignMask & MEIO_STORAGE_MASK_POTIONS ? MEMORIA_PersistRetrieveObject(oPC, MEIO_PERSIST_NAMESPACE, "potions", GetLocation(oPC)) : MEIO_CreateStorage(oPC, MEIO_POTION_STORAGE_RESREF, MEIO_LOCAL_POTION_STORAGE, MEIO_POTION_STORAGE_TAG, MEIO_STORAGE_SLOT_POTIONS);
+    oBooks = iCampaignMask & MEIO_STORAGE_MASK_BOOKS ? MEMORIA_PersistRetrieveObject(oPC, MEIO_PERSIST_NAMESPACE, "books", GetLocation(oPC)) : MEIO_CreateStorage(oPC, MEIO_BOOK_STORAGE_RESREF, MEIO_LOCAL_BOOK_STORAGE, MEIO_BOOK_STORAGE_TAG, MEIO_STORAGE_SLOT_BOOKS);
+    int iBlocked = (!MEIO_IsExpectedStorage(oScrolls) ? MEIO_STORAGE_MASK_SCROLLS : 0) | (!MEIO_IsExpectedStorage(oPotions) ? MEIO_STORAGE_MASK_POTIONS : 0) | (!MEIO_IsExpectedStorage(oBooks) ? MEIO_STORAGE_MASK_BOOKS : 0);
+    if (iBlocked)
+    {
+        MEIO_DestroyStartupStorage(oScrolls);
+        MEIO_DestroyStartupStorage(oPotions);
+        MEIO_DestroyStartupStorage(oBooks);
+        SetLocalInt(oPC, MEIO_LOCAL_STORAGE_BLOCKED_MASK, iBlocked);
+        SetLocalInt(oPC, MEIO_LOCAL_PERSIST_FAILURES, GetLocalInt(oPC, MEIO_LOCAL_PERSIST_FAILURES) + 1);
+        MEIO_ReportError(oPC, "RetrieveCampaignObject returned a missing or non-STORE object; empty replacement refused mask=" + IntToString(iBlocked) + " scrolls={" + MEIO_DescribeStorage(oScrolls) + "} potions={" + MEIO_DescribeStorage(oPotions) + "} books={" + MEIO_DescribeStorage(oBooks) + "}");
+        MEIO_Debug(oPC, "Storage persistence restore blocked mask=" + IntToString(iBlocked));
+        return FALSE;
+    }
+    MEIO_AdoptStorage(oPC, oScrolls, MEIO_LOCAL_STORAGE, MEIO_STORAGE_TAG, MEIO_STORAGE_SLOT_SCROLLS);
+    MEIO_AdoptStorage(oPC, oPotions, MEIO_LOCAL_POTION_STORAGE, MEIO_POTION_STORAGE_TAG, MEIO_STORAGE_SLOT_POTIONS);
+    MEIO_AdoptStorage(oPC, oBooks, MEIO_LOCAL_BOOK_STORAGE, MEIO_BOOK_STORAGE_TAG, MEIO_STORAGE_SLOT_BOOKS);
+    if (bRestore)
+    {
+        MEMORIA_PersistInitializeJson(oPC, MEIO_PERSIST_NAMESPACE, MEIO_PERSIST_STATE, MEIO_NewPersistenceState(), TRUE);
+        SetLocalInt(oPC, MEIO_LOCAL_PERSIST_RESTORES, GetLocalInt(oPC, MEIO_LOCAL_PERSIST_RESTORES) + 1);
+    }
+    int iCreated = MEIO_STORAGE_MASK_ALL & ~iCampaignMask;
+    if (iCreated)
+    {
+        SetLocalInt(oPC, MEIO_LOCAL_STORAGE_DIRTY_MASK, iCreated);
+        if (!MEIO_FlushStoragePersistence(oPC))
+        {
+            return FALSE;
+        }
+    }
+    ESI_SetRuntimeMarker(oPC, MEIO_RUNTIME_PERSISTENCE);
+    MEIO_Debug(oPC, bRestore ? "Storage persistence restored campaign stores" : "Storage persistence created fresh stores");
+    return TRUE;
+}
+
+object MEIO_EnsureStorage(object oPC)
+{
+    if (!MEIO_InitializeStoragePersistence(oPC) || (GetLocalInt(oPC, MEIO_LOCAL_STORAGE_BLOCKED_MASK) & MEIO_STORAGE_MASK_SCROLLS))
+    {
+        return OBJECT_INVALID;
+    }
+    return MEIO_FindRuntimeStorage(oPC);
+}
+
+object MEIO_EnsurePotionStorage(object oPC)
+{
+    if (!MEIO_InitializeStoragePersistence(oPC) || (GetLocalInt(oPC, MEIO_LOCAL_STORAGE_BLOCKED_MASK) & MEIO_STORAGE_MASK_POTIONS))
+    {
+        return OBJECT_INVALID;
+    }
+    return MEIO_FindRuntimePotionStorage(oPC);
 }
 
 object MEIO_EnsureBookStorage(object oPC)
 {
-    object oStorage = MEIO_FindRuntimeBookStorage(oPC);
-    if (!GetIsObjectValid(oStorage))
-    {
-        oStorage = CreateObject(OBJECT_TYPE_STORE, MEIO_BOOK_STORAGE_RESREF, GetLocation(oPC), FALSE, MEIO_BOOK_STORAGE_TAG);
-    }
-    if (!GetIsObjectValid(oStorage))
+    if (!MEIO_InitializeStoragePersistence(oPC) || (GetLocalInt(oPC, MEIO_LOCAL_STORAGE_BLOCKED_MASK) & MEIO_STORAGE_MASK_BOOKS))
     {
         return OBJECT_INVALID;
     }
-    SetTag(oStorage, MEIO_BOOK_STORAGE_TAG);
-    SetLocalObject(oStorage, MEIO_LOCAL_STORAGE_OWNER, oPC);
-    SetLocalObject(oPC, MEIO_LOCAL_BOOK_STORAGE, oStorage);
-    return oStorage;
-}
-
-void MEIO_ScheduleStorageSave(object oPC)
-{
-    MEIO_Debug(oPC, "Storage changed; persistence is owned by the current save game");
+    return MEIO_FindRuntimeBookStorage(oPC);
 }
 
 object MEIO_FindScriptorium(object oPC)
@@ -388,7 +635,7 @@ int MEIO_StoreAmountInternal(object oPC, object oScroll, int iRequested, int bIg
     }
     if (iMoved > 0)
     {
-        MEIO_ScheduleStorageSave(oPC);
+        MEIO_ScheduleStorageSave(oPC, MEIO_STORAGE_MASK_SCROLLS);
     }
     MEIO_Debug(oPC, "StoreAmount finished moved=" + IntToString(iMoved) + " requested=" + IntToString(iRequested) + " " + MEIO_DebugItemState(oPC, oScroll));
     return iMoved;
@@ -455,7 +702,7 @@ int MEIO_StorePotionAmountInternal(object oPC, object oPotion, int iRequested, i
     }
     if (iMoved > 0)
     {
-        MEIO_ScheduleStorageSave(oPC);
+        MEIO_ScheduleStorageSave(oPC, MEIO_STORAGE_MASK_POTIONS);
     }
     MEIO_Debug(oPC, "StorePotionAmount finished moved=" + IntToString(iMoved) + " requested=" + IntToString(iRequested) + " " + MEIO_DebugItemState(oPC, oPotion));
     return iMoved;
@@ -495,7 +742,7 @@ int MEIO_StoreBookAmountInternal(object oPC, object oBook, int iRequested, int b
         {
             SetItemStackSize(oBook, iStack - iMoved);
         }
-        MEIO_ScheduleStorageSave(oPC);
+        MEIO_ScheduleStorageSave(oPC, MEIO_STORAGE_MASK_BOOKS);
     }
     return iMoved;
 }
@@ -527,11 +774,6 @@ int MEIO_DropCopy(object oPC, object oItem)
 
 object MEIO_EnsureScriptorium(object oPC)
 {
-    object oStorage = MEIO_EnsureStorage(oPC);
-    if (!GetIsObjectValid(oStorage))
-    {
-        return OBJECT_INVALID;
-    }
     object oScriptorium = MEIO_FindScriptorium(oPC);
     if (!GetIsObjectValid(oScriptorium))
     {
@@ -573,6 +815,7 @@ void MEIO_ReconcileDuplicates(object oPC, object oPrimary)
 
 int MEIO_SortInventory(object oPC, int bIncludeKeptOut)
 {
+    MEIO_BeginStorageTransaction(oPC);
     int iMoved;
     object oItem = GetFirstItemInInventory(oPC);
     while (GetIsObjectValid(oItem))
@@ -584,6 +827,7 @@ int MEIO_SortInventory(object oPC, int bIncludeKeptOut)
         }
         oItem = oNext;
     }
+    MEIO_EndStorageTransaction(oPC);
     return iMoved;
 }
 
@@ -594,6 +838,7 @@ int MEIO_SortExistingInventory(object oPC)
 
 int MEIO_StoreInventoryBatch(object oPC, int iLimit)
 {
+    MEIO_BeginStorageTransaction(oPC);
     int iAttempted;
     int iMoved;
     object oItem = GetFirstItemInInventory(oPC);
@@ -608,6 +853,7 @@ int MEIO_StoreInventoryBatch(object oPC, int iLimit)
             {
                 SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
                 MEIO_Debug(oPC, "Inventory storage batch completed attempted=" + IntToString(iAttempted) + " moved=" + IntToString(iMoved) + " complete=0");
+                MEIO_EndStorageTransaction(oPC);
                 return FALSE;
             }
         }
@@ -615,11 +861,13 @@ int MEIO_StoreInventoryBatch(object oPC, int iLimit)
     }
     SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
     MEIO_Debug(oPC, "Inventory storage batch completed attempted=" + IntToString(iAttempted) + " moved=" + IntToString(iMoved) + " complete=1");
+    MEIO_EndStorageTransaction(oPC);
     return TRUE;
 }
 
 int MEIO_StorePotionInventoryBatch(object oPC, int iLimit)
 {
+    MEIO_BeginStorageTransaction(oPC);
     int iAttempted;
     int iMoved;
     object oItem = GetFirstItemInInventory(oPC);
@@ -634,6 +882,7 @@ int MEIO_StorePotionInventoryBatch(object oPC, int iLimit)
             {
                 SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
                 MEIO_Debug(oPC, "Potion storage batch completed attempted=" + IntToString(iAttempted) + " moved=" + IntToString(iMoved) + " complete=0");
+                MEIO_EndStorageTransaction(oPC);
                 return FALSE;
             }
         }
@@ -641,11 +890,13 @@ int MEIO_StorePotionInventoryBatch(object oPC, int iLimit)
     }
     SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
     MEIO_Debug(oPC, "Potion storage batch completed attempted=" + IntToString(iAttempted) + " moved=" + IntToString(iMoved) + " complete=1");
+    MEIO_EndStorageTransaction(oPC);
     return TRUE;
 }
 
 int MEIO_StoreBookInventoryBatch(object oPC, int iLimit)
 {
+    MEIO_BeginStorageTransaction(oPC);
     int iAttempted;
     int iMoved;
     object oItem = GetFirstItemInInventory(oPC);
@@ -659,12 +910,14 @@ int MEIO_StoreBookInventoryBatch(object oPC, int iLimit)
             if (iAttempted >= iLimit)
             {
                 SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
+                MEIO_EndStorageTransaction(oPC);
                 return FALSE;
             }
         }
         oItem = oNext;
     }
     SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
+    MEIO_EndStorageTransaction(oPC);
     return TRUE;
 }
 
@@ -676,6 +929,7 @@ void MEIO_BeginBookDuplicateBurn(object oPC)
 
 int MEIO_BurnBookDuplicatesBatch(object oPC, int iLimit)
 {
+    MEIO_BeginStorageTransaction(oPC);
     object oStorage = MEIO_EnsureBookStorage(oPC);
     json jSeen = GetLocalJson(oPC, MEIO_LOCAL_BURN_SEEN);
     int iGeneration = GetLocalInt(oPC, MEIO_LOCAL_BURN_GENERATION);
@@ -712,8 +966,9 @@ int MEIO_BurnBookDuplicatesBatch(object oPC, int iLimit)
                 SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iRemoved);
                 if (iRemoved > 0)
                 {
-                    MEIO_ScheduleStorageSave(oPC);
+                    MEIO_ScheduleStorageSave(oPC, MEIO_STORAGE_MASK_BOOKS);
                 }
+                MEIO_EndStorageTransaction(oPC);
                 return FALSE;
             }
         }
@@ -723,7 +978,7 @@ int MEIO_BurnBookDuplicatesBatch(object oPC, int iLimit)
     SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iRemoved);
     if (iRemoved > 0)
     {
-        MEIO_ScheduleStorageSave(oPC);
+        MEIO_ScheduleStorageSave(oPC, MEIO_STORAGE_MASK_BOOKS);
     }
     oItem = GetFirstItemInInventory(oStorage);
     while (GetIsObjectValid(oItem))
@@ -732,6 +987,7 @@ int MEIO_BurnBookDuplicatesBatch(object oPC, int iLimit)
         oItem = GetNextItemInInventory(oStorage);
     }
     DeleteLocalJson(oPC, MEIO_LOCAL_BURN_SEEN);
+    MEIO_EndStorageTransaction(oPC);
     return TRUE;
 }
 
@@ -753,6 +1009,7 @@ void MEIO_MarkInitialImportItems(object oPC)
 
 int MEIO_StoreInitialInventoryBatch(object oPC, int iLimit)
 {
+    MEIO_BeginStorageTransaction(oPC);
     int iAttempted;
     int iMoved;
     object oItem = GetFirstItemInInventory(oPC);
@@ -774,6 +1031,7 @@ int MEIO_StoreInitialInventoryBatch(object oPC, int iLimit)
             {
                 SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
                 MEIO_Debug(oPC, "Initial inventory storage batch completed attempted=" + IntToString(iAttempted) + " moved=" + IntToString(iMoved) + " complete=0");
+                MEIO_EndStorageTransaction(oPC);
                 return FALSE;
             }
         }
@@ -781,6 +1039,7 @@ int MEIO_StoreInitialInventoryBatch(object oPC, int iLimit)
     }
     SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
     MEIO_Debug(oPC, "Initial inventory storage batch completed attempted=" + IntToString(iAttempted) + " moved=" + IntToString(iMoved) + " complete=1");
+    MEIO_EndStorageTransaction(oPC);
     return TRUE;
 }
 
@@ -800,7 +1059,7 @@ void MEIO_ValidateContents(object oPC, object oStorage)
     }
     if (bChanged)
     {
-        MEIO_ScheduleStorageSave(oPC);
+        MEIO_ScheduleStorageSave(oPC, MEIO_STORAGE_MASK_SCROLLS);
     }
 }
 
@@ -820,7 +1079,7 @@ void MEIO_ValidatePotionContents(object oPC, object oStorage)
     }
     if (bChanged)
     {
-        MEIO_ScheduleStorageSave(oPC);
+        MEIO_ScheduleStorageSave(oPC, MEIO_STORAGE_MASK_POTIONS);
     }
 }
 
@@ -840,7 +1099,7 @@ void MEIO_ValidateBookContents(object oPC, object oStorage)
     }
     if (bChanged)
     {
-        MEIO_ScheduleStorageSave(oPC);
+        MEIO_ScheduleStorageSave(oPC, MEIO_STORAGE_MASK_BOOKS);
     }
 }
 
@@ -871,6 +1130,7 @@ int MEIO_StoreVaultItem(object oPC, object oItem)
     {
         return FALSE;
     }
+    int iStorageMask = MEIO_IsScroll(oItem) ? MEIO_STORAGE_MASK_SCROLLS : MEIO_IsUsablePotion(oItem) ? MEIO_STORAGE_MASK_POTIONS : MEIO_STORAGE_MASK_BOOKS;
     int iRequested = GetItemStackSize(oItem);
     int iMoved = MEIO_IsScroll(oItem) ? MEIO_CopyAmount(oItem, oTarget, iRequested) : MEIO_IsUsablePotion(oItem) ? MEIO_CopyPotionAmount(oItem, oTarget, iRequested) : MEIO_CopyBookAmount(oItem, oTarget, iRequested);
     if (iMoved <= 0)
@@ -885,7 +1145,7 @@ int MEIO_StoreVaultItem(object oPC, object oItem)
     {
         SetItemStackSize(oItem, GetItemStackSize(oItem) - iMoved);
     }
-    MEIO_ScheduleStorageSave(oPC);
+    MEIO_ScheduleStorageSave(oPC, iStorageMask);
     return TRUE;
 }
 
@@ -900,6 +1160,7 @@ void MEIO_ProcessVaultContents(object oPC, int iLimit)
     {
         return;
     }
+    MEIO_BeginStorageTransaction(oPC);
     int iAttempted;
     int bChanged;
     object oItem = GetFirstItemInInventory(oVault);
@@ -917,4 +1178,5 @@ void MEIO_ProcessVaultContents(object oPC, int iLimit)
     {
         MEIO_RebuildOpenWindowIndex(oPC);
     }
+    MEIO_EndStorageTransaction(oPC);
 }

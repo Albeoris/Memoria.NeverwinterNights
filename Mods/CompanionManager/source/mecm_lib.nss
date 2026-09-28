@@ -5,9 +5,10 @@
 #include "memoria_group"
 #include "memoria_locale"
 #include "memoria_loc"
+#include "memoria_persist"
 #include "esi_lib"
 
-const string MECM_VERSION = "1.4.0";
+const string MECM_VERSION = "1.4.2";
 const string MECM_LOC_PREFIX = "mecm";
 const string MECM_LOCAL_INSTALLED = "MECM_INSTALLED";
 const string MECM_LOCAL_ENABLED = "MECM_MODE_ENABLED";

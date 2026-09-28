@@ -12,6 +12,11 @@ void main()
     {
         object oExamined = GetLastGuiEventObject();
         MEIO_Debug(oPC, "GUI disabled-panel attempt panel=" + IntToString(GetLastGuiEventInteger()) + " target=" + ObjectToString(oExamined));
+        if (GetLocalInt(oPC, MEIO_LOCAL_EXAMINE_SUPPRESSION_GUARD))
+        {
+            MEIO_Debug(oPC, "GUI disabled-panel attempt ignored during programmed Examine suppression");
+            return;
+        }
         if (MEIO_IsDirectlyIn(oExamined, oPC) && GetTag(oExamined) == MEIO_SCRIPTORIUM_TAG)
         {
             MEIO_Open(oPC);

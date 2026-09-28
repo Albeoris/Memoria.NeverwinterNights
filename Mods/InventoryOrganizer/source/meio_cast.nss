@@ -57,7 +57,7 @@ void MEIO_ReturnReservation(object oPC)
         return;
     }
     MEIO_NormalizeExtractedTag(oReserved);
-    DeleteLocalInt(oReserved, MEIO_LOCAL_KEEP_OUT);
+    MEIO_UnmarkKeepOut(oPC, oReserved);
     MEIO_Debug(oPC, "Reservation return decision=explicit-store " + MEIO_DebugItemState(oPC, oReserved));
     int iMoved = MEIO_StoreAmountExplicit(oPC, oReserved, 1);
     MEIO_Debug(oPC, "Reservation return store-finished moved=" + IntToString(iMoved) + " " + MEIO_DebugItemState(oPC, oReserved));
@@ -144,7 +144,7 @@ object MEIO_ExtractStoredItem(object oPC, object oStorage, object oSource, int i
     SetLocalObject(oPC, MEIO_LOCAL_RESERVED, oReserved);
     SetLocalString(oPC, MEIO_LOCAL_RESERVED_TAG, sTag);
     MEIO_Debug(oPC, "ExtractOne completed reserved=" + ObjectToString(oReserved) + " originalTag=\"" + sTag + "\" " + MEIO_DebugItemState(oPC, oReserved));
-    MEIO_ScheduleStorageSave(oPC);
+    MEIO_ScheduleStorageSave(oPC, iBaseItem == BASE_ITEM_POTIONS ? MEIO_STORAGE_MASK_POTIONS : iBaseItem == BASE_ITEM_BOOK ? MEIO_STORAGE_MASK_BOOKS : MEIO_STORAGE_MASK_SCROLLS);
     return oReserved;
 }
 
@@ -158,9 +158,9 @@ object MEIO_ExtractPotionOne(object oPC, object oStorage, object oSource)
     return MEIO_ExtractStoredItem(oPC, oStorage, oSource, BASE_ITEM_POTIONS);
 }
 
-int MEIO_WithdrawStoredStack(object oPC, object oStorage, object oSource, int iBaseItem)
+int MEIO_WithdrawStoredAmount(object oPC, object oStorage, object oSource, int iBaseItem, int iRequested)
 {
-    if (!MEIO_IsInScriptorium(oStorage, oSource) || !GetBaseItemFitsInInventory(iBaseItem, oPC))
+    if (!MEIO_IsInScriptorium(oStorage, oSource) || !GetBaseItemFitsInInventory(iBaseItem, oPC) || iRequested <= 0)
     {
         return -1;
     }
@@ -168,7 +168,19 @@ int MEIO_WithdrawStoredStack(object oPC, object oStorage, object oSource, int iB
     string sKey = iBaseItem == BASE_ITEM_POTIONS ? MEIO_GetPotionKey(oSource, iSubtype) : iBaseItem == BASE_ITEM_BOOK ? MEIO_GetBookKey(oSource) : MEIO_GetVariantKey(oSource, iSubtype);
     int iBefore = iBaseItem == BASE_ITEM_POTIONS ? MEIO_CountPotionVariant(oPC, sKey) : iBaseItem == BASE_ITEM_BOOK ? MEIO_CountBookVariant(oPC, sKey) : MEIO_CountVariant(oPC, sKey);
     int iSourceSize = GetItemStackSize(oSource);
+    if (iRequested > iSourceSize)
+    {
+        iRequested = iSourceSize;
+    }
+    if (iRequested < iSourceSize)
+    {
+        SetItemStackSize(oSource, iRequested);
+    }
     object oCopy = CopyItem(oSource, oPC, TRUE);
+    if (iRequested < iSourceSize)
+    {
+        SetItemStackSize(oSource, iSourceSize);
+    }
     int iAfter = iBaseItem == BASE_ITEM_POTIONS ? MEIO_CountPotionVariant(oPC, sKey) : iBaseItem == BASE_ITEM_BOOK ? MEIO_CountBookVariant(oPC, sKey) : MEIO_CountVariant(oPC, sKey);
     int iMoved = iAfter - iBefore;
     if (GetIsObjectValid(oCopy) && !MEIO_IsDirectlyIn(oCopy, oPC))
@@ -179,9 +191,9 @@ int MEIO_WithdrawStoredStack(object oPC, object oStorage, object oSource, int iB
     {
         return -1;
     }
-    if (iMoved > iSourceSize)
+    if (iMoved > iRequested)
     {
-        iMoved = iSourceSize;
+        iMoved = iRequested;
     }
     if (MEIO_IsDirectlyIn(oCopy, oPC))
     {
@@ -196,12 +208,18 @@ int MEIO_WithdrawStoredStack(object oPC, object oStorage, object oSource, int iB
     {
         SetItemStackSize(oSource, iSourceSize - iMoved);
     }
-    MEIO_ScheduleStorageSave(oPC);
+    MEIO_ScheduleStorageSave(oPC, iBaseItem == BASE_ITEM_POTIONS ? MEIO_STORAGE_MASK_POTIONS : iBaseItem == BASE_ITEM_BOOK ? MEIO_STORAGE_MASK_BOOKS : MEIO_STORAGE_MASK_SCROLLS);
     return iMoved;
+}
+
+int MEIO_WithdrawStoredStack(object oPC, object oStorage, object oSource, int iBaseItem)
+{
+    return MEIO_WithdrawStoredAmount(oPC, oStorage, oSource, iBaseItem, GetItemStackSize(oSource));
 }
 
 int MEIO_WithdrawStorageBatch(object oPC, int iBaseItem, int iLimit)
 {
+    MEIO_BeginStorageTransaction(oPC);
     object oStorage = iBaseItem == BASE_ITEM_POTIONS ? MEIO_EnsurePotionStorage(oPC) : iBaseItem == BASE_ITEM_BOOK ? MEIO_EnsureBookStorage(oPC) : MEIO_EnsureStorage(oPC);
     int iAttempted;
     int iMoved;
@@ -218,6 +236,7 @@ int MEIO_WithdrawStorageBatch(object oPC, int iBaseItem, int iLimit)
             {
                 SetLocalInt(oPC, MEIO_LOCAL_BATCH_BLOCKED, TRUE);
                 SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
+                MEIO_EndStorageTransaction(oPC);
                 return TRUE;
             }
             iMoved += iItemMoved;
@@ -225,12 +244,14 @@ int MEIO_WithdrawStorageBatch(object oPC, int iBaseItem, int iLimit)
             if (iAttempted >= iLimit)
             {
                 SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
+                MEIO_EndStorageTransaction(oPC);
                 return FALSE;
             }
         }
         oItem = oNext;
     }
     SetLocalInt(oPC, MEIO_LOCAL_BATCH_MOVED, iMoved);
+    MEIO_EndStorageTransaction(oPC);
     return TRUE;
 }
 
@@ -261,14 +282,13 @@ int MEIO_WithdrawOne(object oPC, json jSelected)
         SendMessageToPC(oPC, MEIO_GetText(oPC, "no_space"));
         return FALSE;
     }
-    object oWithdrawn = MEIO_ExtractOne(oPC, oStorage, oSource);
-    if (!GetIsObjectValid(oWithdrawn))
+    int iMoved = MEIO_WithdrawStoredAmount(oPC, oStorage, oSource, BASE_ITEM_SPELLSCROLL, 1);
+    if (iMoved < 1)
     {
         MEIO_Debug(oPC, "WithdrawOne decision=fail reason=extraction-failed");
         return FALSE;
     }
-    MEIO_ClearReservation(oPC);
-    MEIO_Debug(oPC, "WithdrawOne completed and left item in inventory " + MEIO_DebugItemState(oPC, oWithdrawn));
+    MEIO_Debug(oPC, "WithdrawOne completed moved=" + IntToString(iMoved));
     SendMessageToPC(oPC, MEIO_GetText(oPC, "withdrawn"));
     return TRUE;
 }
@@ -299,12 +319,11 @@ int MEIO_WithdrawPotionOne(object oPC, json jSelected)
         SendMessageToPC(oPC, MEIO_GetText(oPC, "no_space"));
         return FALSE;
     }
-    object oWithdrawn = MEIO_ExtractPotionOne(oPC, oStorage, oSource);
-    if (!GetIsObjectValid(oWithdrawn))
+    int iMoved = MEIO_WithdrawStoredAmount(oPC, oStorage, oSource, BASE_ITEM_POTIONS, 1);
+    if (iMoved < 1)
     {
         return FALSE;
     }
-    MEIO_ClearReservation(oPC);
     SendMessageToPC(oPC, MEIO_GetText(oPC, "potion_withdrawn"));
     return TRUE;
 }
