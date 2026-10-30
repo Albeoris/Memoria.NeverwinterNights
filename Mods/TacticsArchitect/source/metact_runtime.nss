@@ -1264,6 +1264,7 @@ string METACT_DebugReasonText(object oPC, string sReason)
     if (sReason == "negative_vs_undead") return bRussian ? "негативная энергия неразумна против нежити" : "negative energy is unsuitable against undead";
     if (sReason == "status_immunity") return bRussian ? "иммунитет к эффекту заклинания" : "immune to the spell effect";
     if (sReason == "damage_immunity") return bRussian ? "полный иммунитет к типу урона" : "fully immune to the damage type";
+    if (sReason == "damage_resistance") return bRussian ? "постоянное сопротивление типу урона" : "persistent resistance to the damage type";
     if (sReason == "spell_immunity") return bRussian ? "иммунитет к конкретному заклинанию" : "immune to this spell";
     if (sReason == "limited_absorption") return bRussian ? "заклинание поглотит мантия" : "spell will be absorbed by a mantle";
     if (sReason == "unlimited_absorption") return bRussian ? "заклинание поглотит сфера" : "spell will be absorbed by a globe";

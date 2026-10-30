@@ -6,13 +6,22 @@ void MEIO_StoreAllKeyItemsStep(object oPC, int iGeneration);
 void MEIO_WithdrawAllKeyItemsStep(object oPC, int iGeneration);
 void MEIO_TouchKeyTransfer(object oPC);
 int MEIO_StoreKeyItem(object oPC, object oItem, int iGeneration, int bBulk);
+int MEIO_WithdrawKeyItem(object oPC, object oItem, int iGeneration);
 object MEIO_FindKeyItemContainerWithRoom(object oPC, object oItem);
-void MEIO_CheckKeyItemStored(object oPC, object oItem, object oContainer, int iGeneration, int bBulk, int iAttempt);
-void MEIO_CheckKeyItemWithdrawn(object oPC, object oItem, object oContainer, int iGeneration, int iAttempt);
+void MEIO_CheckKeyItemStored(object oPC, object oItem, object oContainer, int iGeneration, int bBulk);
+void MEIO_CheckKeyItemWithdrawn(object oPC, object oItem, object oContainer, int iGeneration);
 
-void MEIO_RetryKeyItemStore(object oPC, object oItem)
+void MEIO_RetryKeyItemTransfer(object oPC, object oItem)
 {
-    MEIO_StoreKeyItem(oPC, oItem, 0, FALSE);
+    object oPossessor = GetItemPossessor(oItem, TRUE);
+    if (oPossessor == oPC)
+    {
+        MEIO_StoreKeyItem(oPC, oItem, 0, FALSE);
+    }
+    else if (GetObjectType(oPossessor) == OBJECT_TYPE_ITEM && MEIO_IsKeyItemContainer(oPossessor))
+    {
+        MEIO_WithdrawKeyItem(oPC, oItem, 0);
+    }
 }
 
 string MEIO_KeyTransferState(object oPC, object oItem, object oContainer)
@@ -88,7 +97,7 @@ void MEIO_RecoverStaleKeyTransfer(object oPC)
         oPending = MEIO_FindPendingKeyItem(oPC);
         if (GetIsObjectValid(oPending))
         {
-            MEIO_ReportError(oPC, "Found orphaned key item move marker " + MEIO_KeyTransferState(oPC, oPending, MEIO_FindKeyItemContainerWithRoom(oPC, oPending)));
+            MEIO_Debug(oPC, "Found orphaned key item move marker " + MEIO_KeyTransferState(oPC, oPending, MEIO_FindKeyItemContainerWithRoom(oPC, oPending)));
         }
     }
     int bBulk = iMode == MEIO_TRANSFER_STORE_KEY_ITEMS || iMode == MEIO_TRANSFER_WITHDRAW_KEY_ITEMS;
@@ -108,14 +117,10 @@ void MEIO_RecoverStaleKeyTransfer(object oPC)
     }
     if (!bBulk)
     {
-        MEIO_ReportError(oPC, "Retrying stale key item store " + MEIO_KeyTransferState(oPC, oPending, MEIO_FindKeyItemContainerWithRoom(oPC, oPending)));
         DeleteLocalObject(oPC, MEIO_LOCAL_KEY_PENDING_ITEM);
         DeleteLocalInt(oPC, MEIO_LOCAL_KEY_TRANSFER_LEASE);
-        MEIO_Debug(oPC, "Retrying stale key item store " + MEIO_DebugItemState(oPC, oPending));
-        if (MEIO_IsDirectlyIn(oPending, oPC))
-        {
-            DelayCommand(0.1f, MEIO_RetryKeyItemStore(oPC, oPending));
-        }
+        MEIO_Debug(oPC, "Retrying stale key item transfer " + MEIO_DebugItemState(oPC, oPending));
+        DelayCommand(0.1f, MEIO_RetryKeyItemTransfer(oPC, oPending));
         return;
     }
     SetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION, GetLocalInt(oPC, MEIO_LOCAL_RETURN_GENERATION) + 1);
@@ -404,23 +409,23 @@ int MEIO_StoreKeyItem(object oPC, object oItem, int iGeneration, int bBulk)
 {
     if (!MEIO_IsDirectlyIn(oItem, oPC))
     {
-        MEIO_ReportError(oPC, "Key item store refused reason=not-directly-in-player-inventory " + MEIO_KeyTransferState(oPC, oItem, OBJECT_INVALID));
+        MEIO_Debug(oPC, "Key item store refused reason=not-directly-in-player-inventory " + MEIO_KeyTransferState(oPC, oItem, OBJECT_INVALID));
         return FALSE;
     }
     if (!MEIO_CanStoreKeyItem(oItem))
     {
-        MEIO_ReportError(oPC, "Key item store refused reason=ineligible-item " + MEIO_KeyTransferState(oPC, oItem, OBJECT_INVALID));
+        MEIO_Debug(oPC, "Key item store refused reason=ineligible-item " + MEIO_KeyTransferState(oPC, oItem, OBJECT_INVALID));
         return FALSE;
     }
     if (GetLocalInt(oItem, MEIO_LOCAL_KEY_MOVE_PENDING))
     {
-        MEIO_ReportError(oPC, "Key item store refused reason=move-pending " + MEIO_KeyTransferState(oPC, oItem, MEIO_FindKeyItemContainerWithRoom(oPC, oItem)));
+        MEIO_Debug(oPC, "Key item store refused reason=move-pending " + MEIO_KeyTransferState(oPC, oItem, MEIO_FindKeyItemContainerWithRoom(oPC, oItem)));
         return FALSE;
     }
     object oContainer = MEIO_FindKeyItemContainerWithRoom(oPC, oItem);
     if (!GetIsObjectValid(oContainer))
     {
-        MEIO_ReportError(oPC, "Key item store refused reason=no-container-with-room " + MEIO_KeyTransferState(oPC, oItem, oContainer));
+        MEIO_Debug(oPC, "Key item store refused reason=no-container-with-room " + MEIO_KeyTransferState(oPC, oItem, oContainer));
         return FALSE;
     }
     SetLocalInt(oItem, MEIO_LOCAL_KEY_MOVE_PENDING, TRUE);
@@ -429,26 +434,18 @@ int MEIO_StoreKeyItem(object oPC, object oItem, int iGeneration, int bBulk)
     MEIO_Debug(oPC, "Key item store queued container=" + ObjectToString(oContainer) + " bulk=" + IntToString(bBulk) + " " + MEIO_DebugItemState(oPC, oItem));
     AssignCommand(oPC, ActionGiveItem(oItem, oContainer));
     // Check outside the player's action queue because a new player command can clear both the transfer and an action-queued confirmation.
-    DelayCommand(0.2f, MEIO_CheckKeyItemStored(oPC, oItem, oContainer, iGeneration, bBulk, 1));
+    DelayCommand(0.2f, MEIO_CheckKeyItemStored(oPC, oItem, oContainer, iGeneration, bBulk));
     return TRUE;
 }
 
-void MEIO_CheckKeyItemStored(object oPC, object oItem, object oContainer, int iGeneration, int bBulk, int iAttempt)
+void MEIO_CheckKeyItemStored(object oPC, object oItem, object oContainer, int iGeneration, int bBulk)
 {
     if (MEIO_IsDirectlyIn(oItem, oContainer) || !GetIsObjectValid(oItem) || !MEIO_IsDirectlyIn(oItem, oPC) || !GetIsObjectValid(oContainer))
     {
         MEIO_ConfirmKeyItemStored(oPC, oItem, oContainer, iGeneration, bBulk);
         return;
     }
-    if (iAttempt >= 3)
-    {
-        MEIO_ReportError(oPC, "Key item store action did not complete attempt=" + IntToString(iAttempt) + " " + MEIO_KeyTransferState(oPC, oItem, oContainer));
-        MEIO_Debug(oPC, "Key item store action did not complete; waiting for retry " + MEIO_DebugItemState(oPC, oItem));
-        return;
-    }
-    MEIO_TouchKeyTransfer(oPC);
-    AssignCommand(oPC, ActionGiveItem(oItem, oContainer));
-    DelayCommand(0.2f, MEIO_CheckKeyItemStored(oPC, oItem, oContainer, iGeneration, bBulk, iAttempt + 1));
+    MEIO_Debug(oPC, "Key item store action is still queued; deferring retry to heartbeat " + MEIO_DebugItemState(oPC, oItem));
 }
 
 void MEIO_ConfirmKeyItemWithdrawn(object oPC, object oItem, object oContainer, int iGeneration)
@@ -494,7 +491,7 @@ int MEIO_WithdrawKeyItem(object oPC, object oItem, int iGeneration)
     object oContainer = GetItemPossessor(oItem, TRUE);
     if (GetObjectType(oContainer) != OBJECT_TYPE_ITEM || !MEIO_IsDirectlyIn(oContainer, oPC) || !MEIO_IsDirectlyIn(oItem, oContainer) || GetLocalInt(oItem, MEIO_LOCAL_KEY_MOVE_PENDING) || !GetBaseItemFitsInInventory(GetBaseItemType(oItem), oPC))
     {
-        MEIO_ReportError(oPC, "Key item withdrawal refused " + MEIO_KeyTransferState(oPC, oItem, oContainer) + " fitsInPC=" + IntToString(GetBaseItemFitsInInventory(GetBaseItemType(oItem), oPC)));
+        MEIO_Debug(oPC, "Key item withdrawal refused " + MEIO_KeyTransferState(oPC, oItem, oContainer) + " fitsInPC=" + IntToString(GetBaseItemFitsInInventory(GetBaseItemType(oItem), oPC)));
         return FALSE;
     }
     MEIO_MarkKeepOut(oPC, oItem);
@@ -504,26 +501,18 @@ int MEIO_WithdrawKeyItem(object oPC, object oItem, int iGeneration)
     MEIO_Debug(oPC, "Key item withdrawal queued container=" + ObjectToString(oContainer) + " " + MEIO_DebugItemState(oPC, oItem));
     AssignCommand(oPC, ActionTakeItem(oItem, oContainer));
     // Keep confirmation independent from the player's action queue for the same reason as storage.
-    DelayCommand(0.2f, MEIO_CheckKeyItemWithdrawn(oPC, oItem, oContainer, iGeneration, 1));
+    DelayCommand(0.2f, MEIO_CheckKeyItemWithdrawn(oPC, oItem, oContainer, iGeneration));
     return TRUE;
 }
 
-void MEIO_CheckKeyItemWithdrawn(object oPC, object oItem, object oContainer, int iGeneration, int iAttempt)
+void MEIO_CheckKeyItemWithdrawn(object oPC, object oItem, object oContainer, int iGeneration)
 {
     if (MEIO_IsDirectlyIn(oItem, oPC) || !GetIsObjectValid(oItem) || !MEIO_IsDirectlyIn(oItem, oContainer) || !GetIsObjectValid(oContainer))
     {
         MEIO_ConfirmKeyItemWithdrawn(oPC, oItem, oContainer, iGeneration);
         return;
     }
-    if (iAttempt >= 3)
-    {
-        MEIO_ReportError(oPC, "Key item withdrawal action did not complete attempt=" + IntToString(iAttempt) + " " + MEIO_KeyTransferState(oPC, oItem, oContainer));
-        MEIO_Debug(oPC, "Key item withdrawal action did not complete; waiting for retry " + MEIO_DebugItemState(oPC, oItem));
-        return;
-    }
-    MEIO_TouchKeyTransfer(oPC);
-    AssignCommand(oPC, ActionTakeItem(oItem, oContainer));
-    DelayCommand(0.2f, MEIO_CheckKeyItemWithdrawn(oPC, oItem, oContainer, iGeneration, iAttempt + 1));
+    MEIO_Debug(oPC, "Key item withdrawal action is still queued; deferring retry to heartbeat " + MEIO_DebugItemState(oPC, oItem));
 }
 
 object MEIO_ResolveDisplayedKeyItem(object oPC, json jEntry)
@@ -560,7 +549,7 @@ int MEIO_MoveDisplayedKeyItem(object oPC, json jEntry)
     if (MEIO_IsTransferBusy(oPC) || GetIsObjectValid(GetLocalObject(oPC, MEIO_LOCAL_KEY_PENDING_ITEM)))
     {
         object oPending = GetLocalObject(oPC, MEIO_LOCAL_KEY_PENDING_ITEM);
-        MEIO_ReportError(oPC, "Key item move blocked reason=transfer-busy selected=" + ObjectToString(oItem) + " " + MEIO_KeyTransferState(oPC, oPending, MEIO_FindKeyItemContainerWithRoom(oPC, oPending)));
+        MEIO_Debug(oPC, "Key item move blocked reason=transfer-busy selected=" + ObjectToString(oItem) + " " + MEIO_KeyTransferState(oPC, oPending, MEIO_FindKeyItemContainerWithRoom(oPC, oPending)));
         SendMessageToPC(oPC, MEIO_GetText(oPC, "transfer_busy"));
         return FALSE;
     }

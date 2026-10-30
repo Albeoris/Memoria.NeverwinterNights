@@ -200,6 +200,33 @@ int METACT_HasFullDamageImmunity(object oTarget, int iDamageType)
     return FALSE;
 }
 
+int METACT_HasPersistentDamageResistance(object oTarget, int iDamageType)
+{
+    if (iDamageType == DAMAGE_TYPE_BASE_WEAPON)
+        return FALSE;
+    effect eEffect = GetFirstEffect(oTarget);
+    while (GetIsEffectValid(eEffect))
+    {
+        if (GetEffectType(eEffect, TRUE) == EFFECT_TYPE_DAMAGE_RESISTANCE && GetEffectInteger(eEffect, 0) == iDamageType && GetEffectInteger(eEffect, 1) > 0 && GetEffectInteger(eEffect, 2) == 0)
+            return TRUE;
+        eEffect = GetNextEffect(oTarget);
+    }
+    int iItemType = METACT_DamageTypeToItemType(iDamageType);
+    int iSlot;
+    for (iSlot = INVENTORY_SLOT_HEAD; iSlot <= INVENTORY_SLOT_CARMOUR; iSlot++)
+    {
+        object oItem = GetItemInSlot(iSlot, oTarget);
+        itemproperty ip = GetFirstItemProperty(oItem);
+        while (GetIsItemPropertyValid(ip))
+        {
+            if (GetItemPropertyType(ip) == ITEM_PROPERTY_DAMAGE_RESISTANCE && GetItemPropertySubType(ip) == iItemType && GetItemPropertyCostTableValue(ip) > 0)
+                return TRUE;
+            ip = GetNextItemProperty(oItem);
+        }
+    }
+    return FALSE;
+}
+
 int METACT_HasSpellEffect(object oTarget, int iSpell)
 {
     effect eEffect = GetFirstEffect(oTarget);
@@ -239,9 +266,15 @@ int METACT_IsSpellSensible(object oCaster, object oTarget, int iSpell, int iSpel
             SetLocalString(oCaster, METACT_LOCAL_REJECT_REASON, "status_immunity");
             return FALSE;
         }
-        if (METACT_HasFullDamageImmunity(oTarget, METACT_ImmunityNameToDamageType(sImmunity, iSpell)))
+        int iDamageType = METACT_ImmunityNameToDamageType(sImmunity, iSpell);
+        if (METACT_HasFullDamageImmunity(oTarget, iDamageType))
         {
             SetLocalString(oCaster, METACT_LOCAL_REJECT_REASON, "damage_immunity");
+            return FALSE;
+        }
+        if (METACT_HasPersistentDamageResistance(oTarget, iDamageType))
+        {
+            SetLocalString(oCaster, METACT_LOCAL_REJECT_REASON, "damage_resistance");
             return FALSE;
         }
         if (SpellImmunityCheck(oTarget, oCaster, iSpell, FALSE))

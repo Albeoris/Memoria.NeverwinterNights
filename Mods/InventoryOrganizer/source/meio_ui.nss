@@ -123,8 +123,11 @@ json MEIO_BuildPotionGrid(int iCapacity)
         {
             jRow = JsonArrayInsert(jRow, MEIO_BuildPotionSlot(iSlot + iColumn));
         }
-        jRows = JsonArrayInsert(jRows, NuiHeight(NuiRow(jRow), 72.0f));
+        // Let the row fit its fixed-height slots and the client's scaled margins.
+        // A second fixed height can conflict with those required constraints.
+        jRows = JsonArrayInsert(jRows, NuiRow(jRow));
     }
+    jRows = JsonArrayInsert(jRows, NuiSpacer());
     return NuiGroup(NuiCol(jRows), TRUE, NUI_SCROLLBARS_Y);
 }
 
@@ -151,8 +154,10 @@ json MEIO_BuildBookGrid(int iCapacity)
         {
             jRow = JsonArrayInsert(jRow, MEIO_BuildBookSlot(iSlot + iColumn));
         }
-        jRows = JsonArrayInsert(jRows, NuiHeight(NuiRow(jRow), 66.0f));
+        // As with potions, derive row height from the slots instead of fixing both.
+        jRows = JsonArrayInsert(jRows, NuiRow(jRow));
     }
+    jRows = JsonArrayInsert(jRows, NuiSpacer());
     return NuiGroup(NuiCol(jRows), TRUE, NUI_SCROLLBARS_Y);
 }
 
